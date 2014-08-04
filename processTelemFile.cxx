@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <unistd.h>
+#include <cstdlib>
 #include <signal.h>  
 #include <sys/stat.h>
 using namespace std;
@@ -11,7 +12,7 @@ using namespace std;
 #include "AnitaPacketUtil.h"
 
 //Web plotter includes
-//#include "AnitaHeaderHandler.h"
+#include "AnitaHeaderHandler.h"
 // #include "configLib/configLib.h"
 // #include "kvpLib/keyValuePair.h"
 // #include "AnitaAuxiliaryHandler.h"
@@ -38,7 +39,7 @@ int processLOSFile(char *filename);
 unsigned short *bigBuffer;
 
 
-//AnitaHeaderHandler *headHandler;
+AnitaHeaderHandler *headHandler;
 
 
 #define MIN_LOS_SIZE 900000
@@ -56,7 +57,7 @@ int main (int argc, char ** argv)
   std::cout << "sizeof(unsigned long): " << sizeof(unsigned long) << "\n";
   //`  return -1;
   //Create the handlers
-  //  headHandler = new AnitaHeaderHandler();
+  headHandler = new AnitaHeaderHandler();
 
 
 
@@ -64,12 +65,12 @@ int main (int argc, char ** argv)
   //  processHighRateTDRSSFile(argv[1]);
   processLOSFile(argv[1]);
 
+  headHandler->loopMap();
   free(bigBuffer);
 }
 
 
 int processHighRateTDRSSFile(char *filename) {
-//    cout << (int) headHandler->number << endl;
 
     int numBytes=0,count=0;
     FILE *tdrssFile;
@@ -154,7 +155,6 @@ int processHighRateTDRSSFile(char *filename) {
     }
  
 
-    //    headHandler->loopMap();
 
     return 0;
 
@@ -183,6 +183,15 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 //	printf("count %d\n",count);
 	checkVal=checkPacket(&buffer[count]);
 	gHdr = (GenericHeader_t*) &buffer[count];		
+
+	if(checkVal==8 && gHdr->code==PACKET_HKD && gHdr->numBytes==sizeof(SSHkDataStruct_t)) {
+	  printf("Got SSHkDataStruct_t??\n");
+	  gHdr->code=PACKET_HKD_SS;
+	  gHdr->verId=VER_HK_SS;
+	  checkVal=0;
+	  count+=sizeof(HkDataStruct_t);
+	  continue;
+	}
 
 
 	printf("Got %s (%#x) -- (%d bytes)\n",
@@ -220,8 +229,7 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	    case PACKET_HD:
 	      //	      cout << "Got Header\n";
 	      hdPtr= (AnitaEventHeader_t*)testGHdr;
-	      //	      if(time_t(hdPtr->unixTime)<time_t(nowTime+1000))
-	      //	      headHandler->addHeader(hdPtr);
+	      headHandler->addHeader(hdPtr);
 	      break;
 	    case PACKET_SURF_HK:
 	      //	      cout << "Got SurfHk\n";
@@ -316,6 +324,8 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	      //		hkHandler->addCalHk(hkPtr);
 	      //	      else if(hkPtr->ip320.code==IP320_AVZ)
 	      //		hkHandler->addAvzHk(hkPtr);
+	      break;	
+	    case PACKET_HKD_SS:	      
 	      break;	 
 
 	    case PACKET_ACQD_START:
@@ -366,7 +376,6 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 
 
 int processLOSFile(char *filename) {
-//    cout << (int) headHandler->number << endl;
   static int lastNumBytes=0;
   //  static unsigned int lastUnixTime=0;
   static int lastLosFile=-1;

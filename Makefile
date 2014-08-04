@@ -9,13 +9,6 @@ include Makefile.arch
 SYSINCLUDES	=
 SYSLIBS         = -L/unix/anita/software/install/lib/ -lgsl 
 
-ifndef WEBPLOTTER_DIR
-#@echo "WEBPLOTTER_DIR not defined defaulting to /home/anita/rawWebPlotter"
-WEBPLOTTER_DIR=/home/anita/rawWebPlotter
-endif
-
-WEBPLOTTER_LIB_DIR=${WEBPLOTTER_DIR}/lib
-
 ifdef ANITA_UTIL_INSTALL_DIR
 ANITA_UTIL_LIB_DIR=${ANITA_UTIL_INSTALL_DIR}/lib
 ANITA_UTIL_INC_DIR=${ANITA_UTIL_INSTALL_DIR}/include
@@ -45,19 +38,19 @@ ROOTLIBS += -lGui -lTreePlayer
 
 #Generic and Site Specific Flags
 CXXFLAGS     += $(ROOTCFLAGS) $(FFTFLAG) $(SYSINCLUDES) $(INC_ANITA_UTIL)
-LDFLAGS      += -g $(ROOTLDFLAGS) -L$(WEBPLOTTER_LIB_DIR)
+LDFLAGS      += -g $(ROOTLDFLAGS) 
 
 LIBS          = $(ROOTLIBS) -lMathMore -lMinuit -lGeom $(SYSLIBS) $(LD_ANITA_UTIL) $(FFTLIBS)  -lAnitaEvent -lMagicDisplay
 GLIBS         = $(ROOTGLIBS) $(SYSLIBS)
 
 #Now the bits we're actually compiling
-ROOT_LIBRARY = #libAnitaTelem.${DLLSUF}
-LIB_OBJS =  #AnitaHeaderHandler.o  #AnitaCmdEchoHandler.o   AnitaSurfHkHandler.o AnitaFileHandler.o  AnitaHkHandler.o  AnitaTurfRateHandler.o AnitaGenericHeaderHandler.o  AnitaMonitorHandler.o AnitaAuxiliaryHandler.o AnitaGpsHandler.o AnitaSlowRateHandler.o  plotUtils.o RunNumServer.o rawWebDict.o
-CLASS_HEADERS =  #AnitaHeaderHandler.h #AnitaCmdEchoHandler.h    AnitaSurfHkHandler.h AnitaFileHandler.h  AnitaHkHandler.h  AnitaTurfRateHandler.h AnitaGenericHeaderHandler.h  AnitaMonitorHandler.h AnitaAuxiliaryHandler.h AnitaGpsHandler.h AnitaSlowRateHandler.h  plotUtils.h RunNumServer.h
+ROOT_LIBRARY = libAnitaTelem.${DLLSUF}
+LIB_OBJS =  AnitaHeaderHandler.o  #AnitaCmdEchoHandler.o   AnitaSurfHkHandler.o AnitaFileHandler.o  AnitaHkHandler.o  AnitaTurfRateHandler.o AnitaGenericHeaderHandler.o  AnitaMonitorHandler.o AnitaAuxiliaryHandler.o AnitaGpsHandler.o AnitaSlowRateHandler.o  plotUtils.o RunNumServer.o rawWebDict.o
+CLASS_HEADERS =  AnitaHeaderHandler.h #AnitaCmdEchoHandler.h    AnitaSurfHkHandler.h AnitaFileHandler.h  AnitaHkHandler.h  AnitaTurfRateHandler.h AnitaGenericHeaderHandler.h  AnitaMonitorHandler.h AnitaAuxiliaryHandler.h AnitaGpsHandler.h AnitaSlowRateHandler.h  plotUtils.h RunNumServer.h
 
 
 
-all :  processTelemFile # $(ROOT_LIBRARY) lib/libConfig.so lib/libkvp.so 
+all :  processTelemFile  $(ROOT_LIBRARY) # lib/libConfig.so lib/libkvp.so 
 
 
 processTelemFile : processTelemFile.o #$(ROOT_LIBRARY)
