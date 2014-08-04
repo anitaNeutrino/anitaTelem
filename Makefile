@@ -47,17 +47,17 @@ ROOTLIBS += -lGui -lTreePlayer
 CXXFLAGS     += $(ROOTCFLAGS) $(FFTFLAG) $(SYSINCLUDES) $(INC_ANITA_UTIL)
 LDFLAGS      += -g $(ROOTLDFLAGS) -L$(WEBPLOTTER_LIB_DIR)
 
-LIBS          = $(ROOTLIBS) -lMathMore -lMinuit $(SYSLIBS) $(LD_ANITA_UTIL) $(FFTLIBS)  -lAnitaEvent -lMagicDisplay
+LIBS          = $(ROOTLIBS) -lMathMore -lMinuit -lGeom $(SYSLIBS) $(LD_ANITA_UTIL) $(FFTLIBS)  -lAnitaEvent -lMagicDisplay
 GLIBS         = $(ROOTGLIBS) $(SYSLIBS)
 
 #Now the bits we're actually compiling
-ROOT_LIBRARY = libAnitaTelem.${DLLSUF}
-LIB_OBJS =  AnitaHeaderHandler.o  #AnitaCmdEchoHandler.o   AnitaSurfHkHandler.o AnitaFileHandler.o  AnitaHkHandler.o  AnitaTurfRateHandler.o AnitaGenericHeaderHandler.o  AnitaMonitorHandler.o AnitaAuxiliaryHandler.o AnitaGpsHandler.o AnitaSlowRateHandler.o  plotUtils.o RunNumServer.o rawWebDict.o
-CLASS_HEADERS =  AnitaHeaderHandler.h #AnitaCmdEchoHandler.h    AnitaSurfHkHandler.h AnitaFileHandler.h  AnitaHkHandler.h  AnitaTurfRateHandler.h AnitaGenericHeaderHandler.h  AnitaMonitorHandler.h AnitaAuxiliaryHandler.h AnitaGpsHandler.h AnitaSlowRateHandler.h  plotUtils.h RunNumServer.h
+ROOT_LIBRARY = #libAnitaTelem.${DLLSUF}
+LIB_OBJS =  #AnitaHeaderHandler.o  #AnitaCmdEchoHandler.o   AnitaSurfHkHandler.o AnitaFileHandler.o  AnitaHkHandler.o  AnitaTurfRateHandler.o AnitaGenericHeaderHandler.o  AnitaMonitorHandler.o AnitaAuxiliaryHandler.o AnitaGpsHandler.o AnitaSlowRateHandler.o  plotUtils.o RunNumServer.o rawWebDict.o
+CLASS_HEADERS =  #AnitaHeaderHandler.h #AnitaCmdEchoHandler.h    AnitaSurfHkHandler.h AnitaFileHandler.h  AnitaHkHandler.h  AnitaTurfRateHandler.h AnitaGenericHeaderHandler.h  AnitaMonitorHandler.h AnitaAuxiliaryHandler.h AnitaGpsHandler.h AnitaSlowRateHandler.h  plotUtils.h RunNumServer.h
 
 
 
-all : $(ROOT_LIBRARY) processTelemFile # lib/libConfig.so lib/libkvp.so 
+all :  processTelemFile # $(ROOT_LIBRARY) lib/libConfig.so lib/libkvp.so 
 
 
 processTelemFile : processTelemFile.o #$(ROOT_LIBRARY)

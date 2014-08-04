@@ -11,7 +11,7 @@ using namespace std;
 #include "AnitaPacketUtil.h"
 
 //Web plotter includes
-#include "AnitaHeaderHandler.h"
+//#include "AnitaHeaderHandler.h"
 // #include "configLib/configLib.h"
 // #include "kvpLib/keyValuePair.h"
 // #include "AnitaAuxiliaryHandler.h"
@@ -33,11 +33,12 @@ using namespace std;
 //Functions
 void handleScience(unsigned char *buffer,unsigned short numBytes);
 int processHighRateTDRSSFile(char *filename);
+int processLOSFile(char *filename);
 
 unsigned short *bigBuffer;
 
 
-AnitaHeaderHandler *headHandler;
+//AnitaHeaderHandler *headHandler;
 
 
 #define MIN_LOS_SIZE 900000
@@ -48,17 +49,20 @@ int main (int argc, char ** argv)
 {
   bigBuffer = (unsigned short*) malloc(BIG_BUF_SIZE);
   if(argc<2) {
-    std::cerr << "Usage: " << argv[0] << "<telem file>\n";
+    std::cerr << "Usage: " << argv[0] << " <telem file>\n";
     return -1;
   }
   
+  std::cout << "sizeof(unsigned long): " << sizeof(unsigned long) << "\n";
+  //`  return -1;
   //Create the handlers
-  headHandler = new AnitaHeaderHandler();
+  //  headHandler = new AnitaHeaderHandler();
 
 
 
 
-  processHighRateTDRSSFile(argv[1]);
+  //  processHighRateTDRSSFile(argv[1]);
+  processLOSFile(argv[1]);
 
   free(bigBuffer);
 }
@@ -150,7 +154,7 @@ int processHighRateTDRSSFile(char *filename) {
     }
  
 
-    headHandler->loopMap();
+    //    headHandler->loopMap();
 
     return 0;
 
@@ -217,7 +221,7 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	      //	      cout << "Got Header\n";
 	      hdPtr= (AnitaEventHeader_t*)testGHdr;
 	      //	      if(time_t(hdPtr->unixTime)<time_t(nowTime+1000))
-	      headHandler->addHeader(hdPtr);
+	      //	      headHandler->addHeader(hdPtr);
 	      break;
 	    case PACKET_SURF_HK:
 	      //	      cout << "Got SurfHk\n";
@@ -344,8 +348,8 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	      
 	}
 	else {
-	    printf("Problem with packet -- checkVal==%d  (code? %#x)\n",
-		   checkVal,gHdr->code);
+	    printf("Problem with packet -- checkVal==%d  (%s code? %#x)\n",
+		   checkVal,packetCodeAsString(gHdr->code),gHdr->code);
 	    //	    return;
 	    if(gHdr->numBytes>0) {
 	      count+=gHdr->numBytes;
@@ -358,4 +362,123 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	}
     }
        
+}
+
+
+int processLOSFile(char *filename) {
+//    cout << (int) headHandler->number << endl;
+  static int lastNumBytes=0;
+  //  static unsigned int lastUnixTime=0;
+  static int lastLosFile=-1;
+  static int currentLosFile=0;
+  if(currentLosFile!=lastLosFile) {
+    lastNumBytes=0;
+  }
+  //  cout << "processLOSFile: " << filename << "\t" << lastLosFile << "\t" << currentLosFile << endl;
+  lastLosFile=currentLosFile;
+  int numBytes=0,count=0;
+  FILE *losFile;
+  
+    //data stuff
+  unsigned short numWords;
+  unsigned short unused;
+  unsigned short foodHdr;
+  unsigned short doccHdr;
+  unsigned short ae00Hdr;
+  int losOrSip;
+  int oddOrEven;
+  unsigned long bufferCount;
+  unsigned long *ulPtr;
+  unsigned short numSciBytes;
+  unsigned short checksum;
+  unsigned short endHdr;
+  unsigned short swEndHdr;
+  unsigned short auxHdr2;
+
+    losFile=fopen(filename,"rb");
+    if(!losFile) {
+//	printf("Couldn't open: %s\n",filename);
+	return -1;
+    }
+
+    
+    numBytes=fread(bigBuffer,1,BIG_BUF_SIZE,losFile);
+    if(numBytes<=0) {
+      fclose(losFile);
+      return -1;
+    }
+
+    //    printf("numBytes %d, lastNumBytes %d\n",numBytes,lastNumBytes);
+    if(numBytes==lastNumBytes) {
+      //No new data
+      fclose(losFile);
+      return 2;
+    }
+    count=lastNumBytes;
+    lastNumBytes=numBytes;
+    cout << "losFile: " << filename << endl;
+    struct stat buf;
+    //    int retVal2=
+
+
+    
+    stat(filename,&buf);
+    //    ghdHandler->newLosFile(currentLosRun,currentLosFile,buf.st_mtime);
+    printf("Read %d bytes from %s\n",numBytes,filename);
+    fclose(losFile);
+    int count3=0;
+
+    //    for(int i=0;i<100;i++)
+      //      printf("%d\t%#x\n",i,bigBuffer[i]);
+    while(count<numBytes) {
+      //      printf("%d -- %x\n",count,bigBuffer[count]);
+      //      printf("%d of %d\n",count,numBytes);
+	count3++;
+	//	if(count3>100) break;
+	if(bigBuffer[count]==0xf00d) {
+	    count3=0;
+	    //	    printf("Got f00d %d\n",count);
+	    //Maybe new los buffer
+
+	    foodHdr=bigBuffer[count];
+	    doccHdr=bigBuffer[count+1];
+	    ae00Hdr=bigBuffer[count+2];
+	    numWords=bigBuffer[count+3];
+
+	    // printf("numWords -- %d -- %x\n",numWords,numWords);
+	    // printf("foodHdr -- %x\n",foodHdr);
+	    // printf("doccHdr -- %x\n",doccHdr);
+	    // printf("ae00Hdr -- %x\n",ae00Hdr);
+
+	    //	    exit(0);
+	    if(foodHdr==0xf00d && doccHdr==0xd0cc && (ae00Hdr&0xfff0)==0xae00) {
+		//Got a los buffer
+		losOrSip=ae00Hdr&0x1;
+		oddOrEven=ae00Hdr&0x2>>1;
+		ulPtr = (unsigned long*) &bigBuffer[count+3];
+		bufferCount=*ulPtr;
+		numSciBytes=bigBuffer[count+2+5];
+		//		printf("Buffer %u -- %d bytes\n",bufferCount,numSciBytes);
+		checksum=bigBuffer[count+2+6+(numSciBytes/2)];		
+		swEndHdr=bigBuffer[count+2+7+(numSciBytes/2)];
+		endHdr=bigBuffer[count+2+8+(numSciBytes/2)];
+		auxHdr2=bigBuffer[count+2+9+(numSciBytes/2)];
+
+		//Now do something with buffer
+		handleScience((unsigned char*)&bigBuffer[count+2+6],numSciBytes);
+		// printf("swEndHdr -- %x\n",swEndHdr);
+		// printf("endHdr -- %x\n",endHdr);
+		// printf("auxHdr2 -- %x\n",auxHdr2);	
+		
+		//		exit(0);
+//		return 0;
+		count+=12+(numSciBytes/2);
+		continue;
+	    }
+	}
+	count++;
+    }
+
+    return 0;
+
 }
