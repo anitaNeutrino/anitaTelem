@@ -40,7 +40,7 @@ ROOTLIBS += -lGui -lTreePlayer
 CXXFLAGS     += $(ROOTCFLAGS) $(FFTFLAG) $(SYSINCLUDES) $(INC_ANITA_UTIL)
 LDFLAGS      += -g $(ROOTLDFLAGS) 
 
-LIBS          = $(ROOTLIBS) -lMathMore -lMinuit -lGeom $(SYSLIBS) $(LD_ANITA_UTIL) $(FFTLIBS)  -lAnitaEvent -lMagicDisplay
+LIBS          = $(ROOTLIBS) -lMathMore -lMinuit -lGeom $(SYSLIBS) $(LD_ANITA_UTIL) $(FFTLIBS)  -lAnitaEvent 
 GLIBS         = $(ROOTGLIBS) $(SYSLIBS)
 
 #Now the bits we're actually compiling
@@ -53,9 +53,9 @@ CLASS_HEADERS =  AnitaHeaderHandler.h #AnitaCmdEchoHandler.h    AnitaSurfHkHandl
 all :  processTelemFile  $(ROOT_LIBRARY) # lib/libConfig.so lib/libkvp.so 
 
 
-processTelemFile : processTelemFile.o #$(ROOT_LIBRARY)
+processTelemFile : processTelemFile.o $(ROOT_LIBRARY)
 	@echo "<**Linking**> "$@ 
-	$(LD) $(LDFLAGS) processTelemFile.o $(LIBS) $(ROOT_LIBRARY) -o $@
+	$(LD) $(LDFLAGS) processTelemFile.o $(LIBS) -L. -lAnitaTelem -o $@
 	@chmod 755 $<
 
 lib/libConfig.so:

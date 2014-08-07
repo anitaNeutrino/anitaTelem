@@ -50,7 +50,7 @@ int main (int argc, char ** argv)
 {
   bigBuffer = (unsigned short*) malloc(BIG_BUF_SIZE);
   if(argc<2) {
-    std::cerr << "Usage: " << argv[0] << " <telem file>\n";
+    std::cerr << "Usage: " << argv[0] << " <telem file> <telem file>\n";
     return -1;
   }
   
@@ -63,10 +63,12 @@ int main (int argc, char ** argv)
 
 
   //  processHighRateTDRSSFile(argv[1]);
-  processLOSFile(argv[1]);
+  for(int i=1;i<argc;i++) 
+    processLOSFile(argv[i]);
+  free(bigBuffer);
 
   headHandler->loopMap();
-  free(bigBuffer);
+  
 }
 
 
@@ -378,13 +380,10 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 int processLOSFile(char *filename) {
   static int lastNumBytes=0;
   //  static unsigned int lastUnixTime=0;
-  static int lastLosFile=-1;
-  static int currentLosFile=0;
-  if(currentLosFile!=lastLosFile) {
-    lastNumBytes=0;
-  }
+  lastNumBytes=0;
+
   //  cout << "processLOSFile: " << filename << "\t" << lastLosFile << "\t" << currentLosFile << endl;
-  lastLosFile=currentLosFile;
+
   int numBytes=0,count=0;
   FILE *losFile;
   
