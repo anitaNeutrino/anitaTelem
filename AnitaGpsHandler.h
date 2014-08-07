@@ -1,12 +1,12 @@
 ////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
-////// Simple Class to handle telemetered AnitaEventHeader_t       /////////
+////// Simple Class to handle telemetered GpsDataStruct_t      /////////
 //////                                                             /////////
 ////// r.nichol@ucl.ac.uk --- July 2014                            /////////
 ////////////////////////////////////////////////////////////////////////////
 
-#ifndef ANITAHEADERHANDLER_H
-#define ANITAHEADERHANDLER_H
+#ifndef ANITAGPSHANDLER_H
+#define ANITAGPSHANDLER_H
 
 #include <map>
 
@@ -15,24 +15,27 @@
 #include "plotUtils.h"    
 
 
-class AnitaHeaderHandler 
+class AnitaGpsHandler 
 {   
 public:
-    AnitaHeaderHandler(int run);
-    ~AnitaHeaderHandler();
+    AnitaGpsHandler(int run);
+    ~AnitaGpsHandler();
     
-    void addHeader(AnitaEventHeader_t *hdPtr);
-    void loopMap();
+    void addG12Pos(GpsG12PosStruct_t *g12Ptr);
+    void addG12Sat(GpsG12SatStruct_t *g12Ptr);
+
+    void loopG12PosMap();
+    void loopG12SatMap();
 
 
 private:
     int fRun;
-    std::map<UInt_t, AnitaEventHeader_t> fHeadMap;
-    void processHeader(AnitaEventHeader_t *theHeader);    
+    std::map<UInt_t, GpsG12PosStruct_t> fG12PosMap;
+    std::map<UInt_t, GpsG12SatStruct_t> fG12SatMap;
 
 
 };
 
-#endif //ANITAHEADERHANDLER_H
+#endif //ANITAGPSHANDLER_H
 
 

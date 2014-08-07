@@ -45,8 +45,8 @@ GLIBS         = $(ROOTGLIBS) $(SYSLIBS)
 
 #Now the bits we're actually compiling
 ROOT_LIBRARY = libAnitaTelem.${DLLSUF}
-LIB_OBJS =  AnitaHeaderHandler.o  #AnitaCmdEchoHandler.o   AnitaSurfHkHandler.o AnitaFileHandler.o  AnitaHkHandler.o  AnitaTurfRateHandler.o AnitaGenericHeaderHandler.o  AnitaMonitorHandler.o AnitaAuxiliaryHandler.o AnitaGpsHandler.o AnitaSlowRateHandler.o  plotUtils.o RunNumServer.o rawWebDict.o
-CLASS_HEADERS =  AnitaHeaderHandler.h #AnitaCmdEchoHandler.h    AnitaSurfHkHandler.h AnitaFileHandler.h  AnitaHkHandler.h  AnitaTurfRateHandler.h AnitaGenericHeaderHandler.h  AnitaMonitorHandler.h AnitaAuxiliaryHandler.h AnitaGpsHandler.h AnitaSlowRateHandler.h  plotUtils.h RunNumServer.h
+LIB_OBJS =  AnitaHeaderHandler.o AnitaHkHandler.o AnitaGpsHandler.o AnitaMonitorHandler.o #AnitaCmdEchoHandler.o   AnitaSurfHkHandler.o AnitaFileHandler.o    AnitaTurfRateHandler.o AnitaGenericHeaderHandler.o   AnitaAuxiliaryHandler.o AnitaSlowRateHandler.o  plotUtils.o RunNumServer.o rawWebDict.o
+CLASS_HEADERS =  AnitaHeaderHandler.h  AnitaHkHandler.h AnitaGpsHandler.h  AnitaMonitorHandler.h #AnitaCmdEchoHandler.h    AnitaSurfHkHandler.h AnitaFileHandler.h   AnitaTurfRateHandler.h AnitaGenericHeaderHandler.h  AnitaAuxiliaryHandler.h  AnitaSlowRateHandler.h  plotUtils.h RunNumServer.h
 
 
 

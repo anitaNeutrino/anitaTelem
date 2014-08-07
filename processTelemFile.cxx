@@ -13,14 +13,16 @@ using namespace std;
 
 //Web plotter includes
 #include "AnitaHeaderHandler.h"
+#include "AnitaHkHandler.h"
+#include "AnitaGpsHandler.h" 
+#include "AnitaMonitorHandler.h" 
+
 // #include "configLib/configLib.h"
 // #include "kvpLib/keyValuePair.h"
 // #include "AnitaAuxiliaryHandler.h"
 // #include "AnitaSurfHkHandler.h" 
 // #include "AnitaTurfRateHandler.h"
-// #include "AnitaMonitorHandler.h" 
 // #include "AnitaHkHandler.h" 
-// #include "AnitaGpsHandler.h" 
 // #include "AnitaFileHandler.h" 
 // #include "AnitaCmdEchoHandler.h" 
 // #include "AnitaGenericHeaderHandler.h"
@@ -40,7 +42,11 @@ unsigned short *bigBuffer;
 
 
 AnitaHeaderHandler *headHandler;
+AnitaMonitorHandler *monHandler;
+AnitaHkHandler *hkHandler;
+AnitaGpsHandler *gpsHandler;
 
+int currentRun=0;
 
 #define MIN_LOS_SIZE 900000
 #define MIN_TDRSS_SIZE 40000
@@ -49,26 +55,31 @@ AnitaHeaderHandler *headHandler;
 int main (int argc, char ** argv)
 {
   bigBuffer = (unsigned short*) malloc(BIG_BUF_SIZE);
-  if(argc<2) {
-    std::cerr << "Usage: " << argv[0] << " <telem file> <telem file>\n";
+  if(argc<3) {
+    std::cerr << "Usage: " << argv[0] << " <run> <telem file> <telem file>\n";
     return -1;
   }
   
   std::cout << "sizeof(unsigned long): " << sizeof(unsigned long) << "\n";
+  currentRun=atoi(argv[1]);
   //`  return -1;
   //Create the handlers
-  headHandler = new AnitaHeaderHandler();
+  headHandler = new AnitaHeaderHandler(currentRun);
+  hkHandler = new AnitaHkHandler(currentRun);
+  gpsHandler = new AnitaGpsHandler(currentRun);
+  monHandler = new AnitaMonitorHandler(currentRun);
 
 
-
-
-  //  processHighRateTDRSSFile(argv[1]);
-  for(int i=1;i<argc;i++) 
+  for(int i=2;i<argc;i++) 
     processLOSFile(argv[i]);
   free(bigBuffer);
 
   headHandler->loopMap();
-  
+  hkHandler->loopMap();
+  gpsHandler->loopG12PosMap();
+  gpsHandler->loopG12SatMap();
+  monHandler->loopMap();
+  monHandler->loopOtherMap();
 }
 
 
@@ -196,9 +207,9 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	}
 
 
-	printf("Got %s (%#x) -- (%d bytes)\n",
-	       packetCodeAsString(gHdr->code),
-	       gHdr->code,gHdr->numBytes);
+	// printf("Got %s (%#x) -- (%d bytes)\n",
+	//        packetCodeAsString(gHdr->code),
+	//        gHdr->code,gHdr->numBytes);
 	GenericHeader_t *testGHdr=gHdr;
 
 
@@ -254,19 +265,19 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	      break;
 	    case PACKET_MONITOR:
 	      //	      cout << "Got MonitorStruct_t\n";
-	      //	      monHandler->addMonitor((MonitorStruct_t*)testGHdr);
+	      monHandler->addMonitor((MonitorStruct_t*)testGHdr);
 	      break;
 	    case PACKET_OTHER_MONITOR:
 	      //	      cout << "Got OtherMonitorStruct_t\n";
-	      //	      monHandler->addOtherMonitor((OtherMonitorStruct_t*)testGHdr);
+	      monHandler->addOtherMonitor((OtherMonitorStruct_t*)testGHdr);
 	      break;
 	    case PACKET_GPS_G12_SAT:
 	      //	      cout << "Got GpsG12SatStruct_t\n";
-	      //	      gpsHandler->addG12Sat((GpsG12SatStruct_t*) testGHdr);
+	      gpsHandler->addG12Sat((GpsG12SatStruct_t*) testGHdr);
 	      break;
 	    case PACKET_GPS_G12_POS:
 	      //	      cout << "Got GpsG12PosStruct_t\n";
-	      //	      gpsHandler->addG12Pos((GpsG12PosStruct_t*) testGHdr);
+	      gpsHandler->addG12Pos((GpsG12PosStruct_t*) testGHdr);
 	      break;
 	    case PACKET_GPS_ADU5_SAT:
 	      //	      cout << "Got GpsAdu5SatStruct_t\n";
@@ -319,9 +330,9 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	      
 	    case PACKET_HKD:	      
 	      hkPtr = (HkDataStruct_t*)testGHdr;
-	      //	      cout << "Got HkDataStruct_t " << hkPtr->ip320.code << "\n";
-	      //	      if(hkPtr->ip320.code==IP320_RAW)
-	      //		hkHandler->addHk(hkPtr);
+	      cout << "Got HkDataStruct_t " << hkPtr->ip320.code << "\t" << IP320_RAW << "\n";
+	      if(hkPtr->ip320.code==IP320_RAW)
+		hkHandler->addHk(hkPtr);
 	      //	      else if(hkPtr->ip320.code==IP320_CAL)
 	      //		hkHandler->addCalHk(hkPtr);
 	      //	      else if(hkPtr->ip320.code==IP320_AVZ)

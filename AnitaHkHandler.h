@@ -1,12 +1,12 @@
 ////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
-////// Simple Class to handle telemetered AnitaEventHeader_t       /////////
+////// Simple Class to handle telemetered HkDataStruct_t      /////////
 //////                                                             /////////
 ////// r.nichol@ucl.ac.uk --- July 2014                            /////////
 ////////////////////////////////////////////////////////////////////////////
 
-#ifndef ANITAHEADERHANDLER_H
-#define ANITAHEADERHANDLER_H
+#ifndef ANITAHKHANDLER_H
+#define ANITAHKHANDLER_H
 
 #include <map>
 
@@ -15,24 +15,23 @@
 #include "plotUtils.h"    
 
 
-class AnitaHeaderHandler 
+class AnitaHkHandler 
 {   
 public:
-    AnitaHeaderHandler(int run);
-    ~AnitaHeaderHandler();
+    AnitaHkHandler(int run);
+    ~AnitaHkHandler();
     
-    void addHeader(AnitaEventHeader_t *hdPtr);
+    void addHk(HkDataStruct_t *hkPtr);
     void loopMap();
 
 
 private:
     int fRun;
-    std::map<UInt_t, AnitaEventHeader_t> fHeadMap;
-    void processHeader(AnitaEventHeader_t *theHeader);    
+    std::map<UInt_t, HkDataStruct_t> fHkMap;
 
 
 };
 
-#endif //ANITAHEADERHANDLER_H
+#endif //ANITAHKHANDLER_H
 
 
