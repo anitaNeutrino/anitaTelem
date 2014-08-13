@@ -16,13 +16,12 @@ using namespace std;
 #include "AnitaHkHandler.h"
 #include "AnitaGpsHandler.h" 
 #include "AnitaMonitorHandler.h" 
+#include "AnitaSurfHkHandler.h" 
+#include "AnitaTurfRateHandler.h"
 
 // #include "configLib/configLib.h"
 // #include "kvpLib/keyValuePair.h"
 // #include "AnitaAuxiliaryHandler.h"
-// #include "AnitaSurfHkHandler.h" 
-// #include "AnitaTurfRateHandler.h"
-// #include "AnitaHkHandler.h" 
 // #include "AnitaFileHandler.h" 
 // #include "AnitaCmdEchoHandler.h" 
 // #include "AnitaGenericHeaderHandler.h"
@@ -44,6 +43,8 @@ unsigned short *bigBuffer;
 AnitaHeaderHandler *headHandler;
 AnitaMonitorHandler *monHandler;
 AnitaHkHandler *hkHandler;
+AnitaSurfHkHandler *surfhkHandler;
+AnitaTurfRateHandler *turfRateHandler;
 AnitaGpsHandler *gpsHandler;
 
 int currentRun=0;
@@ -64,13 +65,14 @@ int main (int argc, char ** argv)
   currentRun=atoi(argv[1]);
   //`  return -1;
   //Create the handlers
-  std::string rawDir("/anitStorage/palestine14/telem/raw");
+  std::string rawDir("/unix/anita2/palestine14/telem/raw");
 
   headHandler = new AnitaHeaderHandler(rawDir,currentRun);
   hkHandler = new AnitaHkHandler(rawDir,currentRun);
   gpsHandler = new AnitaGpsHandler(rawDir,currentRun);
   monHandler = new AnitaMonitorHandler(rawDir,currentRun);
-
+  surfhkHandler = new AnitaSurfHkHandler(rawDir,currentRun);
+  turfRateHandler = new AnitaTurfRateHandler(rawDir,currentRun);
 
   for(int i=2;i<argc;i++) 
     processLOSFile(argv[i]);
@@ -82,6 +84,8 @@ int main (int argc, char ** argv)
   gpsHandler->loopG12SatMap();
   monHandler->loopMap();
   monHandler->loopOtherMap();
+  surfhkHandler->loopMap();
+  turfRateHandler->loopMap();
 }
 
 
@@ -250,7 +254,7 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	      //	      cout << "Got SurfHk\n";
 	      surfPtr = (FullSurfHkStruct_t*) testGHdr;
 	      //	      if((time_t)surfPtr->unixTime<time_t(nowTime+1000))
-	      //		surfhkHandler->addSurfHk(surfPtr);
+	      surfhkHandler->addSurfHk(surfPtr);
 	      break;
 	    case PACKET_AVG_SURF_HK:
 	      //	      cout << "Got AveragedSurfHkStruct_t\n";
@@ -259,7 +263,7 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	      
 	    case PACKET_TURF_RATE:
 	      //	      cout << "Got TurfRate\n";
-	      //	      turfRateHandler->addTurfRate((TurfRateStruct_t*)testGHdr);
+	      turfRateHandler->addTurfRate((TurfRateStruct_t*)testGHdr);
 	      break;
 	    case PACKET_SUM_TURF_RATE:
 	      //	      cout << "Got SummedTurfRateStruct_t\n";

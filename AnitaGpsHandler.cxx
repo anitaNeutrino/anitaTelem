@@ -67,9 +67,9 @@ void AnitaGpsHandler::loopG12PosMap()
       if(outFile) fclose(outFile);
       outFile=NULL;
 
-      sprintf(fileName,"/anitaStorage/palestine14/telem/raw/run%d/house/gps/g12/pos/sub_%d/sub_%d/",fRun,gpsPtr->unixTime,gpsPtr->unixTime);       
+      sprintf(fileName,"%s/run%d/house/gps/g12/pos/sub_%d/sub_%d/",fRawDir.c_str(),fRun,gpsPtr->unixTime,gpsPtr->unixTime);       
       gSystem->mkdir(fileName,kTRUE);
-      sprintf(fileName,"/anitaStorage/palestine14/telem/raw/run%d/house/gps/g12/pos/sub_%d/sub_%d/pos_%d.dat.gz",fRun,gpsPtr->unixTime,gpsPtr->unixTime,gpsPtr->unixTime);
+      sprintf(fileName,"%s/run%d/house/gps/g12/pos/sub_%d/sub_%d/pos_%d.dat.gz",fRawDir.c_str(),fRun,gpsPtr->unixTime,gpsPtr->unixTime,gpsPtr->unixTime);
       std::cout << fileName << "\n";
       outFile=fopen(fileName,"wb");
       if(!outFile ) {
