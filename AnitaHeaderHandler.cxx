@@ -23,8 +23,8 @@
 #define EVENT_FILES_PER_DIR 100
 
 
-AnitaHeaderHandler::AnitaHeaderHandler(int run)
-  :fRun(run)
+AnitaHeaderHandler::AnitaHeaderHandler(std::string rawDir,int run)
+  :fRawDir(rawDir),fRun(run)
 {
 
 
@@ -65,9 +65,9 @@ void AnitaHeaderHandler::loopMap()
       if(outFile) fclose(outFile);
       outFile=NULL;
 
-      sprintf(fileName,"/anitaStorage/palestine14/telem/raw/run%d/event/ev%d/ev%d",fRun,dirNumber,subDirNumber);
+      sprintf(fileName,"%s/run%d/event/ev%d/ev%d",fRawDir.c_str(),fRun,dirNumber,subDirNumber);
       gSystem->mkdir(fileName,kTRUE);
-      sprintf(fileName,"/anitaStorage/palestine14/telem/raw/run%d/event/ev%d/ev%d/hd_%d.dat.gz",fRun,dirNumber,subDirNumber,fileNumber);
+      sprintf(fileName,"%s/run%d/event/ev%d/ev%d/hd_%d.dat.gz",fRawDir.c_str(),fRun,dirNumber,subDirNumber,fileNumber);
       outFile=fopen(fileName,"wb");
       if(!outFile ) {
 	printf("Couldn't open: %s\n",fileName);

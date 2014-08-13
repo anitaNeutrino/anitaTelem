@@ -1,41 +1,39 @@
 ////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
-////// Simple Class to handle telemetered MonitorDataStruct_t      /////////
+////// Simple Class to handle telemetered TurfRateStruct_t    /////////
 //////                                                             /////////
 ////// r.nichol@ucl.ac.uk --- July 2014                            /////////
 ////////////////////////////////////////////////////////////////////////////
 
-#ifndef ANITAMONITORHANDLER_H
-#define ANITAMONITORHANDLER_H
+#ifndef ANITATURFRATEHANDLER_H
+#define ANITATURFRATEHANDLER_H
 
 #include <map>
 #include <string>
+
 
 #include "simpleStructs.h"
 #include "plotUtils.h"    
 
 
-class AnitaMonitorHandler 
+class AnitaTurfRateHandler 
 {   
 public:
-  AnitaMonitorHandler(std::string rawDir,int run);
-    ~AnitaMonitorHandler();
+  AnitaTurfRateHandler(std::string rawDir,int run);
+    ~AnitaTurfRateHandler();
     
-    void addMonitor(MonitorStruct_t *monitorPtr);
-    void addOtherMonitor(OtherMonitorStruct_t *monitorPtr);
+    void addTurfRate(TurfRateStruct_t *hkPtr);
     void loopMap();
-    void loopOtherMap();
 
 
 private:
     std::string fRawDir;
     int fRun;
-    std::map<UInt_t, MonitorStruct_t> fMonitorMap;
-    std::map<UInt_t, OtherMonitorStruct_t> fOtherMonitorMap;
+    std::map<UInt_t,TurfRateStruct_t> fTurfRateMap;
 
 
 };
 
-#endif //ANITAMONITORHANDLER_H
+#endif //ANITATURFRATEHANDLER_H
 
 

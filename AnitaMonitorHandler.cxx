@@ -22,8 +22,8 @@
 #define EVENT_FILES_PER_DIR 100
 #define MONITOR_PER_FILE 1000
 
-AnitaMonitorHandler::AnitaMonitorHandler(int run)
-  :fRun(run)
+AnitaMonitorHandler::AnitaMonitorHandler(std::string rawDir,int run)
+  :fRawDir(rawDir),fRun(run)
 {
 
 
@@ -66,9 +66,9 @@ void AnitaMonitorHandler::loopOtherMap()
       if(outFile) fclose(outFile);
       outFile=NULL;
 
-      sprintf(fileName,"/anitaStorage/palestine14/telem/raw/run%d/house/monitor/sub_%d/sub_%d/",fRun,monitorPtr->unixTime,monitorPtr->unixTime);       
+      sprintf(fileName,"%s/run%d/house/monitor/sub_%d/sub_%d/",fRawDir.c_str(),fRun,monitorPtr->unixTime,monitorPtr->unixTime);       
       gSystem->mkdir(fileName,kTRUE);
-      sprintf(fileName,"/anitaStorage/palestine14/telem/raw/run%d/house/monitor/sub_%d/sub_%d/mon_%d.dat.gz",fRun,monitorPtr->unixTime,monitorPtr->unixTime,monitorPtr->unixTime);
+      sprintf(fileName,"%s/run%d/house/monitor/sub_%d/sub_%d/mon_%d.dat.gz",fRawDir.c_str(),fRun,monitorPtr->unixTime,monitorPtr->unixTime,monitorPtr->unixTime);
       std::cout << fileName << "\n";
       outFile=fopen(fileName,"wb");
       if(!outFile ) {
@@ -109,9 +109,9 @@ void AnitaMonitorHandler::loopMap()
       if(outFile) fclose(outFile);
       outFile=NULL;
 
-      sprintf(fileName,"/anitaStorage/palestine14/telem/raw/run%d/house/monitor/sub_%d/sub_%d/",fRun,monitorPtr->unixTime,monitorPtr->unixTime);       
+      sprintf(fileName,"%s/run%d/house/monitor/sub_%d/sub_%d/",fRawDir.c_str(),fRun,monitorPtr->unixTime,monitorPtr->unixTime);       
       gSystem->mkdir(fileName,kTRUE);
-      sprintf(fileName,"/anitaStorage/palestine14/telem/raw/run%d/house/monitor/sub_%d/sub_%d/othermon_%d.dat.gz",fRun,monitorPtr->unixTime,monitorPtr->unixTime,monitorPtr->unixTime);
+      sprintf(fileName,"%s/run%d/house/monitor/sub_%d/sub_%d/othermon_%d.dat.gz",fRawDir.c_str(),fRun,monitorPtr->unixTime,monitorPtr->unixTime,monitorPtr->unixTime);
       std::cout << fileName << "\n";
       outFile=fopen(fileName,"wb");
       if(!outFile ) {

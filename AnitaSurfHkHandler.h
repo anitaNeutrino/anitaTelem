@@ -9,6 +9,7 @@
 #define ANITASURFHKHANDLER_H
 
 #include <map>
+#include <string>
 
 
 #include "simpleStructs.h"
@@ -18,7 +19,7 @@
 class AnitaSurfHkHandler 
 {   
 public:
-    AnitaSurfHkHandler(int run);
+  AnitaSurfHkHandler(std::string rawDir,int run);
     ~AnitaSurfHkHandler();
     
     void addSurfHk(FullSurfHkStruct_t *hkPtr);
@@ -26,6 +27,7 @@ public:
 
 
 private:
+    std::string fRawDir;
     int fRun;
     std::map<UInt_t,FullSurfHkStruct_t> fSurfHkMap;
 

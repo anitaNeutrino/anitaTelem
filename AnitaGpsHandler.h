@@ -9,6 +9,7 @@
 #define ANITAGPSHANDLER_H
 
 #include <map>
+#include <string>
 
 
 #include "simpleStructs.h"
@@ -18,7 +19,7 @@
 class AnitaGpsHandler 
 {   
 public:
-    AnitaGpsHandler(int run);
+  AnitaGpsHandler(std::string rawDir,int run);
     ~AnitaGpsHandler();
     
     void addG12Pos(GpsG12PosStruct_t *g12Ptr);
@@ -29,6 +30,7 @@ public:
 
 
 private:
+    std::string fRawDir;
     int fRun;
     std::map<UInt_t, GpsG12PosStruct_t> fG12PosMap;
     std::map<UInt_t, GpsG12SatStruct_t> fG12SatMap;

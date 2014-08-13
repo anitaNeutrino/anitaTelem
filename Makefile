@@ -3,11 +3,25 @@
 ##              and mac os x
 ## Ryan Nichol <rjn@hep.ucl.ac.uk>
 ##############################################################################
-include Makefile.arch
+
+RC     := root-config
+ifeq ($(shell which $(RC) 2>&1 | sed -ne "s@.*/$(RC)@$(RC)@p"),$(RC))
+MKARCH := $(wildcard $(shell $(RC) --etcdir)/Makefile.arch)
+RCONFIG := $(wildcard $(shell $(RC) --incdir)/RConfigure.h)
+endif
+ifneq ($(MKARCH),)
+include $(MKARCH)
+else
+ifeq ($(ROOTSYS),)
+ROOTSYS = ..
+endif
+include $(ROOTSYS)/etc/Makefile.arch
+endif
+
 
 #Site Specific  Flags
 SYSINCLUDES	=
-SYSLIBS         = -L/unix/anita/software/install/lib/ -lgsl 
+SYSLIBS         = 
 
 ifdef ANITA_UTIL_INSTALL_DIR
 ANITA_UTIL_LIB_DIR=${ANITA_UTIL_INSTALL_DIR}/lib
@@ -37,20 +51,20 @@ endif
 ROOTLIBS += -lGui -lTreePlayer
 
 #Generic and Site Specific Flags
-CXXFLAGS     += $(ROOTCFLAGS) $(FFTFLAG) $(SYSINCLUDES) $(INC_ANITA_UTIL)
-LDFLAGS      += -g $(ROOTLDFLAGS) 
+CXXFLAGS     += -I. $(ROOTCFLAGS) $(FFTFLAG) $(SYSINCLUDES) $(INC_ANITA_UTIL)
+LDFLAGS      += -L. -g $(ROOTLDFLAGS) 
 
 LIBS          = $(ROOTLIBS) -lMathMore -lMinuit -lGeom $(SYSLIBS) $(LD_ANITA_UTIL) $(FFTLIBS)  -lAnitaEvent 
 GLIBS         = $(ROOTGLIBS) $(SYSLIBS)
 
 #Now the bits we're actually compiling
-ROOT_LIBRARY = libAnitaTelem.${DLLSUF}
-LIB_OBJS =  AnitaHeaderHandler.o AnitaHkHandler.o AnitaGpsHandler.o AnitaMonitorHandler.o #AnitaCmdEchoHandler.o   AnitaSurfHkHandler.o AnitaFileHandler.o    AnitaTurfRateHandler.o AnitaGenericHeaderHandler.o   AnitaAuxiliaryHandler.o AnitaSlowRateHandler.o  plotUtils.o RunNumServer.o rawWebDict.o
-CLASS_HEADERS =  AnitaHeaderHandler.h  AnitaHkHandler.h AnitaGpsHandler.h  AnitaMonitorHandler.h #AnitaCmdEchoHandler.h    AnitaSurfHkHandler.h AnitaFileHandler.h   AnitaTurfRateHandler.h AnitaGenericHeaderHandler.h  AnitaAuxiliaryHandler.h  AnitaSlowRateHandler.h  plotUtils.h RunNumServer.h
+ROOT_LIBRARY = libAnitaTelem.${DllSuf}
+LIB_OBJS =  AnitaHeaderHandler.o AnitaHkHandler.o AnitaGpsHandler.o AnitaMonitorHandler.o  AnitaSurfHkHandler.o  rawWebDict.o #AnitaCmdEchoHandler.o  AnitaFileHandler.o    AnitaTurfRateHandler.o AnitaGenericHeaderHandler.o   AnitaAuxiliaryHandler.o AnitaSlowRateHandler.o  plotUtils.o RunNumServer.o 
+CLASS_HEADERS =  AnitaHeaderHandler.h  AnitaHkHandler.h AnitaGpsHandler.h  AnitaMonitorHandler.h AnitaSurfHkHandler.h #AnitaCmdEchoHandler.h     AnitaFileHandler.h   AnitaTurfRateHandler.h AnitaGenericHeaderHandler.h  AnitaAuxiliaryHandler.h  AnitaSlowRateHandler.h  plotUtils.h RunNumServer.h
 
 
 
-all :  processTelemFile  $(ROOT_LIBRARY) # lib/libConfig.so lib/libkvp.so 
+all :   $(ROOT_LIBRARY) processTelemFile  # lib/libConfig.so lib/libkvp.so 
 
 
 processTelemFile : processTelemFile.o $(ROOT_LIBRARY)
@@ -66,25 +80,39 @@ lib/libkvp.so:
 
 #The library
 $(ROOT_LIBRARY) : $(LIB_OBJS) 
-	@echo "Linking $@ ..."
+	@echo "Linking $@ ..."	
+	@echo "Platform $(PLATFORM)"
+ifeq ($(ARCH),aix5)
+		$(MAKESHARED) $(OutPutOpt) $@ $(LIBS) -p 0 $^
+else
 ifeq ($(PLATFORM),macosx)
 # We need to make both the .dylib and the .so
-	$(LD) $(SOFLAGS) $^ $(OutPutOpt) $@
+		$(LD) $(SOFLAGS)$@ $(LDFLAGS) $^ $(OutPutOpt) $@ $(EXPLLINKLIBS)
+ifneq ($(subst $(MACOSX_MINOR),,1234),1234)
 ifeq ($(MACOSX_MINOR),4)
-	ln -sf $@ $(subst .$(DLLSUF),.so,$@)
-else
-	$(LD) -bundle -undefined $(UNDEFOPT) $(LDFLAGS) $^ \
-	 $(OutPutOpt) $(subst .$(DLLSUF),.so,$@)
+		ln -sf $@ $(subst .$(DllSuf),.so,$@)
+endif
 endif
 else
-	$(LD) $(SOFLAGS) $(LDFLAGS) $(LIB_OBJS) $(LIBS)  -o $@
+ifeq ($(PLATFORM),win32)
+		bindexplib $* $^ > $*.def
+		lib -nologo -MACHINE:IX86 $^ -def:$*.def \
+		   $(OutPutOpt)$(EVENTLIB)
+		$(LD) $(SOFLAGS) $(LDFLAGS) $^ $*.exp $(LIBS) \
+		   $(OutPutOpt)$@
+		$(MT_DLL)
+else
+		$(LD) $(SOFLAGS) $(LDFLAGS) $^ $(OutPutOpt) $@ $(EXPLLINKLIBS)
 endif
+endif
+endif
+		@echo "$@ done"
 
-%.$(OBJSUF) : %.$(SRCSUF)
+%.$(ObjSuf) : %.$(SrcSuf)
 	@echo "<**Compiling**> "$<
 	$(CXX) $(CXXFLAGS) -c $< -o  $@
 
-%.$(OBJSUF) : %.C
+%.$(ObjSuf) : %.C
 	@echo "<**Compiling**> "$<
 	$(CXX) $(CXXFLAGS) $ -c $< -o  $@
 
@@ -96,7 +124,7 @@ rawWebDict.C: $(CLASS_HEADERS)
 
 install: $(ROOT_LIBRARY)
 ifeq ($(PLATFORM),macosx)
-	cp $(ROOT_LIBRARY) $(subst .$(DLLSUF),.so,$(ROOT_LIBRARY)) $(ANITA_UTIL_LIB_DIR)
+	cp $(ROOT_LIBRARY) $(subst .$(DllSuf),.so,$(ROOT_LIBRARY)) $(ANITA_UTIL_LIB_DIR)
 else
 	cp $(ROOT_LIBRARY) $(ANITA_UTIL_LIB_DIR)
 endif
@@ -104,10 +132,10 @@ endif
 
 clean:
 	@rm -f *Dict*
-	@rm -f *.${OBJSUF}
+	@rm -f *.${ObjSuf}
 	@rm -f $(LIBRARY)
 	@rm -f $(ROOT_LIBRARY)
-	@rm -f $(subst .$(DLLSUF),.so,$(ROOT_LIBRARY))	
+	@rm -f $(subst .$(DllSuf),.so,$(ROOT_LIBRARY))	
 	@rm -f $(TEST)
 #	@cd configLib ; make clean
 #	@cd kvpLib ; make clean

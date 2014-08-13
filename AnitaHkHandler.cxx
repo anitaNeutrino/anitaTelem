@@ -23,8 +23,8 @@
 #define EVENT_FILES_PER_DIR 100
 #define HK_PER_FILE 1000
 
-AnitaHkHandler::AnitaHkHandler(int run)
-  :fRun(run)
+AnitaHkHandler::AnitaHkHandler(std::string rawDir,int run)
+  :fRawDir(rawDir),fRun(run)
 {
 
 
@@ -61,9 +61,9 @@ void AnitaHkHandler::loopMap()
       if(outFile) fclose(outFile);
       outFile=NULL;
 
-      sprintf(fileName,"/anitaStorage/palestine14/telem/raw/run%d/house/hk/raw/sub_%d/sub_%d/",fRun,hkPtr->unixTime,hkPtr->unixTime);       
+      sprintf(fileName,"%s/run%d/house/hk/raw/sub_%d/sub_%d/",fRawDir.c_str(),fRun,hkPtr->unixTime,hkPtr->unixTime);       
       gSystem->mkdir(fileName,kTRUE);
-      sprintf(fileName,"/anitaStorage/palestine14/telem/raw/run%d/house/hk/raw/sub_%d/sub_%d/hk_raw_%d.dat.gz",fRun,hkPtr->unixTime,hkPtr->unixTime,hkPtr->unixTime);
+      sprintf(fileName,"%s/run%d/house/hk/raw/sub_%d/sub_%d/hk_raw_%d.dat.gz",fRawDir.c_str(),fRun,hkPtr->unixTime,hkPtr->unixTime,hkPtr->unixTime);
       std::cout << fileName << "\n";
       outFile=fopen(fileName,"wb");
       if(!outFile ) {

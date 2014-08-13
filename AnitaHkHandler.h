@@ -9,6 +9,7 @@
 #define ANITAHKHANDLER_H
 
 #include <map>
+#include <string>
 
 
 #include "simpleStructs.h"
@@ -18,7 +19,7 @@
 class AnitaHkHandler 
 {   
 public:
-    AnitaHkHandler(int run);
+    AnitaHkHandler(std::string rawDir,int run);
     ~AnitaHkHandler();
     
     void addHk(HkDataStruct_t *hkPtr);
@@ -26,6 +27,7 @@ public:
 
 
 private:
+    std::string fRawDir;
     int fRun;
     std::map<UInt_t, HkDataStruct_t> fHkMap;
 

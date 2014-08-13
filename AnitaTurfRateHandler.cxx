@@ -1,17 +1,17 @@
 ////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
-////// Simple Class to handle telemetered AnitaEventSurfHk_t       /////////
+////// Simple Class to handle telemetered TurfRateStruct_t       /////////
 //////                                                             /////////
 ////// r.nichol@ucl.ac.uk --- July 2014                            /////////
 ////////////////////////////////////////////////////////////////////////////
 
-#include "AnitaSurfHkHandler.h"
+#include "AnitaTurfRateHandler.h"
 
 #include <iostream>
 #include "TTree.h"
 #include "TFile.h"
 #include "TSystem.h"
-#include "SurfHk.h"
+#include "TurfRate.h"
 #include "simpleStructs.h"
 
 
@@ -23,37 +23,37 @@
 #define EVENT_FILES_PER_DIR 100
 #define HK_PER_FILE 1000
 
-AnitaSurfHkHandler::AnitaSurfHkHandler(std::string rawDir,int run)
+AnitaTurfRateHandler::AnitaTurfRateHandler(std::string rawDir,int run)
   :fRawDir(rawDir),fRun(run)
 {
 
 
 }
 
-AnitaSurfHkHandler::~AnitaSurfHkHandler()
+AnitaTurfRateHandler::~AnitaTurfRateHandler()
 {
 
 
 }
     
-void AnitaSurfHkHandler::addSurfHk(FullSurfHkStruct_t *hkPtr)
+void AnitaTurfRateHandler::addTurfRate(TurfRateStruct_t *hkPtr)
 {
-  fSurfHkMap.insert(std::pair<UInt_t,FullSurfHkStruct_t>(hkPtr->unixTime,*hkPtr));
+  fTurfRateMap.insert(std::pair<UInt_t,TurfRateStruct_t>(hkPtr->unixTime,*hkPtr));
 
 }
 
 
-void AnitaSurfHkHandler::loopMap() 
+void AnitaTurfRateHandler::loopMap() 
 {
   char fileName[FILENAME_MAX];
   int fileCount=0;
-  std::map<UInt_t,FullSurfHkStruct_t>::iterator it;
+  std::map<UInt_t,TurfRateStruct_t>::iterator it;
   FILE *outFile=NULL;
-  for(it=fSurfHkMap.begin();it!=fSurfHkMap.end();it++) {
-    FullSurfHkStruct_t *hkPtr=&(it->second);
+  for(it=fTurfRateMap.begin();it!=fTurfRateMap.end();it++) {
+    TurfRateStruct_t *hkPtr=&(it->second);
     //    std::cout << hkPtr->unixTime << "\t" << hkPtr->unixTime << "\t" << 100*(hkPtr->unixTime/100) << "\n";    
     
-    //    processSurfHk(hkPtr);
+    //    processTurfRate(hkPtr);
        
     if(outFile==NULL) {
       //      std::cout << "Here\n";
@@ -61,9 +61,9 @@ void AnitaSurfHkHandler::loopMap()
       if(outFile) fclose(outFile);
       outFile=NULL;
 
-      sprintf(fileName,"%s/run%d/house/surfhk/sub_%d/sub_%d/",fRawDir.c_str(),fRun,hkPtr->unixTime,hkPtr->unixTime);       
+      sprintf(fileName,"%s/run%d/house/turfhk/sub_%d/sub_%d/",fRawDir.c_str(),fRun,hkPtr->unixTime,hkPtr->unixTime);       
       gSystem->mkdir(fileName,kTRUE);
-      sprintf(fileName,"%s/run%d/house/surfhk/sub_%d/sub_%d/surfhk_%d.dat.gz",fRawDir.c_str(),fRun,hkPtr->unixTime,hkPtr->unixTime,hkPtr->unixTime);
+      sprintf(fileName,"%s/run%d/house/turfhk/sub_%d/sub_%d/turfrate_%d.dat.gz",fRawDir.c_str(),fRun,hkPtr->unixTime,hkPtr->unixTime,hkPtr->unixTime);
       std::cout << fileName << "\n";
       outFile=fopen(fileName,"wb");
       if(!outFile ) {
@@ -71,7 +71,7 @@ void AnitaSurfHkHandler::loopMap()
 	return;
       }
     }
-    fwrite(hkPtr,sizeof(FullSurfHkStruct_t),1,outFile);
+    fwrite(hkPtr,sizeof(TurfRateStruct_t),1,outFile);
     fileCount++;
     if(fileCount>=HK_PER_FILE) {
       fileCount=0;

@@ -64,10 +64,12 @@ int main (int argc, char ** argv)
   currentRun=atoi(argv[1]);
   //`  return -1;
   //Create the handlers
-  headHandler = new AnitaHeaderHandler(currentRun);
-  hkHandler = new AnitaHkHandler(currentRun);
-  gpsHandler = new AnitaGpsHandler(currentRun);
-  monHandler = new AnitaMonitorHandler(currentRun);
+  std::string rawDir("/anitStorage/palestine14/telem/raw");
+
+  headHandler = new AnitaHeaderHandler(rawDir,currentRun);
+  hkHandler = new AnitaHkHandler(rawDir,currentRun);
+  gpsHandler = new AnitaGpsHandler(rawDir,currentRun);
+  monHandler = new AnitaMonitorHandler(rawDir,currentRun);
 
 
   for(int i=2;i<argc;i++) 
@@ -400,7 +402,7 @@ int processLOSFile(char *filename) {
   
     //data stuff
   unsigned short numWords;
-  unsigned short unused;
+  //  unsigned short unused;
   unsigned short foodHdr;
   unsigned short doccHdr;
   unsigned short ae00Hdr;

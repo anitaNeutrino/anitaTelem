@@ -23,8 +23,8 @@
 #define EVENT_FILES_PER_DIR 100
 #define HK_PER_FILE 1000
 
-AnitaGpsHandler::AnitaGpsHandler(int run)
-  :fRun(run)
+AnitaGpsHandler::AnitaGpsHandler(std::string rawDir,int run)
+  :fRawDir(rawDir),fRun(run)
 {
 
 
@@ -111,9 +111,9 @@ void AnitaGpsHandler::loopG12SatMap()
       if(outFile) fclose(outFile);
       outFile=NULL;
 
-      sprintf(fileName,"/anitaStorage/palestine14/telem/raw/run%d/house/gps/g12/sat/sub_%d/sub_%d/",fRun,gpsPtr->unixTime,gpsPtr->unixTime);       
+      sprintf(fileName,"%s/run%d/house/gps/g12/sat/sub_%d/sub_%d/",fRawDir.c_str(),fRun,gpsPtr->unixTime,gpsPtr->unixTime);       
       gSystem->mkdir(fileName,kTRUE);
-      sprintf(fileName,"/anitaStorage/palestine14/telem/raw/run%d/house/gps/g12/sat/sub_%d/sub_%d/sat_%d.dat.gz",fRun,gpsPtr->unixTime,gpsPtr->unixTime,gpsPtr->unixTime);
+      sprintf(fileName,"%s/run%d/house/gps/g12/sat/sub_%d/sub_%d/sat_%d.dat.gz",fRawDir.c_str(),fRun,gpsPtr->unixTime,gpsPtr->unixTime,gpsPtr->unixTime);
       std::cout << fileName << "\n";
       outFile=fopen(fileName,"wb");
       if(!outFile ) {

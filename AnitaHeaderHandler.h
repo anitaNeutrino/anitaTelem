@@ -9,7 +9,7 @@
 #define ANITAHEADERHANDLER_H
 
 #include <map>
-
+#include <string>
 
 #include "simpleStructs.h"
 #include "plotUtils.h"    
@@ -18,16 +18,17 @@
 class AnitaHeaderHandler 
 {   
 public:
-    AnitaHeaderHandler(int run);
-    ~AnitaHeaderHandler();
-    
-    void addHeader(AnitaEventHeader_t *hdPtr);
-    void loopMap();
-
+  AnitaHeaderHandler(std::string rawDir,int run);
+  ~AnitaHeaderHandler();
+  
+  void addHeader(AnitaEventHeader_t *hdPtr);
+  void loopMap();
+  
 
 private:
-    int fRun;
-    std::map<UInt_t, AnitaEventHeader_t> fHeadMap;
+  std::string fRawDir;
+  int fRun;
+  std::map<UInt_t, AnitaEventHeader_t> fHeadMap;
 
 
 
