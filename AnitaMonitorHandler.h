@@ -1,12 +1,12 @@
 ////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
-////// Simple Class to handle telemetered AnitaEventHeader_t       /////////
+////// Simple Class to handle telemetered MonitorDataStruct_t      /////////
 //////                                                             /////////
 ////// r.nichol@ucl.ac.uk --- July 2014                            /////////
 ////////////////////////////////////////////////////////////////////////////
 
-#ifndef ANITAHEADERHANDLER_H
-#define ANITAHEADERHANDLER_H
+#ifndef ANITAMONITORHANDLER_H
+#define ANITAMONITORHANDLER_H
 
 #include <map>
 
@@ -15,24 +15,26 @@
 #include "plotUtils.h"    
 
 
-class AnitaHeaderHandler 
+class AnitaMonitorHandler 
 {   
 public:
-    AnitaHeaderHandler(int run);
-    ~AnitaHeaderHandler();
+    AnitaMonitorHandler(int run);
+    ~AnitaMonitorHandler();
     
-    void addHeader(AnitaEventHeader_t *hdPtr);
+    void addMonitor(MonitorStruct_t *monitorPtr);
+    void addOtherMonitor(OtherMonitorStruct_t *monitorPtr);
     void loopMap();
+    void loopOtherMap();
 
 
 private:
     int fRun;
-    std::map<UInt_t, AnitaEventHeader_t> fHeadMap;
-
+    std::map<UInt_t, MonitorStruct_t> fMonitorMap;
+    std::map<UInt_t, OtherMonitorStruct_t> fOtherMonitorMap;
 
 
 };
 
-#endif //ANITAHEADERHANDLER_H
+#endif //ANITAMONITORHANDLER_H
 
 

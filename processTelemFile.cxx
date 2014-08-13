@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <unistd.h>
+#include <cstdlib>
 #include <signal.h>  
 #include <sys/stat.h>
 using namespace std;
@@ -11,15 +12,17 @@ using namespace std;
 #include "AnitaPacketUtil.h"
 
 //Web plotter includes
-//#include "AnitaHeaderHandler.h"
+#include "AnitaHeaderHandler.h"
+#include "AnitaHkHandler.h"
+#include "AnitaGpsHandler.h" 
+#include "AnitaMonitorHandler.h" 
+
 // #include "configLib/configLib.h"
 // #include "kvpLib/keyValuePair.h"
 // #include "AnitaAuxiliaryHandler.h"
 // #include "AnitaSurfHkHandler.h" 
 // #include "AnitaTurfRateHandler.h"
-// #include "AnitaMonitorHandler.h" 
 // #include "AnitaHkHandler.h" 
-// #include "AnitaGpsHandler.h" 
 // #include "AnitaFileHandler.h" 
 // #include "AnitaCmdEchoHandler.h" 
 // #include "AnitaGenericHeaderHandler.h"
@@ -38,8 +41,12 @@ int processLOSFile(char *filename);
 unsigned short *bigBuffer;
 
 
-//AnitaHeaderHandler *headHandler;
+AnitaHeaderHandler *headHandler;
+AnitaMonitorHandler *monHandler;
+AnitaHkHandler *hkHandler;
+AnitaGpsHandler *gpsHandler;
 
+int currentRun=0;
 
 #define MIN_LOS_SIZE 900000
 #define MIN_TDRSS_SIZE 40000
@@ -48,28 +55,35 @@ unsigned short *bigBuffer;
 int main (int argc, char ** argv)
 {
   bigBuffer = (unsigned short*) malloc(BIG_BUF_SIZE);
-  if(argc<2) {
-    std::cerr << "Usage: " << argv[0] << " <telem file>\n";
+  if(argc<3) {
+    std::cerr << "Usage: " << argv[0] << " <run> <telem file> <telem file>\n";
     return -1;
   }
   
   std::cout << "sizeof(unsigned long): " << sizeof(unsigned long) << "\n";
+  currentRun=atoi(argv[1]);
   //`  return -1;
   //Create the handlers
-  //  headHandler = new AnitaHeaderHandler();
+  headHandler = new AnitaHeaderHandler(currentRun);
+  hkHandler = new AnitaHkHandler(currentRun);
+  gpsHandler = new AnitaGpsHandler(currentRun);
+  monHandler = new AnitaMonitorHandler(currentRun);
 
 
-
-
-  //  processHighRateTDRSSFile(argv[1]);
-  processLOSFile(argv[1]);
-
+  for(int i=2;i<argc;i++) 
+    processLOSFile(argv[i]);
   free(bigBuffer);
+
+  headHandler->loopMap();
+  hkHandler->loopMap();
+  gpsHandler->loopG12PosMap();
+  gpsHandler->loopG12SatMap();
+  monHandler->loopMap();
+  monHandler->loopOtherMap();
 }
 
 
 int processHighRateTDRSSFile(char *filename) {
-//    cout << (int) headHandler->number << endl;
 
     int numBytes=0,count=0;
     FILE *tdrssFile;
@@ -154,7 +168,6 @@ int processHighRateTDRSSFile(char *filename) {
     }
  
 
-    //    headHandler->loopMap();
 
     return 0;
 
@@ -184,10 +197,19 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	checkVal=checkPacket(&buffer[count]);
 	gHdr = (GenericHeader_t*) &buffer[count];		
 
+	if(checkVal==8 && gHdr->code==PACKET_HKD && gHdr->numBytes==sizeof(SSHkDataStruct_t)) {
+	  printf("Got SSHkDataStruct_t??\n");
+	  gHdr->code=PACKET_HKD_SS;
+	  gHdr->verId=VER_HK_SS;
+	  checkVal=0;
+	  count+=sizeof(HkDataStruct_t);
+	  continue;
+	}
 
-	printf("Got %s (%#x) -- (%d bytes)\n",
-	       packetCodeAsString(gHdr->code),
-	       gHdr->code,gHdr->numBytes);
+
+	// printf("Got %s (%#x) -- (%d bytes)\n",
+	//        packetCodeAsString(gHdr->code),
+	//        gHdr->code,gHdr->numBytes);
 	GenericHeader_t *testGHdr=gHdr;
 
 
@@ -220,8 +242,7 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	    case PACKET_HD:
 	      //	      cout << "Got Header\n";
 	      hdPtr= (AnitaEventHeader_t*)testGHdr;
-	      //	      if(time_t(hdPtr->unixTime)<time_t(nowTime+1000))
-	      //	      headHandler->addHeader(hdPtr);
+	      headHandler->addHeader(hdPtr);
 	      break;
 	    case PACKET_SURF_HK:
 	      //	      cout << "Got SurfHk\n";
@@ -244,19 +265,19 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	      break;
 	    case PACKET_MONITOR:
 	      //	      cout << "Got MonitorStruct_t\n";
-	      //	      monHandler->addMonitor((MonitorStruct_t*)testGHdr);
+	      monHandler->addMonitor((MonitorStruct_t*)testGHdr);
 	      break;
 	    case PACKET_OTHER_MONITOR:
 	      //	      cout << "Got OtherMonitorStruct_t\n";
-	      //	      monHandler->addOtherMonitor((OtherMonitorStruct_t*)testGHdr);
+	      monHandler->addOtherMonitor((OtherMonitorStruct_t*)testGHdr);
 	      break;
 	    case PACKET_GPS_G12_SAT:
 	      //	      cout << "Got GpsG12SatStruct_t\n";
-	      //	      gpsHandler->addG12Sat((GpsG12SatStruct_t*) testGHdr);
+	      gpsHandler->addG12Sat((GpsG12SatStruct_t*) testGHdr);
 	      break;
 	    case PACKET_GPS_G12_POS:
 	      //	      cout << "Got GpsG12PosStruct_t\n";
-	      //	      gpsHandler->addG12Pos((GpsG12PosStruct_t*) testGHdr);
+	      gpsHandler->addG12Pos((GpsG12PosStruct_t*) testGHdr);
 	      break;
 	    case PACKET_GPS_ADU5_SAT:
 	      //	      cout << "Got GpsAdu5SatStruct_t\n";
@@ -309,13 +330,15 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	      
 	    case PACKET_HKD:	      
 	      hkPtr = (HkDataStruct_t*)testGHdr;
-	      //	      cout << "Got HkDataStruct_t " << hkPtr->ip320.code << "\n";
-	      //	      if(hkPtr->ip320.code==IP320_RAW)
-	      //		hkHandler->addHk(hkPtr);
+	      cout << "Got HkDataStruct_t " << hkPtr->ip320.code << "\t" << IP320_RAW << "\n";
+	      if(hkPtr->ip320.code==IP320_RAW)
+		hkHandler->addHk(hkPtr);
 	      //	      else if(hkPtr->ip320.code==IP320_CAL)
 	      //		hkHandler->addCalHk(hkPtr);
 	      //	      else if(hkPtr->ip320.code==IP320_AVZ)
 	      //		hkHandler->addAvzHk(hkPtr);
+	      break;	
+	    case PACKET_HKD_SS:	      
 	      break;	 
 
 	    case PACKET_ACQD_START:
@@ -366,16 +389,12 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 
 
 int processLOSFile(char *filename) {
-//    cout << (int) headHandler->number << endl;
   static int lastNumBytes=0;
   //  static unsigned int lastUnixTime=0;
-  static int lastLosFile=-1;
-  static int currentLosFile=0;
-  if(currentLosFile!=lastLosFile) {
-    lastNumBytes=0;
-  }
+  lastNumBytes=0;
+
   //  cout << "processLOSFile: " << filename << "\t" << lastLosFile << "\t" << currentLosFile << endl;
-  lastLosFile=currentLosFile;
+
   int numBytes=0,count=0;
   FILE *losFile;
   

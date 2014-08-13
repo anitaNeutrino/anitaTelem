@@ -23,7 +23,8 @@
 #define EVENT_FILES_PER_DIR 100
 
 
-AnitaHeaderHandler::AnitaHeaderHandler()
+AnitaHeaderHandler::AnitaHeaderHandler(int run)
+  :fRun(run)
 {
 
 
@@ -50,7 +51,7 @@ void AnitaHeaderHandler::loopMap()
   FILE *outFile=NULL;
   for(it=fHeadMap.begin();it!=fHeadMap.end();it++) {
     AnitaEventHeader_t *hdPtr=&(it->second);
-    std::cout << hdPtr->unixTime << "\t" << hdPtr->eventNumber << "\t" << 100*(hdPtr->eventNumber/100) << "\n";    
+    //    std::cout << hdPtr->unixTime << "\t" << hdPtr->eventNumber << "\t" << 100*(hdPtr->eventNumber/100) << "\n";    
     int fileNumber=100*(hdPtr->eventNumber/100);
     //    processHeader(hdPtr);
     
@@ -64,15 +65,16 @@ void AnitaHeaderHandler::loopMap()
       if(outFile) fclose(outFile);
       outFile=NULL;
 
-      sprintf(fileName,"/anitaStorage/palestine14/telem/raw/run1000/event/ev%d/ev%d",dirNumber,subDirNumber);
+      sprintf(fileName,"/anitaStorage/palestine14/telem/raw/run%d/event/ev%d/ev%d",fRun,dirNumber,subDirNumber);
       gSystem->mkdir(fileName,kTRUE);
-      sprintf(fileName,"/anitaStorage/palestine14/telem/raw/run1000/event/ev%d/ev%d/hd_%d.dat",dirNumber,subDirNumber,fileNumber);
+      sprintf(fileName,"/anitaStorage/palestine14/telem/raw/run%d/event/ev%d/ev%d/hd_%d.dat.gz",fRun,dirNumber,subDirNumber,fileNumber);
       outFile=fopen(fileName,"wb");
       if(!outFile ) {
 	printf("Couldn't open: %s\n",fileName);
 	return;
       }
     }
+    lastFileNumber=fileNumber;
     fwrite(hdPtr,sizeof(AnitaEventHeader_t),1,outFile);
   }
   
