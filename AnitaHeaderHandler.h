@@ -23,11 +23,10 @@ public:
     
     void addHeader(AnitaEventHeader_t *hdPtr);
     void loopMap();
-    
+
 
 private:
-    std::map<UInt_t, AnitaEventHeader_t> fHeadMap;
-    
+    std::map<UInt_t, AnitaEventHeader_t> fHeadMap; 
 
 
 };
