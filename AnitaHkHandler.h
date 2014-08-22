@@ -23,13 +23,16 @@ public:
     ~AnitaHkHandler();
     
     void addHk(HkDataStruct_t *hkPtr);
+    void addSSHk(SSHkDataStruct_t *hkPtr);
     void loopMap();
+    void loopSSMap();
 
 
 private:
     std::string fRawDir;
     int fRun;
     std::map<UInt_t, HkDataStruct_t> fHkMap;
+    std::map<UInt_t, SSHkDataStruct_t> fSSHkMap;
 
 
 };

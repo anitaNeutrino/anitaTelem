@@ -23,13 +23,16 @@ public:
     ~AnitaSurfHkHandler();
     
     void addSurfHk(FullSurfHkStruct_t *hkPtr);
+    void addAveragedSurfHk(AveragedSurfHkStruct_t *hkPtr);
     void loopMap();
+    void loopAvgMap();
 
 
 private:
     std::string fRawDir;
     int fRun;
     std::map<UInt_t,FullSurfHkStruct_t> fSurfHkMap;
+    std::map<UInt_t,AveragedSurfHkStruct_t> fAvgSurfHkMap;
 
 
 };

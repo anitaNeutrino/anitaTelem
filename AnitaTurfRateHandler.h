@@ -23,13 +23,16 @@ public:
     ~AnitaTurfRateHandler();
     
     void addTurfRate(TurfRateStruct_t *hkPtr);
+    void addSumTurfRate(SummedTurfRateStruct_t *hkPtr);
     void loopMap();
+    void loopSumMap();
 
 
 private:
     std::string fRawDir;
     int fRun;
     std::map<UInt_t,TurfRateStruct_t> fTurfRateMap;
+    std::map<UInt_t,SummedTurfRateStruct_t> fSumTurfRateMap;
 
 
 };

@@ -41,6 +41,12 @@ void AnitaHkHandler::addHk(HkDataStruct_t *hkPtr)
   fHkMap.insert(std::pair<UInt_t,HkDataStruct_t>(hkPtr->unixTime,*hkPtr));
 
 }
+    
+void AnitaHkHandler::addSSHk(SSHkDataStruct_t *hkPtr)
+{
+  fSSHkMap.insert(std::pair<UInt_t,SSHkDataStruct_t>(hkPtr->unixTime,*hkPtr));
+
+}
 
 
 void AnitaHkHandler::loopMap() 
@@ -72,6 +78,50 @@ void AnitaHkHandler::loopMap()
       }
     }
     fwrite(hkPtr,sizeof(HkDataStruct_t),1,outFile);
+    fileCount++;
+    if(fileCount>=HK_PER_FILE) {
+      fileCount=0;
+      fclose(outFile);
+      outFile=NULL;
+    }
+  }
+  
+  if(outFile) fclose(outFile);
+  outFile=NULL;
+
+}
+
+
+
+void AnitaHkHandler::loopSSMap() 
+{
+  char fileName[FILENAME_MAX];
+  int fileCount=0;
+  std::map<UInt_t,SSHkDataStruct_t>::iterator it;
+  FILE *outFile=NULL;
+  for(it=fSSHkMap.begin();it!=fSSHkMap.end();it++) {
+    SSHkDataStruct_t *hkPtr=&(it->second);
+    //    std::cout << hkPtr->unixTime << "\t" << hkPtr->unixTime << "\t" << 100*(hkPtr->unixTime/100) << "\n";    
+    
+    //    processHk(hkPtr);
+       
+    if(outFile==NULL) {
+      //      std::cout << "Here\n";
+      //Create a file
+      if(outFile) fclose(outFile);
+      outFile=NULL;
+
+      sprintf(fileName,"%s/run%d/house/hk/raw/sub_%d/sub_%d/",fRawDir.c_str(),fRun,hkPtr->unixTime,hkPtr->unixTime);       
+      gSystem->mkdir(fileName,kTRUE);
+      sprintf(fileName,"%s/run%d/house/hk/raw/sub_%d/sub_%d/sshk_raw_%d.dat.gz",fRawDir.c_str(),fRun,hkPtr->unixTime,hkPtr->unixTime,hkPtr->unixTime);
+      std::cout << fileName << "\n";
+      outFile=fopen(fileName,"wb");
+      if(!outFile ) {
+	printf("Couldn't open: %s\n",fileName);
+	return;
+      }
+    }
+    fwrite(hkPtr,sizeof(SSHkDataStruct_t),1,outFile);
     fileCount++;
     if(fileCount>=HK_PER_FILE) {
       fileCount=0;

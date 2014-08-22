@@ -85,6 +85,7 @@ int main (int argc, char ** argv)
   monHandler->loopMap();
   monHandler->loopOtherMap();
   surfhkHandler->loopMap();
+  surfhkHandler->loopAvgMap();
   turfRateHandler->loopMap();
 }
 
@@ -239,6 +240,7 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	HkDataStruct_t *hkPtr=0;
 	AnitaEventHeader_t *hdPtr=0;
 	FullSurfHkStruct_t *surfPtr=0;
+	SSHkDataStruct_t *sshkPtr=0;
 	if((checkVal==0) && testGHdr>0) {	  
 	  //	  if(testGHdr->code>0) ghdHandler->addHeader(testGHdr);
 	    //	    printf("Got %s (%#x) -- (%d bytes)\n",
@@ -258,7 +260,7 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	      break;
 	    case PACKET_AVG_SURF_HK:
 	      //	      cout << "Got AveragedSurfHkStruct_t\n";
-	      //	      surfhkHandler->addAveragedSurfHk((AveragedSurfHkStruct_t*) testGHdr);
+	      surfhkHandler->addAveragedSurfHk((AveragedSurfHkStruct_t*) testGHdr);
 	      break;
 	      
 	    case PACKET_TURF_RATE:
@@ -267,7 +269,7 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	      break;
 	    case PACKET_SUM_TURF_RATE:
 	      //	      cout << "Got SummedTurfRateStruct_t\n";
-	      //	      turfRateHandler->addSumTurfRate((SummedTurfRateStruct_t*)testGHdr);
+	      turfRateHandler->addSumTurfRate((SummedTurfRateStruct_t*)testGHdr);
 	      break;
 	    case PACKET_MONITOR:
 	      //	      cout << "Got MonitorStruct_t\n";
@@ -287,19 +289,19 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	      break;
 	    case PACKET_GPS_ADU5_SAT:
 	      //	      cout << "Got GpsAdu5SatStruct_t\n";
-	      //	      gpsHandler->addAdu5Sat((GpsAdu5SatStruct_t*) testGHdr);
+	      gpsHandler->addAdu5Sat((GpsAdu5SatStruct_t*) testGHdr);
 	      break;
 	    case PACKET_GPS_ADU5_PAT:
 	      //	      cout << "Got GpsAdu5PatStruct_t\n";
-	      //	      gpsHandler->addAdu5Pat((GpsAdu5PatStruct_t*) testGHdr);
+	      gpsHandler->addAdu5Pat((GpsAdu5PatStruct_t*) testGHdr);
 	      break;
 	    case PACKET_GPS_ADU5_VTG:
 	      //	      cout << "Got GpsAdu5VtgStruct_t\n";
-	      //	      gpsHandler->addAdu5Vtg((GpsAdu5VtgStruct_t*) testGHdr);
+	      gpsHandler->addAdu5Vtg((GpsAdu5VtgStruct_t*) testGHdr);
 	      break;
 	    case PACKET_GPS_GGA:
 	      //	      cout << "Got GpsGgaStruct_t\n";
-	      //	      gpsHandler->addGpsGga((GpsGgaStruct_t*) testGHdr);
+	      gpsHandler->addGpsGga((GpsGgaStruct_t*) testGHdr);
 	      break;
 	    case PACKET_ZIPPED_FILE:
 	      //	      cout << "Got ZippedFile_t\n";
@@ -336,7 +338,7 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	      
 	    case PACKET_HKD:	      
 	      hkPtr = (HkDataStruct_t*)testGHdr;
-	      cout << "Got HkDataStruct_t " << hkPtr->ip320.code << "\t" << IP320_RAW << "\n";
+	      //	      cout << "Got HkDataStruct_t " << hkPtr->ip320.code << "\t" << IP320_RAW << "\n";
 	      if(hkPtr->ip320.code==IP320_RAW)
 		hkHandler->addHk(hkPtr);
 	      //	      else if(hkPtr->ip320.code==IP320_CAL)
@@ -345,6 +347,10 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	      //		hkHandler->addAvzHk(hkPtr);
 	      break;	
 	    case PACKET_HKD_SS:	      
+	      sshkPtr= (SSHkDataStruct_t*)testGHdr;
+	      cout << "Got SSHkDataStruct_t " << sshkPtr->ip320.code << "\t" << IP320_RAW << "\n";
+	      if(sshkPtr->ip320.code==IP320_RAW) 
+		hkHandler->addSSHk(sshkPtr);
 	      break;	 
 
 	    case PACKET_ACQD_START:
@@ -360,10 +366,12 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	      //	      auxHandler->addLogWatchdStart((LogWatchdStart_t*)testGHdr);
 	      break;
 	      
-	      //	    defualt:
-	      fprintf(stderr,"Got packet without a handler (code: %x -- %s)\n",
-		      testGHdr->code,packetCodeAsString(testGHdr->code));
-	      break;
+	    default: 
+	      {
+		fprintf(stderr,"Got packet without a handler (code: %x -- %s)\n",
+			testGHdr->code,packetCodeAsString(testGHdr->code));
+		break;
+	      }
 	    }
 
 	    
