@@ -231,7 +231,7 @@ void AnitaGpsHandler::loopAdu5PatMaps()
 	
 	sprintf(fileName,"%s/run%d/house/gps/%s/pat/sub_%d/sub_%d/",fRawDir.c_str(),fRun,getGpsName(gpsId),gpsPtr->unixTime,gpsPtr->unixTime);       
 	gSystem->mkdir(fileName,kTRUE);
-	sprintf(fileName,"%s/run%d/house/gps/%s/pat/sub_%d/sub_%d/gga_%d.dat.gz",fRawDir.c_str(),fRun,getGpsName(gpsId),gpsPtr->unixTime,gpsPtr->unixTime,gpsPtr->unixTime);
+	sprintf(fileName,"%s/run%d/house/gps/%s/pat/sub_%d/sub_%d/pat_%d.dat.gz",fRawDir.c_str(),fRun,getGpsName(gpsId),gpsPtr->unixTime,gpsPtr->unixTime,gpsPtr->unixTime);
 	std::cout << fileName << "\n";
 	outFile=fopen(fileName,"wb");
 	if(!outFile ) {
@@ -277,7 +277,7 @@ void AnitaGpsHandler::loopAdu5SatMaps()
 	
 	sprintf(fileName,"%s/run%d/house/gps/%s/sat/sub_%d/sub_%d/",fRawDir.c_str(),fRun,getGpsName(gpsId),gpsPtr->unixTime,gpsPtr->unixTime);       
 	gSystem->mkdir(fileName,kTRUE);
-	sprintf(fileName,"%s/run%d/house/gps/%s/sat/sub_%d/sub_%d/gga_%d.dat.gz",fRawDir.c_str(),fRun,getGpsName(gpsId),gpsPtr->unixTime,gpsPtr->unixTime,gpsPtr->unixTime);
+	sprintf(fileName,"%s/run%d/house/gps/%s/sat/sub_%d/sub_%d/sat_%d.dat.gz",fRawDir.c_str(),fRun,getGpsName(gpsId),gpsPtr->unixTime,gpsPtr->unixTime,gpsPtr->unixTime);
 	std::cout << fileName << "\n";
 	outFile=fopen(fileName,"wb");
 	if(!outFile ) {
@@ -323,7 +323,7 @@ void AnitaGpsHandler::loopAdu5VtgMaps()
 	
 	sprintf(fileName,"%s/run%d/house/gps/%s/vtg/sub_%d/sub_%d/",fRawDir.c_str(),fRun,getGpsName(gpsId),gpsPtr->unixTime,gpsPtr->unixTime);       
 	gSystem->mkdir(fileName,kTRUE);
-	sprintf(fileName,"%s/run%d/house/gps/%s/vtg/sub_%d/sub_%d/gga_%d.dat.gz",fRawDir.c_str(),fRun,getGpsName(gpsId),gpsPtr->unixTime,gpsPtr->unixTime,gpsPtr->unixTime);
+	sprintf(fileName,"%s/run%d/house/gps/%s/vtg/sub_%d/sub_%d/vtg_%d.dat.gz",fRawDir.c_str(),fRun,getGpsName(gpsId),gpsPtr->unixTime,gpsPtr->unixTime,gpsPtr->unixTime);
 	std::cout << fileName << "\n";
 	outFile=fopen(fileName,"wb");
 	if(!outFile ) {

@@ -18,10 +18,10 @@ using namespace std;
 #include "AnitaMonitorHandler.h" 
 #include "AnitaSurfHkHandler.h" 
 #include "AnitaTurfRateHandler.h"
+#include "AnitaAuxiliaryHandler.h"
 
 // #include "configLib/configLib.h"
 // #include "kvpLib/keyValuePair.h"
-// #include "AnitaAuxiliaryHandler.h"
 // #include "AnitaFileHandler.h" 
 // #include "AnitaCmdEchoHandler.h" 
 // #include "AnitaGenericHeaderHandler.h"
@@ -47,6 +47,7 @@ AnitaHkHandler *hkHandler;
 AnitaSurfHkHandler *surfhkHandler;
 AnitaTurfRateHandler *turfRateHandler;
 AnitaGpsHandler *gpsHandler;
+AnitaAuxiliaryHandler *auxHandler;
 
 int currentRun=0;
 
@@ -74,6 +75,7 @@ int main (int argc, char ** argv)
   monHandler = new AnitaMonitorHandler(rawDir,currentRun);
   surfhkHandler = new AnitaSurfHkHandler(rawDir,currentRun);
   turfRateHandler = new AnitaTurfRateHandler(rawDir,currentRun);
+  auxHandler = new AnitaAuxiliaryHandler(rawDir,currentRun);
 
   for(int i=2;i<argc;i++) 
     processLOSFile(argv[i]);
@@ -81,13 +83,22 @@ int main (int argc, char ** argv)
 
   headHandler->loopMap();
   hkHandler->loopMap();
+  hkHandler->loopSSMap();
   gpsHandler->loopG12PosMap();
   gpsHandler->loopG12SatMap();
+  gpsHandler->loopAdu5PatMaps();
+  gpsHandler->loopAdu5SatMaps();
+  gpsHandler->loopAdu5VtgMaps();
+  gpsHandler->loopGpsGgaMaps();
   monHandler->loopMap();
   monHandler->loopOtherMap();
   surfhkHandler->loopMap();
   surfhkHandler->loopAvgMap();
   turfRateHandler->loopMap();
+  turfRateHandler->loopSumMap();
+  auxHandler->loopAcqdStartMap();
+  auxHandler->loopGpsdStartMap();
+  auxHandler->loopLogWatchdStartMap();
 }
 
 
@@ -350,22 +361,25 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	    case PACKET_HKD_SS:	      
 	      sshkPtr= (SSHkDataStruct_t*)testGHdr;
 	      
-	      cout << "Got SSHkDataStruct_t " <<guessCode(sshkPtr) << "\t" << IP320_RAW << "\n";
+	      //	      cout << "Got SSHkDataStruct_t " <<guessCode(sshkPtr) << "\t" << IP320_RAW << "\n";
+	      if(sshkPtr->ip320.code==0) {
+		sshkPtr->ip320.code=(AnalogueCode_t)guessCode(sshkPtr);
+	      }
 	      if(sshkPtr->ip320.code==IP320_RAW) 
 		hkHandler->addSSHk(sshkPtr);
 	      break;	 
 
 	    case PACKET_ACQD_START:
 	      //	      cout << "Got Acqd Start Packet\n";
-	      //	      auxHandler->addAcqdStart((AcqdStartStruct_t*)testGHdr);
+	      auxHandler->addAcqdStart((AcqdStartStruct_t*)testGHdr);
 	      break;
 	    case PACKET_GPSD_START:
 	      //	      cout << "Got GPSd Start Packet\n";
-	      //	      auxHandler->addGpsdStart((GpsdStartStruct_t*)testGHdr);
+	      auxHandler->addGpsdStart((GpsdStartStruct_t*)testGHdr);
 	      break;
 	    case PACKET_LOGWATCHD_START:
 	      //	      cout << "Got Log Watchd Start Packet\n";
-	      //	      auxHandler->addLogWatchdStart((LogWatchdStart_t*)testGHdr);
+	      auxHandler->addLogWatchdStart((LogWatchdStart_t*)testGHdr);
 	      break;
 	      
 	    default: 
@@ -520,9 +534,15 @@ int processLOSFile(char *filename) {
 
 
 int guessCode(SSHkDataStruct_t *hkPtr) {
+  float mean=0;
   for(int i=0;i<CHANS_PER_IP320;i++) {
-    std::cout << i << "\t" << hkPtr->ip320.board.data[i] << "\n";
+    //    std::cout << i << "\t" <<  << "\n";
+    mean+=((hkPtr->ip320.board.data[i])>>4);
   }
+  mean/=CHANS_PER_IP320;
+  //  std::cout << "Mean: " << mean << "\n";
+  if(mean>4000) return IP320_CAL;
+  if(mean<2050) return IP320_AVZ;
   return IP320_RAW;
 }
 
