@@ -36,6 +36,7 @@ using namespace std;
 void handleScience(unsigned char *buffer,unsigned short numBytes);
 int processHighRateTDRSSFile(char *filename);
 int processLOSFile(char *filename);
+int guessCode(SSHkDataStruct_t *hkPtr);
 
 unsigned short *bigBuffer;
 
@@ -348,7 +349,8 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	      break;	
 	    case PACKET_HKD_SS:	      
 	      sshkPtr= (SSHkDataStruct_t*)testGHdr;
-	      cout << "Got SSHkDataStruct_t " << sshkPtr->ip320.code << "\t" << IP320_RAW << "\n";
+	      
+	      cout << "Got SSHkDataStruct_t " <<guessCode(sshkPtr) << "\t" << IP320_RAW << "\n";
 	      if(sshkPtr->ip320.code==IP320_RAW) 
 		hkHandler->addSSHk(sshkPtr);
 	      break;	 
@@ -515,3 +517,12 @@ int processLOSFile(char *filename) {
     return 0;
 
 }
+
+
+int guessCode(SSHkDataStruct_t *hkPtr) {
+  for(int i=0;i<CHANS_PER_IP320;i++) {
+    std::cout << i << "\t" << hkPtr->ip320.board.data[i] << "\n";
+  }
+  return IP320_RAW;
+}
+
