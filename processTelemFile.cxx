@@ -19,11 +19,11 @@ using namespace std;
 #include "AnitaSurfHkHandler.h" 
 #include "AnitaTurfRateHandler.h"
 #include "AnitaAuxiliaryHandler.h"
+#include "AnitaCmdEchoHandler.h" 
 
 // #include "configLib/configLib.h"
 // #include "kvpLib/keyValuePair.h"
 // #include "AnitaFileHandler.h" 
-// #include "AnitaCmdEchoHandler.h" 
 // #include "AnitaGenericHeaderHandler.h"
 // #include "AnitaSlowRateHandler.h"
 
@@ -48,6 +48,7 @@ AnitaSurfHkHandler *surfhkHandler;
 AnitaTurfRateHandler *turfRateHandler;
 AnitaGpsHandler *gpsHandler;
 AnitaAuxiliaryHandler *auxHandler;
+AnitaCmdEchoHandler *cmdHandler;
 
 int currentRun=0;
 
@@ -76,6 +77,8 @@ int main (int argc, char ** argv)
   surfhkHandler = new AnitaSurfHkHandler(rawDir,currentRun);
   turfRateHandler = new AnitaTurfRateHandler(rawDir,currentRun);
   auxHandler = new AnitaAuxiliaryHandler(rawDir,currentRun);
+  cmdHandler = new AnitaCmdEchoHandler(rawDir,currentRun);
+  
 
   for(int i=2;i<argc;i++) 
     processLOSFile(argv[i]);
@@ -99,6 +102,7 @@ int main (int argc, char ** argv)
   auxHandler->loopAcqdStartMap();
   auxHandler->loopGpsdStartMap();
   auxHandler->loopLogWatchdStartMap();
+  cmdHandler->loopMaps();
 }
 
 
@@ -322,7 +326,7 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	      break;
 	    case PACKET_CMD_ECHO:
 	      //	      cout << "Got CommandEcho_t\n";
-	      //	      cmdHandler->addCmdEcho((CommandEcho_t*) testGHdr);
+	      cmdHandler->addCmdEcho((CommandEcho_t*) testGHdr);
 	      break;
 		    
 	    case PACKET_SURF:
