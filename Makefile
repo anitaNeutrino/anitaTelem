@@ -59,8 +59,8 @@ GLIBS         = $(ROOTGLIBS) $(SYSLIBS)
 
 #Now the bits we're actually compiling
 ROOT_LIBRARY = libAnitaTelem.${DllSuf}
-LIB_OBJS =  AnitaHeaderHandler.o AnitaHkHandler.o AnitaGpsHandler.o AnitaMonitorHandler.o  AnitaSurfHkHandler.o  AnitaTurfRateHandler.o  AnitaAuxiliaryHandler.o rawWebDict.o AnitaCmdEchoHandler.o #  AnitaFileHandler.o     AnitaGenericHeaderHandler.o   AnitaSlowRateHandler.o  plotUtils.o RunNumServer.o 
-CLASS_HEADERS =  AnitaHeaderHandler.h  AnitaHkHandler.h AnitaGpsHandler.h  AnitaMonitorHandler.h AnitaSurfHkHandler.h AnitaTurfRateHandler.h AnitaAuxiliaryHandler.h AnitaCmdEchoHandler.h  #    AnitaFileHandler.h    AnitaGenericHeaderHandler.h    AnitaSlowRateHandler.h  plotUtils.h RunNumServer.h
+LIB_OBJS =  AnitaHeaderHandler.o AnitaHkHandler.o AnitaGpsHandler.o AnitaMonitorHandler.o  AnitaSurfHkHandler.o  AnitaTurfRateHandler.o  AnitaAuxiliaryHandler.o rawWebDict.o AnitaCmdEchoHandler.o AnitaFileHandler.o  #      AnitaGenericHeaderHandler.o   AnitaSlowRateHandler.o  plotUtils.o RunNumServer.o 
+CLASS_HEADERS =  AnitaHeaderHandler.h  AnitaHkHandler.h AnitaGpsHandler.h  AnitaMonitorHandler.h AnitaSurfHkHandler.h AnitaTurfRateHandler.h AnitaAuxiliaryHandler.h AnitaCmdEchoHandler.h  AnitaFileHandler.h #       AnitaGenericHeaderHandler.h    AnitaSlowRateHandler.h  plotUtils.h RunNumServer.h
 
 
 
@@ -87,7 +87,7 @@ ifeq ($(ARCH),aix5)
 else
 ifeq ($(PLATFORM),macosx)
 # We need to make both the .dylib and the .so
-		$(LD) $(SOFLAGS)$@ $(LDFLAGS) $^ $(OutPutOpt) $@ $(EXPLLINKLIBS)
+		$(LD) $(SOFLAGS)$@ $(LDFLAGS) $^ $(OutPutOpt) $@ $(LIBS) $(EXPLLINKLIBS)
 ifneq ($(subst $(MACOSX_MINOR),,1234),1234)
 ifeq ($(MACOSX_MINOR),4)
 		ln -sf $@ $(subst .$(DllSuf),.so,$@)
@@ -102,7 +102,7 @@ ifeq ($(PLATFORM),win32)
 		   $(OutPutOpt)$@
 		$(MT_DLL)
 else
-		$(LD) $(SOFLAGS) $(LDFLAGS) $^ $(OutPutOpt) $@ $(EXPLLINKLIBS)
+		$(LD) $(SOFLAGS) $(LDFLAGS) $^ $(OutPutOpt) $@ $(LIBS) $(EXPLLINKLIBS)
 endif
 endif
 endif

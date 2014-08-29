@@ -9,6 +9,8 @@
 #pragma link C++ class AnitaHkHandler+;
 #pragma link C++ class AnitaMonitorHandler+;
 #pragma link C++ class AnitaSurfHkHandler+;
+#pragma link C++ class AnitaCmdEchoHandler+;
+#pragma link C++ class AnitaFileHandler+;
 
 
 
