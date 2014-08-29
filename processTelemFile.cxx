@@ -92,6 +92,7 @@ int main (int argc, char ** argv)
   free(bigBuffer);
 
   headHandler->loopMap();
+  headHandler->loopEventMap();
   hkHandler->loopMap();
   hkHandler->loopSSMap();
   gpsHandler->loopG12PosMap();
