@@ -60,12 +60,12 @@ int main (int argc, char ** argv)
 {
   bigBuffer = (unsigned short*) malloc(BIG_BUF_SIZE);
   if(argc<3) {
-    std::cerr << "Usage: " << argv[0] << " <run> <telem file> <telem file>\n";
+    std::cerr << "Usage: " << argv[0] << " <los or tdrss> <run> <telem file> <telem file>\n";
     return -1;
   }
-  
+  int losOrTdrss=atoi(argv[1]);
   std::cout << "sizeof(unsigned long): " << sizeof(unsigned long) << "\n";
-  currentRun=atoi(argv[1]);
+  currentRun=atoi(argv[2]);
   //`  return -1;
   //Create the handlers
   std::string rawDir("/unix/anita2/palestine14/telem/raw");
@@ -80,8 +80,13 @@ int main (int argc, char ** argv)
   cmdHandler = new AnitaCmdEchoHandler(rawDir,currentRun);
   
 
-  for(int i=2;i<argc;i++) 
-    processLOSFile(argv[i]);
+  for(int i=3;i<argc;i++) {
+    if(losOrTdrss)
+      processLOSFile(argv[i]);
+    else 
+      processHighRateTDRSSFile(argv[i]);
+  }
+
   free(bigBuffer);
 
   headHandler->loopMap();
@@ -120,7 +125,7 @@ int processHighRateTDRSSFile(char *filename) {
     int losOrSip;
     int oddOrEven;
     unsigned int bufferCount;
-    unsigned int *ulPtr;
+    unsigned long *ulPtr;
     unsigned short numSciBytes;
     unsigned short checksum;
     unsigned short endHdr;
@@ -155,7 +160,7 @@ int processHighRateTDRSSFile(char *filename) {
 //	printf("%x\n",bigBuffer[count]);
 //	printf("%d of %d\n",count,numBytes);
 	count3++;
-	if(count3>1000) break;
+	if(count3>10000) break;
 	if(bigBuffer[count]==0xf00d) {
 	    count3=0;
 	    //	    printf("Got f00d\n");
@@ -163,27 +168,27 @@ int processHighRateTDRSSFile(char *filename) {
 	    startHdr=bigBuffer[count];
 	    auxHdr=bigBuffer[count+1];
 	    idHdr=bigBuffer[count+2];
-//	    printf("startHdr -- %x\n",startHdr);
-//	    printf("auxHdr -- %x\n",auxHdr);
-//	    printf("idHdr -- %x\n",idHdr);
+	    //	    printf("startHdr -- %x (count %d %x)\n",startHdr,count,count);
+	    //	    printf("auxHdr -- %x\n",auxHdr);
+	    //	    printf("idHdr -- %x\n",idHdr);
 	    if(startHdr==0xf00d && auxHdr==0xd0cc && (idHdr&0xfff0)==0xae00) {
 		//Got a tdrss buffer
 		losOrSip=idHdr&0x1;
 		oddOrEven=idHdr&0x2>>1;
-		ulPtr = (unsigned int*) &bigBuffer[count+3];
+		ulPtr = (unsigned long*) &bigBuffer[count+3];
 		bufferCount=*ulPtr;
-		numSciBytes=bigBuffer[count+5];
-//		printf("Buffer %u -- %d bytes\n",bufferCount,numSciBytes);		
-		handleScience((unsigned char*)&bigBuffer[count+6],numSciBytes);
-		checksum=bigBuffer[count+6+(numSciBytes/2)];		
-		swEndHdr=bigBuffer[count+7+(numSciBytes/2)];
-		endHdr=bigBuffer[count+8+(numSciBytes/2)];
-		auxHdr2=bigBuffer[count+9+(numSciBytes/2)];
-//		printf("swEndHdr -- %x\n",swEndHdr);
-//		printf("endHdr -- %x\n",endHdr);
-//		printf("auxHdr2 -- %x\n",auxHdr2);		
+		numSciBytes=bigBuffer[count+2+5];
+		//		printf("Buffer %u -- %d bytes\n",bufferCount,numSciBytes);		
+		handleScience((unsigned char*)&bigBuffer[count+2+6],numSciBytes);
+		checksum=bigBuffer[count+2+6+(numSciBytes/2)];		
+		swEndHdr=bigBuffer[count+2+7+(numSciBytes/2)];
+		endHdr=bigBuffer[count+2+8+(numSciBytes/2)];
+		auxHdr2=bigBuffer[count+2+9+(numSciBytes/2)];
+		//		printf("swEndHdr -- %x  (count %d %x)\n",swEndHdr,count+2+7+(numSciBytes/2),count+2+7+(numSciBytes/2));
+		//		printf("endHdr -- %x\n",endHdr);
+		//		printf("auxHdr2 -- %x\n",auxHdr2);		
 //		return 0;
-		count+=10+(numSciBytes/2);
+		count+=2+10+(numSciBytes/2);
 		continue;
 	    }
 	}
@@ -230,9 +235,9 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	}
 
 
-	// printf("Got %s (%#x) -- (%d bytes)\n",
-	//        packetCodeAsString(gHdr->code),
-	//        gHdr->code,gHdr->numBytes);
+// 	printf("Got %s (%#x) -- (%d bytes)\n",
+// 	       packetCodeAsString(gHdr->code),
+// 	       gHdr->code,gHdr->numBytes);
 	GenericHeader_t *testGHdr=gHdr;
 
 
