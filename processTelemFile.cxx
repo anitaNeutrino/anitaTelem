@@ -20,10 +20,10 @@ using namespace std;
 #include "AnitaTurfRateHandler.h"
 #include "AnitaAuxiliaryHandler.h"
 #include "AnitaCmdEchoHandler.h" 
+#include "AnitaFileHandler.h" 
 
 // #include "configLib/configLib.h"
 // #include "kvpLib/keyValuePair.h"
-// #include "AnitaFileHandler.h" 
 // #include "AnitaGenericHeaderHandler.h"
 // #include "AnitaSlowRateHandler.h"
 
@@ -49,6 +49,7 @@ AnitaTurfRateHandler *turfRateHandler;
 AnitaGpsHandler *gpsHandler;
 AnitaAuxiliaryHandler *auxHandler;
 AnitaCmdEchoHandler *cmdHandler;
+AnitaFileHandler *fileHandler;
 
 int currentRun=0;
 
@@ -78,6 +79,7 @@ int main (int argc, char ** argv)
   turfRateHandler = new AnitaTurfRateHandler(rawDir,currentRun);
   auxHandler = new AnitaAuxiliaryHandler(rawDir,currentRun);
   cmdHandler = new AnitaCmdEchoHandler(rawDir,currentRun);
+  fileHandler = new AnitaFileHandler(rawDir,currentRun);
   
 
   for(int i=3;i<argc;i++) {
@@ -327,7 +329,7 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	    case PACKET_ZIPPED_FILE:
 	      //	      cout << "Got ZippedFile_t\n";
 	      ///		    printf("Boo\n");
-	      //	      fileHandler->processFile((ZippedFile_t*) testGHdr);
+	      fileHandler->processFile((ZippedFile_t*) testGHdr);
 	      break;
 	    case PACKET_CMD_ECHO:
 	      //	      cout << "Got CommandEcho_t\n";
