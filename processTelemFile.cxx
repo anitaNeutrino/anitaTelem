@@ -338,25 +338,23 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 		    
 	    case PACKET_SURF:
 	      //	      cout << "Got RawSurfPacket_t\n";
-	      //	      if(makeEventPlots) headHandler->addRawSurfPacket((RawSurfPacket_t*)testGHdr);
+	      headHandler->addRawSurfPacket((RawSurfPacket_t*)testGHdr);
 	      break;
 	    case PACKET_WV:
 	      //	      cout << "Got RawWaveformPacket_t\n";
-	      //	      if(makeEventPlots) headHandler->addRawWavePacket((RawWaveformPacket_t*)testGHdr);
+	      headHandler->addRawWavePacket((RawWaveformPacket_t*)testGHdr);
 	      break;
 	    case PACKET_ENC_SURF:
 	      //	      cout << "Got EncodedSurfPacketHeader_t\n";
-	      //	      if(makeEventPlots) 
-	      //	      headHandler->addEncSurfPacket((EncodedSurfPacketHeader_t*)testGHdr);
+	      headHandler->addEncSurfPacket((EncodedSurfPacketHeader_t*)testGHdr);
 	      break;
 	    case PACKET_ENC_SURF_PEDSUB:
 	      //	      	      cout << "Got EncodedPedSubbedSurfPacketHeader_t\n";
-	      //	      if(makeEventPlots) 
-	      //		headHandler->addEncPedSubbedSurfPacket((EncodedPedSubbedSurfPacketHeader_t*)testGHdr);
+	      headHandler->addEncPedSubbedSurfPacket((EncodedPedSubbedSurfPacketHeader_t*)testGHdr);
 	      break;
 	    case PACKET_ENC_WV_PEDSUB:
 	      //	      cout << "Got EncodedPedSubbeWavePacketHeader_t\n";
-	      //if(makeEventPlots) headHandler->addEncPedSubbedWavePacket((EncodedPedSubbedChannelPacketHeader_t*)testGHdr);
+	      headHandler->addEncPedSubbedWavePacket((EncodedPedSubbedChannelPacketHeader_t*)testGHdr);
 	      break;
 	      
 	    case PACKET_HKD:	      
