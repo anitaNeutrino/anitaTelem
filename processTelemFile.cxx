@@ -328,7 +328,7 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	      gpsHandler->addGpsGga((GpsGgaStruct_t*) testGHdr);
 	      break;
 	    case PACKET_ZIPPED_FILE:
-	      //	      cout << "Got ZippedFile_t\n";
+	      cout << "Got ZippedFile_t\n";
 	      ///		    printf("Boo\n");
 	      fileHandler->processFile((ZippedFile_t*) testGHdr);
 	      break;
