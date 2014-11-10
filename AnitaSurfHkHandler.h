@@ -19,20 +19,19 @@
 class AnitaSurfHkHandler 
 {   
 public:
-  AnitaSurfHkHandler(std::string rawDir,int run);
+  AnitaSurfHkHandler(std::string rawDir);
     ~AnitaSurfHkHandler();
     
-    void addSurfHk(FullSurfHkStruct_t *hkPtr);
-    void addAveragedSurfHk(AveragedSurfHkStruct_t *hkPtr);
+    void addSurfHk(FullSurfHkStruct_t *hkPtr,int run);
+    void addAveragedSurfHk(AveragedSurfHkStruct_t *hkPtr,int run);
     void loopMap();
     void loopAvgMap();
 
 
 private:
     std::string fRawDir;
-    int fRun;
-    std::map<UInt_t,FullSurfHkStruct_t> fSurfHkMap;
-    std::map<UInt_t,AveragedSurfHkStruct_t> fAvgSurfHkMap;
+    std::map<UInt_t,std::map<UInt_t,FullSurfHkStruct_t> > fSurfHkMap;
+    std::map<UInt_t,std::map<UInt_t,AveragedSurfHkStruct_t> > fAvgSurfHkMap;
 
 
 };

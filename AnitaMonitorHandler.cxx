@@ -22,8 +22,8 @@
 #define EVENT_FILES_PER_DIR 100
 #define MONITOR_PER_FILE 1000
 
-AnitaMonitorHandler::AnitaMonitorHandler(std::string rawDir,int run)
-  :fRawDir(rawDir),fRun(run)
+AnitaMonitorHandler::AnitaMonitorHandler(std::string rawDir)
+  :fRawDir(rawDir)
 {
 
 
@@ -35,26 +35,48 @@ AnitaMonitorHandler::~AnitaMonitorHandler()
 
 }
     
-void AnitaMonitorHandler::addMonitor(MonitorStruct_t *monitorPtr)
+void AnitaMonitorHandler::addMonitor(MonitorStruct_t *monitorPtr,int run)
 {
-  fMonitorMap.insert(std::pair<UInt_t,MonitorStruct_t>(monitorPtr->unixTime,*monitorPtr));
+
+  std::map<UInt_t,std::map<UInt_t, MonitorStruct_t> >::iterator it=fMonitorMap.find(run);
+  if(it!=fMonitorMap.end()) {
+    it->second.insert(std::pair<UInt_t,MonitorStruct_t>(monitorPtr->unixTime,*monitorPtr));
+  }
+  else {
+    std::map<UInt_t, MonitorStruct_t> runMap;
+    runMap.insert(std::pair<UInt_t,MonitorStruct_t>(monitorPtr->unixTime,*monitorPtr));
+    fMonitorMap.insert(std::pair<UInt_t,std::map<UInt_t, MonitorStruct_t> >(run,runMap));
+  }
+}
+
+void AnitaMonitorHandler::addOtherMonitor(OtherMonitorStruct_t *monitorPtr,int run)
+{
+
+  std::map<UInt_t,std::map<UInt_t, OtherMonitorStruct_t> >::iterator it=fOtherMonitorMap.find(run);
+  if(it!=fOtherMonitorMap.end()) {
+    it->second.insert(std::pair<UInt_t,OtherMonitorStruct_t>(monitorPtr->unixTime,*monitorPtr));
+  }
+  else {
+    std::map<UInt_t, OtherMonitorStruct_t> runMap;
+    runMap.insert(std::pair<UInt_t,OtherMonitorStruct_t>(monitorPtr->unixTime,*monitorPtr));
+    fOtherMonitorMap.insert(std::pair<UInt_t,std::map<UInt_t, OtherMonitorStruct_t> >(run,runMap));
+  }
 
 }
 
-void AnitaMonitorHandler::addOtherMonitor(OtherMonitorStruct_t *monitorPtr)
-{
-  fOtherMonitorMap.insert(std::pair<UInt_t,OtherMonitorStruct_t>(monitorPtr->unixTime,*monitorPtr));
 
-}
-
-
-void AnitaMonitorHandler::loopOtherMap() 
+void AnitaMonitorHandler::loopMap() 
 {
   char fileName[FILENAME_MAX];
+
+  std::map<UInt_t,std::map<UInt_t, MonitorStruct_t> >::iterator runIt;
+  for(runIt=fMonitorMap.begin();runIt!=fMonitorMap.end();runIt++) {
+    int fRun=runIt->first;
+
   int fileCount=0;
   std::map<UInt_t,MonitorStruct_t>::iterator it;
   FILE *outFile=NULL;
-  for(it=fMonitorMap.begin();it!=fMonitorMap.end();it++) {
+  for(it=runIt->second.begin();it!=runIt->second.end();it++) {
     MonitorStruct_t *monitorPtr=&(it->second);
     //    std::cout << monitorPtr->unixTime << "\t" << monitorPtr->unixTime << "\t" << 100*(monitorPtr->unixTime/100) << "\n";    
     
@@ -70,7 +92,7 @@ void AnitaMonitorHandler::loopOtherMap()
       gSystem->mkdir(fileName,kTRUE);
       sprintf(fileName,"%s/run%d/house/monitor/sub_%d/sub_%d/mon_%d.dat.gz",fRawDir.c_str(),fRun,monitorPtr->unixTime,monitorPtr->unixTime,monitorPtr->unixTime);
       std::cout << fileName << "\n";
-      outFile=fopen(fileName,"wb");
+      outFile=fopen(fileName,"ab");
       if(!outFile ) {
 	printf("Couldn't open: %s\n",fileName);
 	return;
@@ -87,17 +109,22 @@ void AnitaMonitorHandler::loopOtherMap()
   
   if(outFile) fclose(outFile);
   outFile=NULL;
+  }
 
 }
 
 
-void AnitaMonitorHandler::loopMap() 
+void AnitaMonitorHandler::loopOtherMap() 
 {
   char fileName[FILENAME_MAX];
+
+  std::map<UInt_t,std::map<UInt_t, OtherMonitorStruct_t> >::iterator runIt;
+  for(runIt=fOtherMonitorMap.begin();runIt!=fOtherMonitorMap.end();runIt++) {
+    int fRun=runIt->first;
   int fileCount=0;
   std::map<UInt_t,OtherMonitorStruct_t>::iterator it;
   FILE *outFile=NULL;
-  for(it=fOtherMonitorMap.begin();it!=fOtherMonitorMap.end();it++) {
+  for(it=runIt->second.begin();it!=runIt->second.end();it++) {
     OtherMonitorStruct_t *monitorPtr=&(it->second);
     //    std::cout << monitorPtr->unixTime << "\t" << monitorPtr->unixTime << "\t" << 100*(monitorPtr->unixTime/100) << "\n";    
     
@@ -113,7 +140,7 @@ void AnitaMonitorHandler::loopMap()
       gSystem->mkdir(fileName,kTRUE);
       sprintf(fileName,"%s/run%d/house/monitor/sub_%d/sub_%d/othermon_%d.dat.gz",fRawDir.c_str(),fRun,monitorPtr->unixTime,monitorPtr->unixTime,monitorPtr->unixTime);
       std::cout << fileName << "\n";
-      outFile=fopen(fileName,"wb");
+      outFile=fopen(fileName,"ab");
       if(!outFile ) {
 	printf("Couldn't open: %s\n",fileName);
 	return;
@@ -130,5 +157,5 @@ void AnitaMonitorHandler::loopMap()
   
   if(outFile) fclose(outFile);
   outFile=NULL;
-
+  }
 }

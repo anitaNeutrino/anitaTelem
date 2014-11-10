@@ -18,20 +18,19 @@
 class AnitaMonitorHandler 
 {   
 public:
-  AnitaMonitorHandler(std::string rawDir,int run);
+  AnitaMonitorHandler(std::string rawDir);
     ~AnitaMonitorHandler();
     
-    void addMonitor(MonitorStruct_t *monitorPtr);
-    void addOtherMonitor(OtherMonitorStruct_t *monitorPtr);
+    void addMonitor(MonitorStruct_t *monitorPtr,int run);
+    void addOtherMonitor(OtherMonitorStruct_t *monitorPtr,int run);
     void loopMap();
     void loopOtherMap();
 
 
 private:
     std::string fRawDir;
-    int fRun;
-    std::map<UInt_t, MonitorStruct_t> fMonitorMap;
-    std::map<UInt_t, OtherMonitorStruct_t> fOtherMonitorMap;
+     std::map<UInt_t,std::map<UInt_t, MonitorStruct_t> > fMonitorMap;
+     std::map<UInt_t,std::map<UInt_t, OtherMonitorStruct_t> > fOtherMonitorMap;
 
 
 };

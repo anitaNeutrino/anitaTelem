@@ -19,11 +19,11 @@
 class AnitaTurfRateHandler 
 {   
 public:
-  AnitaTurfRateHandler(std::string rawDir,int run);
+  AnitaTurfRateHandler(std::string rawDir);
     ~AnitaTurfRateHandler();
     
-    void addTurfRate(TurfRateStruct_t *hkPtr);
-    void addSumTurfRate(SummedTurfRateStruct_t *hkPtr);
+    void addTurfRate(TurfRateStruct_t *hkPtr,int run);
+    void addSumTurfRate(SummedTurfRateStruct_t *hkPtr,int run);
     void loopMap();
     void loopSumMap();
 
@@ -31,8 +31,8 @@ public:
 private:
     std::string fRawDir;
     int fRun;
-    std::map<UInt_t,TurfRateStruct_t> fTurfRateMap;
-    std::map<UInt_t,SummedTurfRateStruct_t> fSumTurfRateMap;
+    std::map<UInt_t,std::map<UInt_t,TurfRateStruct_t> > fTurfRateMap;
+    std::map<UInt_t,std::map<UInt_t,SummedTurfRateStruct_t> > fSumTurfRateMap;
 
 
 };

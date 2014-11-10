@@ -19,20 +19,19 @@
 class AnitaHkHandler 
 {   
 public:
-    AnitaHkHandler(std::string rawDir,int run);
+    AnitaHkHandler(std::string rawDir);
     ~AnitaHkHandler();
     
-    void addHk(HkDataStruct_t *hkPtr);
-    void addSSHk(SSHkDataStruct_t *hkPtr);
+    void addHk(HkDataStruct_t *hkPtr, int run);
+    void addSSHk(SSHkDataStruct_t *hkPtr, int run);
     void loopMap();
     void loopSSMap();
 
 
 private:
     std::string fRawDir;
-    int fRun;
-    std::map<UInt_t, HkDataStruct_t> fHkMap;
-    std::map<UInt_t, SSHkDataStruct_t> fSSHkMap;
+    std::map<UInt_t,std::map<UInt_t, HkDataStruct_t> > fHkMap;
+    std::map<UInt_t,std::map<UInt_t, SSHkDataStruct_t> > fSSHkMap;
 
 
 };
