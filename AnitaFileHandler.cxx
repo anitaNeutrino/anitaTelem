@@ -22,24 +22,26 @@ char unzippedBuffer[MAX_FILE_SIZE];
 using namespace std;
 
 
-AnitaFileHandler::AnitaFileHandler(std::string rawDir,int run)
-:fRawDir(rawDir),fRun(run)
+AnitaFileHandler::AnitaFileHandler(std::string awareDir)
+:fAwareDir(awareDir)
 {
-  char fileName[FILENAME_MAX];
-  sprintf(fileName,"%s/run%d/config/archive",fRawDir.c_str(),fRun);
-  sprintf(fileName,"%s/run%d/log/archive",fRawDir.c_str(),fRun);
-  sprintf(fileName,"%s/run%d/aux/archive",fRawDir.c_str(),fRun);
-  gSystem->mkdir(fileName,kTRUE);
 
 }
     
-void AnitaFileHandler::processFile(ZippedFile_t *zfPtr)
+void AnitaFileHandler::processFile(ZippedFile_t *zfPtr,int run)
 {
   //  cout << "Got ZippedFile_t " << zfPtr->filename << "\t" 
   //       << zfPtr->segmentNumber << endl;
   
   char segmentName[FILENAME_MAX];
   char outputFilename[FILENAME_MAX];
+  sprintf(outputFilename,"%s/ANITA3/log/run%d",fAwareDir.c_str(),run);
+  gSystem->mkdir(outputFilename,kTRUE);
+  sprintf(outputFilename,"%s/ANITA3/aux/run%d",fAwareDir.c_str(),run);
+  gSystem->mkdir(outputFilename,kTRUE);
+  sprintf(outputFilename,"%s/ANITA3/config/run%d",fAwareDir.c_str(),run);
+  gSystem->mkdir(outputFilename,kTRUE);
+
   char linkName[FILENAME_MAX];
   char *zippedBuf=(char*) zfPtr;
   int numInputBytes=zfPtr->gHdr.numBytes-sizeof(ZippedFile_t);
@@ -55,7 +57,7 @@ void AnitaFileHandler::processFile(ZippedFile_t *zfPtr)
 	    zfPtr->numUncompressedBytes,numOutputBytes);
   }
   
-  getOutputName(outputFilename,linkName,zfPtr,1);
+  getOutputName(outputFilename,linkName,zfPtr,1,run);
   
   FILE *fpOut = fopen(outputFilename,"w");
   retVal=fwrite(unzippedBuffer,numOutputBytes,1,fpOut);
@@ -66,11 +68,11 @@ void AnitaFileHandler::processFile(ZippedFile_t *zfPtr)
   
   if(zfPtr->segmentNumber==0) {
     //Okay this is a bit silly but, it should probably work
-    getOutputName(outputFilename,linkName,zfPtr,0);
+    getOutputName(outputFilename,linkName,zfPtr,0,run);
     ofstream OutFile(outputFilename);
     for(int segment=0;segment<100;segment++) {
       zfPtr->segmentNumber=segment;
-	getOutputName(segmentName,linkName,zfPtr,1);
+      getOutputName(segmentName,linkName,zfPtr,1,run);
 	ifstream InFile(segmentName);
 	if(!InFile) break;
 	//	cout << "Processing: " << segmentName << endl;
@@ -93,60 +95,60 @@ void AnitaFileHandler::processFile(ZippedFile_t *zfPtr)
     }
 }
 
-void AnitaFileHandler::getOutputName(char *outputFilename,char *linkName,ZippedFile_t *zfPtr,int useSegment)
+void AnitaFileHandler::getOutputName(char *outputFilename,char *linkName,ZippedFile_t *zfPtr,int useSegment,int fRun)
 {
   
   //Now output the file
   if(useSegment) {
     if(strstr(zfPtr->filename,"config")) {
       //Have a config file
-      sprintf(outputFilename,"%s/run%d/config/archive/%s.%u_%u",fRawDir.c_str(),fRun,zfPtr->filename,zfPtr->unixTime,zfPtr->segmentNumber);
-      sprintf(linkName,"%s/run%d/config/%s",fRawDir.c_str(),fRun,zfPtr->filename);
+      sprintf(outputFilename,"%s/ANITA3/config/run%d/archive/%s.%u_%u",fAwareDir.c_str(),fRun,zfPtr->filename,zfPtr->unixTime,zfPtr->segmentNumber);
+      sprintf(linkName,"%s/ANITA3/run%d/config/%s",fAwareDir.c_str(),fRun,zfPtr->filename);
     }
     else if(strstr(zfPtr->filename,"messages")) {
 	  //Have /var/log/messages
-      sprintf(outputFilename,"%s/run%d/log/archive/messages.%u_%u",fRawDir.c_str(),fRun,
+      sprintf(outputFilename,"%s/ANITA3/log/run%d/archive/messages.%u_%u",fAwareDir.c_str(),fRun,
 		  zfPtr->unixTime,zfPtr->segmentNumber);
-      sprintf(linkName,"%s/run%d/log/messages",fRawDir.c_str(),fRun);
+      sprintf(linkName,"%s/ANITA3/log/run%d/messages",fAwareDir.c_str(),fRun);
 	}
     else if(strstr(zfPtr->filename,"anita")) {
       //Have /var/log/messages
-      sprintf(outputFilename,"%s/run%d/log/archive/anita.log.%u_%u",fRawDir.c_str(),fRun,
+      sprintf(outputFilename,"%s/ANITA3//log/run%darchive/anita.log.%u_%u",fAwareDir.c_str(),fRun,
 		  zfPtr->unixTime,zfPtr->segmentNumber);
-      sprintf(linkName,"%s/run%d/log/anita.log",fRawDir.c_str(),fRun);
+      sprintf(linkName,"%s/ANITA3/log/run%d/anita.log",fAwareDir.c_str(),fRun);
     }
     else {
       //Other file
-      sprintf(outputFilename,"%s/run%d/aux/archive/%s.%u_%u",
-	      fRawDir.c_str(),fRun,zfPtr->filename,
+      sprintf(outputFilename,"%s/ANITA3/aux/run%darchive/%s.%u_%u",
+	      fAwareDir.c_str(),fRun,zfPtr->filename,
 	      zfPtr->unixTime,zfPtr->segmentNumber);
-      sprintf(linkName,"%s/run%d/aux/%s",fRawDir.c_str(),fRun,zfPtr->filename);
+      sprintf(linkName,"%s/ANITA3/aux/run%d/%s",fAwareDir.c_str(),fRun,zfPtr->filename);
     }
   }
   else {
     if(strstr(zfPtr->filename,"config")) {
       //Have a config file
-	  sprintf(outputFilename,"%s/run%d/config/archive/%s.%u",fRawDir.c_str(),fRun,zfPtr->filename,zfPtr->unixTime);
-	  sprintf(linkName,"%s/run%d/config/%s",fRawDir.c_str(),fRun,zfPtr->filename);
+	  sprintf(outputFilename,"%s/ANITA3/config/run%d/archive/%s.%u",fAwareDir.c_str(),fRun,zfPtr->filename,zfPtr->unixTime);
+	  sprintf(linkName,"%s/ANITA3/config/run%d/%s",fAwareDir.c_str(),fRun,zfPtr->filename);
 	}
 	else if(strstr(zfPtr->filename,"messages")) {
 	  //Have /var/log/messages
-	  sprintf(outputFilename,"%s/run%d/log/archive/messages.%u",fRawDir.c_str(),fRun,
+	  sprintf(outputFilename,"%s/ANITA3/log/run%d/archive/messages.%u",fAwareDir.c_str(),fRun,
 		  zfPtr->unixTime);
-	  sprintf(linkName,"%s/run%d/log/messages",fRawDir.c_str(),fRun);
+	  sprintf(linkName,"%s/ANITA3/log/run%d/messages",fAwareDir.c_str(),fRun);
 	}
 	else if(strstr(zfPtr->filename,"anita")) {
 	  //Have /var/log/messages
-	  sprintf(outputFilename,"%s/run%d/log/archive/anita.log.%u",fRawDir.c_str(),fRun,
+	  sprintf(outputFilename,"%s/ANITA3/log/run%d/archive/anita.log.%u",fAwareDir.c_str(),fRun,
 		  zfPtr->unixTime);
-	  sprintf(linkName,"%s/run%d/log/anita.log",fRawDir.c_str(),fRun);
+	  sprintf(linkName,"%s/ANITA3/log/run%d/anita.log",fAwareDir.c_str(),fRun);
 	}
 	else {
 	  //Other file
-	  sprintf(outputFilename,"%s/run%d/aux/archive/%s.%u",
-		  fRawDir.c_str(),fRun,zfPtr->filename,
+	  sprintf(outputFilename,"%s/ANITA3/aux/run%d/archive/%s.%u",
+		  fAwareDir.c_str(),fRun,zfPtr->filename,
 		  zfPtr->unixTime);
-	  sprintf(linkName,"%s/run%d/aux/%s",fRawDir.c_str(),fRun,zfPtr->filename);
+	  sprintf(linkName,"%s/ANITA3/aux/run%d/%s",fAwareDir.c_str(),fRun,zfPtr->filename);
 	}
   }
 }

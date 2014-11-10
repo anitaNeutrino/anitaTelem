@@ -50,6 +50,7 @@ void loadRunNumberMap();
 void saveRunNumberMap();
 UInt_t getRunNumberFromTime(UInt_t unixTime);
 UInt_t getRunNumberFromEvent(UInt_t eventNumber);
+void addRunToMap(UInt_t run, UInt_t eventNumber, UInt_t unixTime);
 
 unsigned short *bigBuffer;
 
@@ -64,7 +65,6 @@ AnitaAuxiliaryHandler *auxHandler;
 AnitaCmdEchoHandler *cmdHandler;
 AnitaFileHandler *fileHandler;
 
-int currentRun=0;
 char *awareOutputDir;
 
 int lastLosNumBytesNumber=0;
@@ -92,7 +92,6 @@ int main (int argc, char ** argv)
   }
   int losOrTdrss=1;
   std::cout << "sizeof(unsigned long): " << sizeof(unsigned long) << "\n";
-  currentRun=100;
   //`  return -1;
   //Create the handlers
   std::string rawDir("/anitaStorage/antarctica14//telem/raw");
@@ -116,8 +115,8 @@ int main (int argc, char ** argv)
   turfRateHandler = new AnitaTurfRateHandler(rawDir);
   auxHandler = new AnitaAuxiliaryHandler(rawDir);
 
-  cmdHandler = new AnitaCmdEchoHandler(awareOutputDir,currentRun);
-  fileHandler = new AnitaFileHandler(rawDir,currentRun);
+  cmdHandler = new AnitaCmdEchoHandler(awareOutputDir);
+  fileHandler = new AnitaFileHandler(awareOutputDir);
   
 
   for(int i=3;i<argc;i++) {
@@ -314,6 +313,7 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	EncodedSurfPacketHeader_t *pack3=0;
 	RawWaveformPacket_t *pack4=0;
 	RawSurfPacket_t *rsp=0;
+	RunStart_t *runStartPtr=0;
 	if((checkVal==0) && testGHdr>0) {	  
 	  //	  if(testGHdr->code>0) ghdHandler->addHeader(testGHdr);
 	    //	    printf("Got %s (%#x) -- (%d bytes)\n",
@@ -382,7 +382,7 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	    case PACKET_ZIPPED_FILE:
 	      cout << "Got ZippedFile_t\n";
 	      ///		    printf("Boo\n");
-	      fileHandler->processFile((ZippedFile_t*) testGHdr);
+	      fileHandler->processFile((ZippedFile_t*) testGHdr,getRunNumberFromTime(((ZippedFile_t*) testGHdr)->unixTime));
 	      break;
 	    case PACKET_CMD_ECHO:
 	      cout << "Got CommandEcho_t\n";
@@ -447,6 +447,11 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	    case PACKET_LOGWATCHD_START:
 	      //	      cout << "Got Log Watchd Start Packet\n";
 	      auxHandler->addLogWatchdStart((LogWatchdStart_t*)testGHdr,getRunNumberFromTime(((LogWatchdStart_t*) testGHdr)->unixTime));
+	      break;
+	    case PACKET_RUN_START:
+	      cout << "Got Run Start Packet\n";
+	      runStartPtr = (RunStart_t*)testGHdr;
+	      addRunToMap(runStartPtr->runNumber,runStartPtr->eventNumber,runStartPtr->unixTime);
 	      break;
 	      
 	    default: 
@@ -769,3 +774,19 @@ UInt_t getRunNumberFromEvent(UInt_t eventNumber)
   std::cout << "Couldn't get run number from eventNumber " << eventNumber << "\n" ;
   return -1;
 }
+
+void addRunToMap(UInt_t run, UInt_t eventNumber, UInt_t unixTime) 
+{
+  std::map<UInt_t,UInt_t>::iterator it=fRunToEventMap.find(run);
+  if(it==fRunToEventMap.end()) {
+    //Don't have this run
+    fTimeRunMap.insert(std::pair<UInt_t,UInt_t>(unixTime,run));      
+    fEventRunMap.insert(std::pair<UInt_t,UInt_t>(eventNumber,run));      
+    fRunToEventMap.insert(std::pair<UInt_t,UInt_t>(run,eventNumber)); 
+  }
+  else {
+    //Maybe do something clever
+    if(it->second > eventNumber) it->second=eventNumber;    
+  }
+}
+
