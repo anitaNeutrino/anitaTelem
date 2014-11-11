@@ -1,9 +1,12 @@
 #include <iostream>
 #include <fstream>
+#include <map>
 #include <unistd.h>
 #include <cstdlib>
 #include <signal.h>  
+
 #include <sys/stat.h>
+
 using namespace std;
 
 
@@ -37,6 +40,16 @@ void handleScience(unsigned char *buffer,unsigned short numBytes);
 int processHighRateTDRSSFile(char *filename);
 int processLOSFile(char *filename);
 int guessCode(SSHkDataStruct_t *hkPtr);
+int getLastLosRunNumber() ;
+int getLastLosFileNumber() ;
+int getLastLosNumBytesNumber();
+void updateLastLosFileNumber();
+void updateLastLosRunNumber();
+void updateLastLosNumBytesNumber();
+void loadRunNumberMap();
+void saveRunNumberMap();
+UInt_t getRunNumberFromTime(UInt_t unixTime);
+UInt_t getRunNumberFromEvent(UInt_t eventNumber);
 
 unsigned short *bigBuffer;
 
@@ -52,6 +65,18 @@ AnitaCmdEchoHandler *cmdHandler;
 AnitaFileHandler *fileHandler;
 
 int currentRun=0;
+char *awareOutputDir;
+
+int lastLosNumBytesNumber=0;
+int lastLosRunNumber=0;
+int lastLosFileNumber=0;
+
+std::map<UInt_t,UInt_t> fTimeRunMap;
+std::map<UInt_t,UInt_t> fEventRunMap;
+
+
+
+
 
 #define MIN_LOS_SIZE 900000
 #define MIN_TDRSS_SIZE 40000
@@ -69,7 +94,18 @@ int main (int argc, char ** argv)
   currentRun=atoi(argv[2]);
   //`  return -1;
   //Create the handlers
-  std::string rawDir("/unix/anita2/palestine14/telem/raw");
+  std::string rawDir("/anitaStorage/antarctica14//telem/raw");
+
+  awareOutputDir=getenv("AWARE_OUTPUT_DIR");
+  if(!awareOutputDir) {
+    std::cout << "AWARE_OUTPUT_DIR not set using default\n";
+    awareOutputDir=(char*)"/anitaStorage/antarctica14/telem/aware/output";
+  }
+  
+  lastLosRunNumber=getLastLosRunNumber();
+  lastLosFileNumber=getLastLosFileNumber();
+  loadRunNumberMap();
+  
 
   headHandler = new AnitaHeaderHandler(rawDir,currentRun);
   hkHandler = new AnitaHkHandler(rawDir,currentRun);
@@ -78,7 +114,8 @@ int main (int argc, char ** argv)
   surfhkHandler = new AnitaSurfHkHandler(rawDir,currentRun);
   turfRateHandler = new AnitaTurfRateHandler(rawDir,currentRun);
   auxHandler = new AnitaAuxiliaryHandler(rawDir,currentRun);
-  cmdHandler = new AnitaCmdEchoHandler(rawDir,currentRun);
+
+  cmdHandler = new AnitaCmdEchoHandler(awareOutputDir,currentRun);
   fileHandler = new AnitaFileHandler(rawDir,currentRun);
   
 
@@ -111,10 +148,15 @@ int main (int argc, char ** argv)
   auxHandler->loopGpsdStartMap();
   auxHandler->loopLogWatchdStartMap();
   cmdHandler->loopMaps();
+
+  updateLastLosRunNumber();
+  updateLastLosFileNumber();
+  updateLastLosNumBytesNumber();
 }
 
 
 int processHighRateTDRSSFile(char *filename) {
+  
 
     int numBytes=0,count=0;
     FILE *tdrssFile;
@@ -216,6 +258,7 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
     time_t nowTime;
     time(&nowTime);
     unsigned long lastCount=count-1;
+    int run=0;
     while(count<(unsigned long)(numBytes-1)) {
       if(count==lastCount)
 	count++;
@@ -265,6 +308,11 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	AnitaEventHeader_t *hdPtr=0;
 	FullSurfHkStruct_t *surfPtr=0;
 	SSHkDataStruct_t *sshkPtr=0;
+	EncodedPedSubbedChannelPacketHeader_t *pack1=0;
+	EncodedPedSubbedSurfPacketHeader_t *pack2=0;
+	EncodedSurfPacketHeader_t *pack3=0;
+	RawWaveformPacket_t *pack4=0;
+	RawSurfPacket_t *rsp=0;
 	if((checkVal==0) && testGHdr>0) {	  
 	  //	  if(testGHdr->code>0) ghdHandler->addHeader(testGHdr);
 	    //	    printf("Got %s (%#x) -- (%d bytes)\n",
@@ -274,7 +322,8 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	    case PACKET_HD:
 	      //	      cout << "Got Header\n";
 	      hdPtr= (AnitaEventHeader_t*)testGHdr;
-	      headHandler->addHeader(hdPtr);
+	      run=getRunNumberFromTime(hdPtr->unixTime);
+	      headHandler->addHeader(hdPtr,run);
 	      break;
 	    case PACKET_SURF_HK:
 	      //	      cout << "Got SurfHk\n";
@@ -333,29 +382,34 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	      fileHandler->processFile((ZippedFile_t*) testGHdr);
 	      break;
 	    case PACKET_CMD_ECHO:
-	      //	      cout << "Got CommandEcho_t\n";
+	      cout << "Got CommandEcho_t\n";
 	      cmdHandler->addCmdEcho((CommandEcho_t*) testGHdr);
 	      break;
 		    
 	    case PACKET_SURF:
 	      //	      cout << "Got RawSurfPacket_t\n";
-	      headHandler->addRawSurfPacket((RawSurfPacket_t*)testGHdr);
+	      rsp=(RawSurfPacket_t*)testGHdr;	  
+	      headHandler->addRawSurfPacket((RawSurfPacket_t*)testGHdr,getRunNumberFromEvent(rsp->eventNumber));
 	      break;
 	    case PACKET_WV:
 	      //	      cout << "Got RawWaveformPacket_t\n";
-	      headHandler->addRawWavePacket((RawWaveformPacket_t*)testGHdr);
+	      pack4=(RawWaveformPacket_t*)testGHdr;
+	      headHandler->addRawWavePacket((RawWaveformPacket_t*)testGHdr,getRunNumberFromEvent(pack4->eventNumber));
 	      break;
 	    case PACKET_ENC_SURF:
 	      //	      cout << "Got EncodedSurfPacketHeader_t\n";
-	      headHandler->addEncSurfPacket((EncodedSurfPacketHeader_t*)testGHdr);
+	      pack3=(EncodedSurfPacketHeader_t*)testGHdr;
+	      headHandler->addEncSurfPacket(pack3,getRunNumberFromEvent(pack3->eventNumber));
 	      break;
 	    case PACKET_ENC_SURF_PEDSUB:
 	      //	      	      cout << "Got EncodedPedSubbedSurfPacketHeader_t\n";
-	      headHandler->addEncPedSubbedSurfPacket((EncodedPedSubbedSurfPacketHeader_t*)testGHdr);
+	      pack2=(EncodedPedSubbedSurfPacketHeader_t*)testGHdr;
+	      headHandler->addEncPedSubbedSurfPacket(pack2,getRunNumberFromEvent(pack2->eventNumber));
 	      break;
 	    case PACKET_ENC_WV_PEDSUB:
 	      //	      cout << "Got EncodedPedSubbeWavePacketHeader_t\n";
-	      headHandler->addEncPedSubbedWavePacket((EncodedPedSubbedChannelPacketHeader_t*)testGHdr);
+	      pack1=(EncodedPedSubbedChannelPacketHeader_t*)testGHdr;
+	      headHandler->addEncPedSubbedWavePacket(pack1,getRunNumberFromEvent(pack1->eventNumber));
 	      break;
 	      
 	    case PACKET_HKD:	      
@@ -427,13 +481,106 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
        
 }
 
+void updateLastLosRunNumber() {
+  std::cout << "updateLastLosRunNumber\t" << lastLosRunNumber << "\n";
+  char fileName[FILENAME_MAX];
+  sprintf(fileName,"%s/ANITA3/db/lastLosRun",awareOutputDir);
+  std::ofstream RunFile(fileName);
+  if(RunFile) {
+    RunFile << lastLosRunNumber << "\n";
+    RunFile.close();
+  } 
+}
+
+void updateLastLosFileNumber() {
+  std::cout << "updateLastLosFileNumber\t" << lastLosFileNumber << "\n";
+  char fileName[FILENAME_MAX];
+  sprintf(fileName,"%s/ANITA3/db/lastLosFile",awareOutputDir);
+  std::ofstream FileFile(fileName);
+  if(FileFile) {
+    FileFile << lastLosFileNumber << "\n";
+    FileFile.close();
+  } 
+}
+
+
+void updateLastLosNumBytesNumber() {
+  std::cout << "updateLastLosNumBytesNumber\t" << lastLosNumBytesNumber << "\n";
+  char fileName[FILENAME_MAX];
+  sprintf(fileName,"%s/ANITA3/db/lastLosNumBytes",awareOutputDir);
+  std::ofstream NumBytesNumBytes(fileName);
+  if(NumBytesNumBytes) {
+    NumBytesNumBytes << lastLosNumBytesNumber << "\n";
+    NumBytesNumBytes.close();
+  } 
+}
+
+
+int getLastLosRunNumber()  {
+  char fileName[FILENAME_MAX];
+  sprintf(fileName,"%s/ANITA3/db/lastLosRun",awareOutputDir);
+  std::ifstream RunFile(fileName);
+  if(RunFile) {
+    RunFile >> lastLosRunNumber;
+    return lastLosRunNumber;
+  }
+  return -1;
+}
+
+int getLastLosNumBytesNumber()  {
+  char fileName[FILENAME_MAX];
+  sprintf(fileName,"%s/ANITA3/db/lastLosNumBytes",awareOutputDir);
+  std::ifstream RunFile(fileName);
+  if(RunFile) {
+    RunFile >> lastLosNumBytesNumber;
+    return lastLosNumBytesNumber;
+  }
+  return -1;
+}
+
+int getLastLosFileNumber()  {
+  char fileName[FILENAME_MAX];
+  sprintf(fileName,"%s/ANITA3/db/lastLosFile",awareOutputDir);
+  std::ifstream LosFile(fileName);
+  if(LosFile) {
+    LosFile >> lastLosFileNumber;
+    return lastLosFileNumber;
+  }
+  return -1;
+}
+
 
 int processLOSFile(char *filename) {
   static int lastNumBytes=0;
+  static int lastRunNumberThisTime=0;
+  static int lastFileNumberThisTime=0;
   //  static unsigned int lastUnixTime=0;
   lastNumBytes=0;
+  int thisFileNumber=0;
+  int thisRunNumber=0;
 
-  //  cout << "processLOSFile: " << filename << "\t" << lastLosFile << "\t" << currentLosFile << endl;
+  const char *losFileString = gSystem->BaseName(filename);
+  const char *losDirString = gSystem->BaseName(gSystem->DirName(filename));
+
+  sscanf(losFileString,"%06d",&thisFileNumber);
+  sscanf(losDirString,"%06d",&thisRunNumber);
+  cout << "processLOSFile: " << filename << "\t" << losFileString << "\t" << losDirString << "\t" << thisFileNumber <<  "\t" << thisRunNumber << "\t" << lastLosFileNumber << "\t" << lastLosRunNumber << endl;
+
+  int newRun=-1;
+  if(thisRunNumber>lastLosRunNumber)
+    newRun=1;
+  else if(thisRunNumber==lastLosRunNumber) {
+    if(thisFileNumber==lastLosFileNumber) {
+      newRun=0;
+      lastNumBytes=getLastLosNumBytesNumber();
+    }
+    else if(thisFileNumber>lastLosFileNumber) {
+      newRun=1;
+      lastNumBytes=0;
+    }
+  }
+  
+  if(newRun<0) return 0;
 
   int numBytes=0,count=0;
   FILE *losFile;
@@ -454,42 +601,43 @@ int processLOSFile(char *filename) {
   unsigned short swEndHdr;
   unsigned short auxHdr2;
 
-    losFile=fopen(filename,"rb");
-    if(!losFile) {
-//	printf("Couldn't open: %s\n",filename);
-	return -1;
-    }
-
-    
-    numBytes=fread(bigBuffer,1,BIG_BUF_SIZE,losFile);
-    if(numBytes<=0) {
-      fclose(losFile);
-      return -1;
-    }
-
-    //    printf("numBytes %d, lastNumBytes %d\n",numBytes,lastNumBytes);
-    if(numBytes==lastNumBytes) {
-      //No new data
-      fclose(losFile);
-      return 2;
-    }
-    count=lastNumBytes;
-    lastNumBytes=numBytes;
-    cout << "losFile: " << filename << endl;
-    struct stat buf;
-    //    int retVal2=
-
-
-    
-    stat(filename,&buf);
-    //    ghdHandler->newLosFile(currentLosRun,currentLosFile,buf.st_mtime);
-    printf("Read %d bytes from %s\n",numBytes,filename);
+  losFile=fopen(filename,"rb");
+  if(!losFile) {
+    //	printf("Couldn't open: %s\n",filename);
+    return -1;
+  }
+  
+  
+  numBytes=fread(bigBuffer,1,BIG_BUF_SIZE,losFile);
+  if(numBytes<=0) {
     fclose(losFile);
-    int count3=0;
+    return -1;
+  }
+  
+  printf("numBytes %d, lastNumBytes %d\n",numBytes,lastNumBytes);
+  if(numBytes==lastNumBytes) {
+    //No new data
+    fclose(losFile);
+    return 2;
+  }
+  count=lastNumBytes;
+  lastNumBytes=numBytes;
+  lastLosNumBytesNumber=numBytes;
+  cout << "losFile: " << filename << endl;
+  struct stat buf;
+  //    int retVal2=
+  
+  
+    
+  stat(filename,&buf);
+  //    ghdHandler->newLosFile(currentLosRun,currentLosFile,buf.st_mtime);
+  printf("Read %d bytes from %s\n",numBytes,filename);
+  fclose(losFile);
+  int count3=0;
 
     //    for(int i=0;i<100;i++)
       //      printf("%d\t%#x\n",i,bigBuffer[i]);
-    while(count<numBytes) {
+  while(count<numBytes) {
       //      printf("%d -- %x\n",count,bigBuffer[count]);
       //      printf("%d of %d\n",count,numBytes);
 	count3++;
@@ -538,7 +686,11 @@ int processLOSFile(char *filename) {
 	count++;
     }
 
-    return 0;
+
+  lastLosRunNumber=thisRunNumber;
+  lastLosFileNumber=thisFileNumber;
+
+  return 0;
 
 }
 
@@ -556,3 +708,55 @@ int guessCode(SSHkDataStruct_t *hkPtr) {
   return IP320_RAW;
 }
 
+
+void loadRunNumberMap()
+{
+  UInt_t runNumber;
+  UInt_t unixTime;
+  UInt_t eventNumber;
+  char fileName[FILENAME_MAX];
+  sprintf(fileName,"%s/ANITA3/db/runNumberMap",awareOutputDir);
+  std::ifstream RunFile(fileName);
+  if(RunFile) {    
+    while(RunFile >> runNumber >> unixTime) {
+      //      std::cout << runNumber << "\t" << unixTime << "\n";
+      fTimeRunMap.insert(std::pair<UInt_t,UInt_t>(unixTime,runNumber));      
+      fEventRunMap.insert(std::pair<UInt_t,UInt_t>(eventNumber,runNumber));      
+    }
+  }
+}
+
+void saveRunNumberMap()
+{
+  char fileName[FILENAME_MAX];
+  sprintf(fileName,"%s/ANITA3/db/runNumberMap",awareOutputDir);
+  std::ofstream RunFile(fileName);
+
+  if(RunFile) {
+    std::map<UInt_t,UInt_t>::iterator it;
+    for(it=fTimeRunMap.begin();it!=fTimeRunMap.end();it++) {
+      RunFile << it->second << "\t" << it->first << "\n";
+    }
+    RunFile.close();
+  }
+}
+
+UInt_t getRunNumberFromTime(UInt_t unixTime)
+{
+  std::map<UInt_t,UInt_t>::iterator it=fTimeRunMap.lower_bound(unixTime);
+  if(it!=fTimeRunMap.end()) {
+    //    std::cout << it->first << "\t" << it->second << "\t" << unixTime << "\n";
+    return it->second;
+  }
+  return -1;
+}
+
+UInt_t getRunNumberFromEvent(UInt_t eventNumber)
+{
+  std::map<UInt_t,UInt_t>::iterator it=fEventRunMap.lower_bound(eventNumber);
+  if(it!=fEventRunMap.end()) {
+    //    std::cout << it->first << "\t" << it->second << "\t" << unixTime << "\n";
+    return it->second;
+  }
+  return -1;
+}

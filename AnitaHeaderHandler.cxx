@@ -36,9 +36,17 @@ AnitaHeaderHandler::~AnitaHeaderHandler()
 
 }
     
-void AnitaHeaderHandler::addHeader(AnitaEventHeader_t *hdPtr)
+void AnitaHeaderHandler::addHeader(AnitaEventHeader_t *hdPtr, UInt_t run)
 {
-  fHeadMap.insert(std::pair<UInt_t,AnitaEventHeader_t>(hdPtr->eventNumber,*hdPtr));
+  std::map<UInt_t,std::map<UInt_t, AnitaEventHeader_t> >::iterator it= fHeadMap.find(run);
+  if(it!=fHeadMap.end()) {
+    it->second.insert(std::pair<UInt_t,AnitaEventHeader_t>(hdPtr->eventNumber,*hdPtr));
+  }
+  else {
+    std::map<UInt_t, AnitaEventHeader_t> runMap;
+    runMap.insert(std::pair<UInt_t,AnitaEventHeader_t>(hdPtr->eventNumber,*hdPtr));
+    fHeadMap.insert(std::pair<UInt_t,std::map<UInt_t, AnitaEventHeader_t> >(run,runMap));    
+  }
 
 }
 
@@ -47,40 +55,44 @@ void AnitaHeaderHandler::loopMap()
 {
   char fileName[FILENAME_MAX];
   int lastFileNumber=-1;
-  std::map<UInt_t,AnitaEventHeader_t>::iterator it;
-  FILE *outFile=NULL;
-  for(it=fHeadMap.begin();it!=fHeadMap.end();it++) {
-    AnitaEventHeader_t *hdPtr=&(it->second);
-    //    std::cout << hdPtr->unixTime << "\t" << hdPtr->eventNumber << "\t" << 100*(hdPtr->eventNumber/100) << "\n";    
-    int fileNumber=100*(hdPtr->eventNumber/100);
-    //    processHeader(hdPtr);
-    
-    //Make base dir
-    int dirNumber=(EVENTS_PER_FILE*EVENT_FILES_PER_DIR*EVENT_FILES_PER_DIR)*(hdPtr->eventNumber/(EVENTS_PER_FILE*EVENT_FILES_PER_DIR*EVENT_FILES_PER_DIR));    
-    //Make sub dir
-    int subDirNumber=(EVENTS_PER_FILE*EVENT_FILES_PER_DIR)*(hdPtr->eventNumber/(EVENTS_PER_FILE*EVENT_FILES_PER_DIR));
+  std::map<UInt_t,std::map<UInt_t, AnitaEventHeader_t> >::iterator runIt;
+  for(runIt=fHeadMap.begin();runIt!=fHeadMap.end();runIt++) {    
+    std::map<UInt_t,AnitaEventHeader_t>::iterator it;
+    FILE *outFile=NULL;
+    UInt_t run=runIt->first;
+    for(it=(runIt->second).begin();it!=(runIt->second).end();it++) {
 
-    if(fileNumber!=lastFileNumber) {
-      //Create a file
-      if(outFile) fclose(outFile);
-      outFile=NULL;
-
-      sprintf(fileName,"%s/run%d/event/ev%d/ev%d",fRawDir.c_str(),fRun,dirNumber,subDirNumber);
-      gSystem->mkdir(fileName,kTRUE);
-      sprintf(fileName,"%s/run%d/event/ev%d/ev%d/hd_%d.dat.gz",fRawDir.c_str(),fRun,dirNumber,subDirNumber,fileNumber);
-      outFile=fopen(fileName,"wb");
-      if(!outFile ) {
-	printf("Couldn't open: %s\n",fileName);
-	return;
+      AnitaEventHeader_t *hdPtr=&(it->second);
+      //    std::cout << hdPtr->unixTime << "\t" << hdPtr->eventNumber << "\t" << 100*(hdPtr->eventNumber/100) << "\n";    
+      int fileNumber=100*(hdPtr->eventNumber/100);
+      //    processHeader(hdPtr);
+      
+      //Make base dir
+      int dirNumber=(EVENTS_PER_FILE*EVENT_FILES_PER_DIR*EVENT_FILES_PER_DIR)*(hdPtr->eventNumber/(EVENTS_PER_FILE*EVENT_FILES_PER_DIR*EVENT_FILES_PER_DIR));    
+      //Make sub dir
+      int subDirNumber=(EVENTS_PER_FILE*EVENT_FILES_PER_DIR)*(hdPtr->eventNumber/(EVENTS_PER_FILE*EVENT_FILES_PER_DIR));
+      
+      if(fileNumber!=lastFileNumber) {
+	//Create a file
+	if(outFile) fclose(outFile);
+	outFile=NULL;
+	
+	sprintf(fileName,"%s/run%d/event/ev%d/ev%d",fRawDir.c_str(),run,dirNumber,subDirNumber);
+	gSystem->mkdir(fileName,kTRUE);
+	sprintf(fileName,"%s/run%d/event/ev%d/ev%d/hd_%d.dat.gz",fRawDir.c_str(),run,dirNumber,subDirNumber,fileNumber);
+	outFile=fopen(fileName,"ab");
+	if(!outFile ) {
+	  printf("Couldn't open: %s\n",fileName);
+	  return;
+	}
       }
+      lastFileNumber=fileNumber;
+      fwrite(hdPtr,sizeof(AnitaEventHeader_t),1,outFile);
     }
-    lastFileNumber=fileNumber;
-    fwrite(hdPtr,sizeof(AnitaEventHeader_t),1,outFile);
-  }
   
-  if(outFile) fclose(outFile);
-  outFile=NULL;
-
+    if(outFile) fclose(outFile);
+    outFile=NULL;
+  }
 }
 
 
@@ -88,49 +100,55 @@ void AnitaHeaderHandler::loopEventMap()
 {
   char fileName[FILENAME_MAX];
   int lastFileNumber=-1;
-  std::map<UInt_t,PedSubbedEventBody_t>::iterator it;
-  FILE *outFile=NULL;
-  for(it=fEventMap.begin();it!=fEventMap.end();it++) {
-    PedSubbedEventBody_t *bdPtr=&(it->second);
-    //    std::cout << bdPtr->unixTime << "\t" << bdPtr->eventNumber << "\t" << 100*(bdPtr->eventNumber/100) << "\n";    
-    int fileNumber=100*(bdPtr->eventNumber/100);
-    //    processHeader(bdPtr);
+
+  std::map<UInt_t,std::map<UInt_t, PedSubbedEventBody_t> >::iterator runIt;
+  for(runIt=fEventMap.begin();runIt!=fEventMap.end();runIt++) {    
     
-    //Make base dir
-    int dirNumber=(EVENTS_PER_FILE*EVENT_FILES_PER_DIR*EVENT_FILES_PER_DIR)*(bdPtr->eventNumber/(EVENTS_PER_FILE*EVENT_FILES_PER_DIR*EVENT_FILES_PER_DIR));    
-    //Make sub dir
-    int subDirNumber=(EVENTS_PER_FILE*EVENT_FILES_PER_DIR)*(bdPtr->eventNumber/(EVENTS_PER_FILE*EVENT_FILES_PER_DIR));
-
-    if(fileNumber!=lastFileNumber) {
-      //Create a file
-      if(outFile) fclose(outFile);
-      outFile=NULL;
-
-      sprintf(fileName,"%s/run%d/event/ev%d/ev%d",fRawDir.c_str(),fRun,dirNumber,subDirNumber);
-      gSystem->mkdir(fileName,kTRUE);
-      sprintf(fileName,"%s/run%d/event/ev%d/ev%d/psev_%d.dat.gz",fRawDir.c_str(),fRun,dirNumber,subDirNumber,fileNumber);
-      outFile=fopen(fileName,"wb");
-      if(!outFile ) {
-	printf("Couldn't open: %s\n",fileName);
-	return;
+    std::map<UInt_t,PedSubbedEventBody_t>::iterator it;
+    FILE *outFile=NULL;
+    UInt_t run=runIt->first;
+    for(it=(runIt->second).begin();it!=(runIt->second).end();it++) {
+      PedSubbedEventBody_t *bdPtr=&(it->second);
+      //    std::cout << bdPtr->unixTime << "\t" << bdPtr->eventNumber << "\t" << 100*(bdPtr->eventNumber/100) << "\n";    
+      int fileNumber=100*(bdPtr->eventNumber/100);
+      //    processHeader(bdPtr);
+      
+      //Make base dir
+      int dirNumber=(EVENTS_PER_FILE*EVENT_FILES_PER_DIR*EVENT_FILES_PER_DIR)*(bdPtr->eventNumber/(EVENTS_PER_FILE*EVENT_FILES_PER_DIR*EVENT_FILES_PER_DIR));    
+      //Make sub dir
+      int subDirNumber=(EVENTS_PER_FILE*EVENT_FILES_PER_DIR)*(bdPtr->eventNumber/(EVENTS_PER_FILE*EVENT_FILES_PER_DIR));
+      
+      if(fileNumber!=lastFileNumber) {
+	//Create a file
+	if(outFile) fclose(outFile);
+	outFile=NULL;
+	
+	sprintf(fileName,"%s/run%d/event/ev%d/ev%d",fRawDir.c_str(),run,dirNumber,subDirNumber);
+	gSystem->mkdir(fileName,kTRUE);
+	sprintf(fileName,"%s/run%d/event/ev%d/ev%d/psev_%d.dat.gz",fRawDir.c_str(),run,dirNumber,subDirNumber,fileNumber);
+	outFile=fopen(fileName,"ab");
+	if(!outFile ) {
+	  printf("Couldn't open: %s\n",fileName);
+	  return;
+	}
       }
+      lastFileNumber=fileNumber;
+      fwrite(bdPtr,sizeof(PedSubbedEventBody_t),1,outFile);
     }
-    lastFileNumber=fileNumber;
-    fwrite(bdPtr,sizeof(PedSubbedEventBody_t),1,outFile);
+    
+    if(outFile) fclose(outFile);
+    outFile=NULL;
   }
-  
-  if(outFile) fclose(outFile);
-  outFile=NULL;
-
 }
 
 
 
 
 
-void AnitaHeaderHandler::addRawSurfPacket(RawSurfPacket_t *rsPkt) {
+void AnitaHeaderHandler::addRawSurfPacket(RawSurfPacket_t *rsPkt, UInt_t run) {
   if(rsPkt->eventNumber == curBody.eventNumber) {
     startedEvent=1;
+    currentEventRun=run;
     int finished=processRawSurfPacket(rsPkt);
     if(finished) {
       addCurPSBody();
@@ -149,9 +167,10 @@ void AnitaHeaderHandler::addRawSurfPacket(RawSurfPacket_t *rsPkt) {
 
 }
 
-void AnitaHeaderHandler::addRawWavePacket(RawWaveformPacket_t *rwPkt) {
+void AnitaHeaderHandler::addRawWavePacket(RawWaveformPacket_t *rwPkt, UInt_t run) {
   if(rwPkt->eventNumber == curBody.eventNumber) {
     startedEvent=1;
+    currentEventRun=run;
     int finished=processRawWavePacket(rwPkt);
     if(finished) {
       //Do something
@@ -169,9 +188,10 @@ void AnitaHeaderHandler::addRawWavePacket(RawWaveformPacket_t *rwPkt) {
   }
 }
     
-void AnitaHeaderHandler::addEncSurfPacket(EncodedSurfPacketHeader_t *esPkt) {
+void AnitaHeaderHandler::addEncSurfPacket(EncodedSurfPacketHeader_t *esPkt, UInt_t run) {
   if(esPkt->eventNumber == curBody.eventNumber) {
     startedEvent=1;
+    currentEventRun=run;
     int finished=processEncSurfPacket(esPkt);
     if(finished) {
       addCurPSBody();
@@ -189,12 +209,13 @@ void AnitaHeaderHandler::addEncSurfPacket(EncodedSurfPacketHeader_t *esPkt) {
   }
 }
 
-void AnitaHeaderHandler::addEncPedSubbedSurfPacket(EncodedPedSubbedSurfPacketHeader_t *epssPkt)
+void AnitaHeaderHandler::addEncPedSubbedSurfPacket(EncodedPedSubbedSurfPacketHeader_t *epssPkt, UInt_t run)
 {
   //  cout << "addEncPedSubbedSurfPacket\t" << epssPkt->eventNumber
   //   << "\t" << curPSBody.eventNumber << endl;
   if(epssPkt->eventNumber == curPSBody.eventNumber) {
     startedEvent=1;
+    currentEventRun=run;
     int finished=processPedSubbedEncSurfPacket(epssPkt);
     //      cout << startedEvent << "\t" << finished << endl;
     if(finished) {
@@ -213,10 +234,11 @@ void AnitaHeaderHandler::addEncPedSubbedSurfPacket(EncodedPedSubbedSurfPacketHea
   }
 }
 
-void AnitaHeaderHandler::addEncPedSubbedWavePacket(EncodedPedSubbedChannelPacketHeader_t *epscPkt)
+void AnitaHeaderHandler::addEncPedSubbedWavePacket(EncodedPedSubbedChannelPacketHeader_t *epscPkt, UInt_t run)
 {
   if(epscPkt->eventNumber == curPSBody.eventNumber) {
-    startedEvent=1;
+    startedEvent=1;    
+    currentEventRun=run;
     int finished=processPedSubbedEncWavePacket(epscPkt);
     if(finished) {
       addCurPSBody();
@@ -370,5 +392,14 @@ void AnitaHeaderHandler::addCurPSBody()
 {
   //  cout << "plotEvent:\t" << curPSBody.eventNumber << endl;
   fillGenericHeader(&curPSBody,PACKET_PED_SUBBED_EVENT,sizeof(PedSubbedEventBody_t));
-  fEventMap.insert(std::pair<UInt_t,PedSubbedEventBody_t>(curPSBody.eventNumber,curPSBody));
+  std::map<UInt_t,std::map<UInt_t, PedSubbedEventBody_t> >::iterator it= fEventMap.find(currentEventRun);
+  if(it!=fEventMap.end()) {
+    it->second.insert(std::pair<UInt_t,PedSubbedEventBody_t>(curPSBody.eventNumber,curPSBody));
+  }
+  else {
+    std::map<UInt_t, PedSubbedEventBody_t> runMap;
+    runMap.insert(std::pair<UInt_t,PedSubbedEventBody_t>(curPSBody.eventNumber,curPSBody));
+    fEventMap.insert(std::pair<UInt_t,std::map<UInt_t, PedSubbedEventBody_t> >(currentEventRun,runMap));    
+  }
+
 }
