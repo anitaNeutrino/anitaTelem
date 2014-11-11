@@ -20,7 +20,7 @@
 class AnitaCmdEchoHandler 
 {   
 public:
-    AnitaCmdEchoHandler(std::string rawDir,int run);
+    AnitaCmdEchoHandler(std::string awareDir);
     ~AnitaCmdEchoHandler();
     
     void addCmdEcho(CommandEcho_t *echoPtr);
@@ -28,8 +28,7 @@ public:
     
 private:
 
-    std::string fRawDir;
-    int fRun;
+    std::string fAwareDir;
     std::multimap<UInt_t, CommandEcho_t> fCmdEchoMap[2];
 };
 

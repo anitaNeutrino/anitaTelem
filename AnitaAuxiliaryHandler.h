@@ -24,13 +24,13 @@ class GpsdStart;
 class AnitaAuxiliaryHandler 
 {   
 public:
-    AnitaAuxiliaryHandler(std::string rawDir,int run);
+    AnitaAuxiliaryHandler(std::string rawDir);
     ~AnitaAuxiliaryHandler();
 
-    void addRunStart(RunStart_t *runStartPtr);
-    void addAcqdStart(AcqdStartStruct_t *acqdStartPtr);
-    void addGpsdStart(GpsdStartStruct_t *gpsdStartPtr);
-    void addLogWatchdStart(LogWatchdStart_t *logWatchdStartPtr);
+    void addRunStart(RunStart_t *runStartPtr,int run);
+    void addAcqdStart(AcqdStartStruct_t *acqdStartPtr,int run);
+    void addGpsdStart(GpsdStartStruct_t *gpsdStartPtr,int run);
+    void addLogWatchdStart(LogWatchdStart_t *logWatchdStartPtr,int run);
 
     void loopAcqdStartMap();
     void loopGpsdStartMap();
@@ -40,10 +40,10 @@ public:
 private:
     std::string fRawDir;
     int fRun;
-    std::map<UInt_t, RunStart_t> fRunStartMap;
-    std::map<UInt_t, AcqdStartStruct_t> fAcqdStartMap;
-    std::map<UInt_t, GpsdStartStruct_t> fGpsdStartMap;
-    std::map<UInt_t, LogWatchdStart_t> fLogWatchdStartMap;
+    std::map<UInt_t,std::map<UInt_t, RunStart_t> > fRunStartMap;
+    std::map<UInt_t,std::map<UInt_t, AcqdStartStruct_t> > fAcqdStartMap;
+    std::map<UInt_t,std::map<UInt_t, GpsdStartStruct_t> > fGpsdStartMap;
+    std::map<UInt_t,std::map<UInt_t, LogWatchdStart_t> > fLogWatchdStartMap;
 
 
 

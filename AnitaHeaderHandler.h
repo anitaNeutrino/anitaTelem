@@ -18,7 +18,7 @@
 class AnitaHeaderHandler 
 {   
 public:
-  AnitaHeaderHandler(std::string rawDir,int run);
+  AnitaHeaderHandler(std::string rawDir);
   ~AnitaHeaderHandler();
   
   void addHeader(AnitaEventHeader_t *hdPtr, UInt_t run);
@@ -45,7 +45,6 @@ private:
     
 
   std::string fRawDir;
-  int fRun;
   std::map<UInt_t,std::map<UInt_t, AnitaEventHeader_t> > fHeadMap;
   std::map<UInt_t,std::map<UInt_t, PedSubbedEventBody_t> > fEventMap;
 

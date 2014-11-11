@@ -23,8 +23,8 @@
 #define EVENT_FILES_PER_DIR 100
 #define HK_PER_FILE 1000
 
-AnitaSurfHkHandler::AnitaSurfHkHandler(std::string rawDir,int run)
-  :fRawDir(rawDir),fRun(run)
+AnitaSurfHkHandler::AnitaSurfHkHandler(std::string rawDir)
+  :fRawDir(rawDir)
 {
 
 
@@ -36,15 +36,33 @@ AnitaSurfHkHandler::~AnitaSurfHkHandler()
 
 }
     
-void AnitaSurfHkHandler::addSurfHk(FullSurfHkStruct_t *hkPtr)
+void AnitaSurfHkHandler::addSurfHk(FullSurfHkStruct_t *hkPtr,int run)
 {
-  fSurfHkMap.insert(std::pair<UInt_t,FullSurfHkStruct_t>(hkPtr->unixTime,*hkPtr));
+
+  std::map<UInt_t,std::map<UInt_t, FullSurfHkStruct_t> >::iterator it=fSurfHkMap.find(run);
+  if(it!=fSurfHkMap.end()) {
+    it->second.insert(std::pair<UInt_t,FullSurfHkStruct_t>(hkPtr->unixTime,*hkPtr));
+  }
+  else {
+    std::map<UInt_t, FullSurfHkStruct_t> runMap;
+    runMap.insert(std::pair<UInt_t,FullSurfHkStruct_t>(hkPtr->unixTime,*hkPtr));
+    fSurfHkMap.insert(std::pair<UInt_t,std::map<UInt_t, FullSurfHkStruct_t> >(run,runMap));
+  }
 
 }
 
-void AnitaSurfHkHandler::addAveragedSurfHk(AveragedSurfHkStruct_t *hkPtr)
+void AnitaSurfHkHandler::addAveragedSurfHk(AveragedSurfHkStruct_t *hkPtr,int run)
 {
-  fAvgSurfHkMap.insert(std::pair<UInt_t,AveragedSurfHkStruct_t>(hkPtr->unixTime,*hkPtr));
+
+  std::map<UInt_t,std::map<UInt_t, AveragedSurfHkStruct_t> >::iterator it=fAvgSurfHkMap.find(run);
+  if(it!=fAvgSurfHkMap.end()) {
+    it->second.insert(std::pair<UInt_t,AveragedSurfHkStruct_t>(hkPtr->unixTime,*hkPtr));
+  }
+  else {
+    std::map<UInt_t, AveragedSurfHkStruct_t> runMap;
+    runMap.insert(std::pair<UInt_t,AveragedSurfHkStruct_t>(hkPtr->unixTime,*hkPtr));
+    fAvgSurfHkMap.insert(std::pair<UInt_t,std::map<UInt_t, AveragedSurfHkStruct_t> >(run,runMap));
+  }
 
 }
 
@@ -52,10 +70,15 @@ void AnitaSurfHkHandler::addAveragedSurfHk(AveragedSurfHkStruct_t *hkPtr)
 void AnitaSurfHkHandler::loopMap() 
 {
   char fileName[FILENAME_MAX];
+
+  std::map<UInt_t,std::map<UInt_t, FullSurfHkStruct_t> >::iterator runIt;
+  for(runIt=fSurfHkMap.begin();runIt!=fSurfHkMap.end();runIt++) {
+    int fRun=runIt->first;
+
   int fileCount=0;
   std::map<UInt_t,FullSurfHkStruct_t>::iterator it;
   FILE *outFile=NULL;
-  for(it=fSurfHkMap.begin();it!=fSurfHkMap.end();it++) {
+  for(it=runIt->second.begin();it!=runIt->second.end();it++) {
     FullSurfHkStruct_t *hkPtr=&(it->second);
     //    std::cout << hkPtr->unixTime << "\t" << hkPtr->unixTime << "\t" << 100*(hkPtr->unixTime/100) << "\n";    
     
@@ -71,7 +94,7 @@ void AnitaSurfHkHandler::loopMap()
       gSystem->mkdir(fileName,kTRUE);
       sprintf(fileName,"%s/run%d/house/surfhk/sub_%d/sub_%d/surfhk_%d.dat.gz",fRawDir.c_str(),fRun,hkPtr->unixTime,hkPtr->unixTime,hkPtr->unixTime);
       std::cout << fileName << "\n";
-      outFile=fopen(fileName,"wb");
+      outFile=fopen(fileName,"ab");
       if(!outFile ) {
 	printf("Couldn't open: %s\n",fileName);
 	return;
@@ -88,17 +111,22 @@ void AnitaSurfHkHandler::loopMap()
   
   if(outFile) fclose(outFile);
   outFile=NULL;
-
+  }
 }
 
 
 void AnitaSurfHkHandler::loopAvgMap() 
 {
   char fileName[FILENAME_MAX];
+
+  std::map<UInt_t,std::map<UInt_t, AveragedSurfHkStruct_t> >::iterator runIt;
+  for(runIt=fAvgSurfHkMap.begin();runIt!=fAvgSurfHkMap.end();runIt++) {
+    int fRun=runIt->first;
+
   int fileCount=0;
   std::map<UInt_t,AveragedSurfHkStruct_t>::iterator it;
   FILE *outFile=NULL;
-  for(it=fAvgSurfHkMap.begin();it!=fAvgSurfHkMap.end();it++) {
+  for(it=runIt->second.begin();it!=runIt->second.end();it++) {
     AveragedSurfHkStruct_t *hkPtr=&(it->second);
     //    std::cout << hkPtr->unixTime << "\t" << hkPtr->unixTime << "\t" << 100*(hkPtr->unixTime/100) << "\n";    
     
@@ -114,7 +142,7 @@ void AnitaSurfHkHandler::loopAvgMap()
       gSystem->mkdir(fileName,kTRUE);
       sprintf(fileName,"%s/run%d/house/surfhk/sub_%d/sub_%d/avgsurfhk_%d.dat.gz",fRawDir.c_str(),fRun,hkPtr->unixTime,hkPtr->unixTime,hkPtr->unixTime);
       std::cout << fileName << "\n";
-      outFile=fopen(fileName,"wb");
+      outFile=fopen(fileName,"ab");
       if(!outFile ) {
 	printf("Couldn't open: %s\n",fileName);
 	return;
@@ -131,5 +159,5 @@ void AnitaSurfHkHandler::loopAvgMap()
   
   if(outFile) fclose(outFile);
   outFile=NULL;
-
+  }
 }

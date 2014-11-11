@@ -23,8 +23,8 @@
 #define EVENT_FILES_PER_DIR 100
 
 
-AnitaHeaderHandler::AnitaHeaderHandler(std::string rawDir,int run)
-  :fRawDir(rawDir),fRun(run),startedEvent(0)
+AnitaHeaderHandler::AnitaHeaderHandler(std::string rawDir)
+  :fRawDir(rawDir),startedEvent(0)
 {
   zeroCounters();
 

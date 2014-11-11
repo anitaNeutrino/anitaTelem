@@ -51,6 +51,10 @@ void saveRunNumberMap();
 UInt_t getRunNumberFromTime(UInt_t unixTime);
 UInt_t getRunNumberFromEvent(UInt_t eventNumber);
 
+void addRunToMap(UInt_t run, UInt_t eventNumber, UInt_t unixTime);
+int needToSaveRunMap=0;
+
+
 unsigned short *bigBuffer;
 
 
@@ -64,7 +68,6 @@ AnitaAuxiliaryHandler *auxHandler;
 AnitaCmdEchoHandler *cmdHandler;
 AnitaFileHandler *fileHandler;
 
-int currentRun=0;
 char *awareOutputDir;
 
 int lastLosNumBytesNumber=0;
@@ -73,6 +76,8 @@ int lastLosFileNumber=0;
 
 std::map<UInt_t,UInt_t> fTimeRunMap;
 std::map<UInt_t,UInt_t> fEventRunMap;
+std::map<UInt_t,UInt_t> fRunToEventMap;
+
 
 
 
@@ -85,13 +90,12 @@ std::map<UInt_t,UInt_t> fEventRunMap;
 int main (int argc, char ** argv)
 {
   bigBuffer = (unsigned short*) malloc(BIG_BUF_SIZE);
-  if(argc<3) {
-    std::cerr << "Usage: " << argv[0] << " <los or tdrss> <run> <telem file> <telem file>\n";
+  if(argc<1) {
+    std::cerr << "Usage: " << argv[0] << "  <telem file> <telem file>\n";
     return -1;
   }
-  int losOrTdrss=atoi(argv[1]);
+  int losOrTdrss=1;
   std::cout << "sizeof(unsigned long): " << sizeof(unsigned long) << "\n";
-  currentRun=atoi(argv[2]);
   //`  return -1;
   //Create the handlers
   std::string rawDir("/anitaStorage/antarctica14//telem/raw");
@@ -101,25 +105,25 @@ int main (int argc, char ** argv)
     std::cout << "AWARE_OUTPUT_DIR not set using default\n";
     awareOutputDir=(char*)"/anitaStorage/antarctica14/telem/aware/output";
   }
-  
+ 
   lastLosRunNumber=getLastLosRunNumber();
   lastLosFileNumber=getLastLosFileNumber();
   loadRunNumberMap();
   
 
-  headHandler = new AnitaHeaderHandler(rawDir,currentRun);
-  hkHandler = new AnitaHkHandler(rawDir,currentRun);
-  gpsHandler = new AnitaGpsHandler(rawDir,currentRun);
-  monHandler = new AnitaMonitorHandler(rawDir,currentRun);
-  surfhkHandler = new AnitaSurfHkHandler(rawDir,currentRun);
-  turfRateHandler = new AnitaTurfRateHandler(rawDir,currentRun);
-  auxHandler = new AnitaAuxiliaryHandler(rawDir,currentRun);
+  headHandler = new AnitaHeaderHandler(rawDir);
+  hkHandler = new AnitaHkHandler(rawDir);
+  gpsHandler = new AnitaGpsHandler(rawDir);
+  monHandler = new AnitaMonitorHandler(rawDir);
+  surfhkHandler = new AnitaSurfHkHandler(rawDir);
+  turfRateHandler = new AnitaTurfRateHandler(rawDir);
+  auxHandler = new AnitaAuxiliaryHandler(rawDir);
 
-  cmdHandler = new AnitaCmdEchoHandler(awareOutputDir,currentRun);
-  fileHandler = new AnitaFileHandler(rawDir,currentRun);
+  cmdHandler = new AnitaCmdEchoHandler(awareOutputDir);
+  fileHandler = new AnitaFileHandler(awareOutputDir);
   
 
-  for(int i=3;i<argc;i++) {
+  for(int i=1;i<argc;i++) {
     if(losOrTdrss)
       processLOSFile(argv[i]);
     else 
@@ -152,6 +156,7 @@ int main (int argc, char ** argv)
   updateLastLosRunNumber();
   updateLastLosFileNumber();
   updateLastLosNumBytesNumber();
+  if(needToSaveRunMap) saveRunNumberMap();
 }
 
 
@@ -258,6 +263,7 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
     time_t nowTime;
     time(&nowTime);
     unsigned long lastCount=count-1;
+    static UInt_t lastEventNumber=0;
     int run=0;
     while(count<(unsigned long)(numBytes-1)) {
       if(count==lastCount)
@@ -313,6 +319,9 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	EncodedSurfPacketHeader_t *pack3=0;
 	RawWaveformPacket_t *pack4=0;
 	RawSurfPacket_t *rsp=0;
+	RunStart_t *runStartPtr=0;
+	LogWatchdStart_t *logWatchStart=0;
+	OtherMonitorStruct_t *otherMonPtr=0;
 	if((checkVal==0) && testGHdr>0) {	  
 	  //	  if(testGHdr->code>0) ghdHandler->addHeader(testGHdr);
 	    //	    printf("Got %s (%#x) -- (%d bytes)\n",
@@ -324,62 +333,68 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	      hdPtr= (AnitaEventHeader_t*)testGHdr;
 	      run=getRunNumberFromTime(hdPtr->unixTime);
 	      headHandler->addHeader(hdPtr,run);
+	      if(hdPtr->eventNumber>lastEventNumber)
+		lastEventNumber=hdPtr->eventNumber;
 	      break;
 	    case PACKET_SURF_HK:
 	      //	      cout << "Got SurfHk\n";
 	      surfPtr = (FullSurfHkStruct_t*) testGHdr;
 	      //	      if((time_t)surfPtr->unixTime<time_t(nowTime+1000))
-	      surfhkHandler->addSurfHk(surfPtr);
+	      surfhkHandler->addSurfHk(surfPtr,getRunNumberFromTime(surfPtr->unixTime));
 	      break;
 	    case PACKET_AVG_SURF_HK:
 	      //	      cout << "Got AveragedSurfHkStruct_t\n";
-	      surfhkHandler->addAveragedSurfHk((AveragedSurfHkStruct_t*) testGHdr);
+	      surfhkHandler->addAveragedSurfHk((AveragedSurfHkStruct_t*) testGHdr,getRunNumberFromTime(((AveragedSurfHkStruct_t*) testGHdr)->unixTime));
 	      break;
 	      
 	    case PACKET_TURF_RATE:
 	      //	      cout << "Got TurfRate\n";
-	      turfRateHandler->addTurfRate((TurfRateStruct_t*)testGHdr);
+	      turfRateHandler->addTurfRate((TurfRateStruct_t*)testGHdr,getRunNumberFromTime(((TurfRateStruct_t*) testGHdr)->unixTime));
 	      break;
 	    case PACKET_SUM_TURF_RATE:
 	      //	      cout << "Got SummedTurfRateStruct_t\n";
-	      turfRateHandler->addSumTurfRate((SummedTurfRateStruct_t*)testGHdr);
+	      turfRateHandler->addSumTurfRate((SummedTurfRateStruct_t*)testGHdr,getRunNumberFromTime(((SummedTurfRateStruct_t*) testGHdr)->unixTime));
 	      break;
 	    case PACKET_MONITOR:
 	      //	      cout << "Got MonitorStruct_t\n";
-	      monHandler->addMonitor((MonitorStruct_t*)testGHdr);
+	      monHandler->addMonitor((MonitorStruct_t*)testGHdr,getRunNumberFromTime(((MonitorStruct_t*) testGHdr)->unixTime));
 	      break;
 	    case PACKET_OTHER_MONITOR:
 	      //	      cout << "Got OtherMonitorStruct_t\n";
-	      monHandler->addOtherMonitor((OtherMonitorStruct_t*)testGHdr);
+	      otherMonPtr=(OtherMonitorStruct_t*)testGHdr;
+	      monHandler->addOtherMonitor(otherMonPtr,otherMonPtr->runNumber);
+	      addRunToMap(otherMonPtr->runNumber,otherMonPtr->runStartEventNumber,otherMonPtr->runStartTime);
 	      break;
 	    case PACKET_GPS_G12_SAT:
 	      //	      cout << "Got GpsG12SatStruct_t\n";
-	      gpsHandler->addG12Sat((GpsG12SatStruct_t*) testGHdr);
+	      gpsHandler->addG12Sat((GpsG12SatStruct_t*) testGHdr,getRunNumberFromTime(((GpsG12SatStruct_t*) testGHdr)->unixTime));
 	      break;
 	    case PACKET_GPS_G12_POS:
 	      //	      cout << "Got GpsG12PosStruct_t\n";
-	      gpsHandler->addG12Pos((GpsG12PosStruct_t*) testGHdr);
+	      gpsHandler->addG12Pos((GpsG12PosStruct_t*) testGHdr,getRunNumberFromTime(((GpsG12PosStruct_t*) testGHdr)->unixTime));
 	      break;
 	    case PACKET_GPS_ADU5_SAT:
 	      //	      cout << "Got GpsAdu5SatStruct_t\n";
-	      gpsHandler->addAdu5Sat((GpsAdu5SatStruct_t*) testGHdr);
+	      gpsHandler->addAdu5Sat((GpsAdu5SatStruct_t*) testGHdr,getRunNumberFromTime(((GpsAdu5SatStruct_t*) testGHdr)->unixTime));
 	      break;
 	    case PACKET_GPS_ADU5_PAT:
 	      //	      cout << "Got GpsAdu5PatStruct_t\n";
-	      gpsHandler->addAdu5Pat((GpsAdu5PatStruct_t*) testGHdr);
+
+	      gpsHandler->addAdu5Pat((GpsAdu5PatStruct_t*) testGHdr,getRunNumberFromTime(((GpsAdu5PatStruct_t*) testGHdr)->unixTime));
 	      break;
 	    case PACKET_GPS_ADU5_VTG:
 	      //	      cout << "Got GpsAdu5VtgStruct_t\n";
-	      gpsHandler->addAdu5Vtg((GpsAdu5VtgStruct_t*) testGHdr);
+	      gpsHandler->addAdu5Vtg((GpsAdu5VtgStruct_t*) testGHdr,getRunNumberFromTime(((GpsAdu5VtgStruct_t*) testGHdr)->unixTime));
 	      break;
 	    case PACKET_GPS_GGA:
 	      //	      cout << "Got GpsGgaStruct_t\n";
-	      gpsHandler->addGpsGga((GpsGgaStruct_t*) testGHdr);
+	      gpsHandler->addGpsGga((GpsGgaStruct_t*) testGHdr,getRunNumberFromTime(((GpsGgaStruct_t*) testGHdr)->unixTime));
+
 	      break;
 	    case PACKET_ZIPPED_FILE:
 	      cout << "Got ZippedFile_t\n";
 	      ///		    printf("Boo\n");
-	      fileHandler->processFile((ZippedFile_t*) testGHdr);
+	      fileHandler->processFile((ZippedFile_t*) testGHdr,getRunNumberFromTime(((ZippedFile_t*) testGHdr)->unixTime));
 	      break;
 	    case PACKET_CMD_ECHO:
 	      cout << "Got CommandEcho_t\n";
@@ -416,7 +431,7 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	      hkPtr = (HkDataStruct_t*)testGHdr;
 	      //	      cout << "Got HkDataStruct_t " << hkPtr->ip320.code << "\t" << IP320_RAW << "\n";
 	      if(hkPtr->ip320.code==IP320_RAW)
-		hkHandler->addHk(hkPtr);
+		hkHandler->addHk(hkPtr,getRunNumberFromTime(hkPtr->unixTime));
 	      //	      else if(hkPtr->ip320.code==IP320_CAL)
 	      //		hkHandler->addCalHk(hkPtr);
 	      //	      else if(hkPtr->ip320.code==IP320_AVZ)
@@ -430,20 +445,28 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 		sshkPtr->ip320.code=(AnalogueCode_t)guessCode(sshkPtr);
 	      }
 	      if(sshkPtr->ip320.code==IP320_RAW) 
-		hkHandler->addSSHk(sshkPtr);
+		hkHandler->addSSHk(sshkPtr,getRunNumberFromTime(sshkPtr->unixTime));
 	      break;	 
 
 	    case PACKET_ACQD_START:
 	      //	      cout << "Got Acqd Start Packet\n";
-	      auxHandler->addAcqdStart((AcqdStartStruct_t*)testGHdr);
+	      auxHandler->addAcqdStart((AcqdStartStruct_t*)testGHdr,getRunNumberFromTime(((AcqdStartStruct_t*) testGHdr)->unixTime));
 	      break;
 	    case PACKET_GPSD_START:
 	      //	      cout << "Got GPSd Start Packet\n";
-	      auxHandler->addGpsdStart((GpsdStartStruct_t*)testGHdr);
+	      auxHandler->addGpsdStart((GpsdStartStruct_t*)testGHdr,getRunNumberFromTime(((GpsdStartStruct_t*) testGHdr)->unixTime));
 	      break;
 	    case PACKET_LOGWATCHD_START:
 	      //	      cout << "Got Log Watchd Start Packet\n";
-	      auxHandler->addLogWatchdStart((LogWatchdStart_t*)testGHdr);
+	      logWatchStart=(LogWatchdStart_t*)testGHdr;
+	      auxHandler->addLogWatchdStart(logWatchStart,logWatchStart->runNumber);
+	      
+	      addRunToMap(logWatchStart->runNumber,lastEventNumber,logWatchStart->unixTime);
+	      break;
+	    case PACKET_RUN_START:
+	      cout << "Got Run Start Packet\n";
+	      runStartPtr = (RunStart_t*)testGHdr;
+	      addRunToMap(runStartPtr->runNumber,runStartPtr->eventNumber,runStartPtr->unixTime);
 	      break;
 	      
 	    default: 
@@ -717,11 +740,13 @@ void loadRunNumberMap()
   char fileName[FILENAME_MAX];
   sprintf(fileName,"%s/ANITA3/db/runNumberMap",awareOutputDir);
   std::ifstream RunFile(fileName);
-  if(RunFile) {    
-    while(RunFile >> runNumber >> unixTime) {
-      //      std::cout << runNumber << "\t" << unixTime << "\n";
+  if(RunFile) { 
+    while(RunFile >> runNumber >> unixTime >> eventNumber) {
+      //      std::cout << runNumber << "\t" << unixTime << "\t" << eventNumber << "\n";
       fTimeRunMap.insert(std::pair<UInt_t,UInt_t>(unixTime,runNumber));      
       fEventRunMap.insert(std::pair<UInt_t,UInt_t>(eventNumber,runNumber));      
+      fRunToEventMap.insert(std::pair<UInt_t,UInt_t>(runNumber,eventNumber));      
+
     }
   }
 }
@@ -734,8 +759,13 @@ void saveRunNumberMap()
 
   if(RunFile) {
     std::map<UInt_t,UInt_t>::iterator it;
+    std::map<UInt_t,UInt_t>::iterator itEvent;
+    UInt_t eventNumber=200000000;
     for(it=fTimeRunMap.begin();it!=fTimeRunMap.end();it++) {
-      RunFile << it->second << "\t" << it->first << "\n";
+      itEvent=fRunToEventMap.find(it->second);
+      if(itEvent!=fRunToEventMap.end())
+	eventNumber=itEvent->second;
+      RunFile << it->second << "\t" << it->first << "\t" << eventNumber << "\n";
     }
     RunFile.close();
   }
@@ -748,6 +778,12 @@ UInt_t getRunNumberFromTime(UInt_t unixTime)
     //    std::cout << it->first << "\t" << it->second << "\t" << unixTime << "\n";
     return it->second;
   }
+  if(fTimeRunMap.size()>0) {
+    it=fTimeRunMap.end();
+    it--;  
+    return it->second;
+  }
+  std::cout << "Couldn't get run number from unixTime " << unixTime << "\n" ;
   return -1;
 }
 
@@ -758,5 +794,34 @@ UInt_t getRunNumberFromEvent(UInt_t eventNumber)
     //    std::cout << it->first << "\t" << it->second << "\t" << unixTime << "\n";
     return it->second;
   }
+  if(fEventRunMap.size()>0) {
+    it=fEventRunMap.end();
+    it--;
+    return it->second;
+  }
+  std::cout << "Couldn't get run number from eventNumber " << eventNumber << "\n" ;
   return -1;
 }
+
+void addRunToMap(UInt_t run, UInt_t eventNumber, UInt_t unixTime) 
+{
+  std::cout << run << "\t" << eventNumber << "\t" << unixTime << "\n";
+
+  std::map<UInt_t,UInt_t>::iterator it=fRunToEventMap.find(run);
+  if(it==fRunToEventMap.end()) {
+    std::cout << "Adding new run to run map\n";
+    needToSaveRunMap=1;
+    //Don't have this run
+    fTimeRunMap.insert(std::pair<UInt_t,UInt_t>(unixTime,run));      
+    fEventRunMap.insert(std::pair<UInt_t,UInt_t>(eventNumber,run));      
+    fRunToEventMap.insert(std::pair<UInt_t,UInt_t>(run,eventNumber)); 
+  }
+  else {
+    //Maybe do something clever
+    std::cout << "Already have this run in the map\n";
+    std::cout << it->second << "\n";
+    if(it->second > eventNumber) it->second=eventNumber;    
+  }
+}
+
+>>>>>>> 5bb9a4114b48412f4da8633b66097842f3bd2932

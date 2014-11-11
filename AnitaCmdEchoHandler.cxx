@@ -22,8 +22,8 @@
 
 #define HK_PER_FILE 1000
 
-AnitaCmdEchoHandler::AnitaCmdEchoHandler(std::string rawDir,int run)
-  :fRawDir(rawDir),fRun(run)
+AnitaCmdEchoHandler::AnitaCmdEchoHandler(std::string awareDir)
+  :fAwareDir(awareDir)
 {
 
 
@@ -51,29 +51,38 @@ void AnitaCmdEchoHandler::addCmdEcho(CommandEcho_t *echoPtr)
 
 void AnitaCmdEchoHandler::loopMaps() 
 {
+  FileStat_t staty;
   char fileName[FILENAME_MAX];
   std::map<UInt_t,CommandEcho_t>::iterator it;
   const char *fromString[2]={"Ground","Payload"};
   
   for(int payloadFlag=0;payloadFlag<2;payloadFlag++) {
      std::ofstream JsonFile;
+     
+     int cmdCount=0;
 
      if(fCmdEchoMap[payloadFlag].size()>0) {
-	sprintf(fileName,"%s/run%d/cmdecho",fRawDir.c_str(),fRun);
+
+      
+	sprintf(fileName,"%s/ANITA3/cmdEcho/%s",fAwareDir.c_str(),fromString[payloadFlag]);
 	gSystem->mkdir(fileName,kTRUE);
-	sprintf(fileName,"%s/run%d/cmdecho/cmd%s.json",fRawDir.c_str(),fRun,fromString[payloadFlag]);
-	JsonFile.open(fileName,std::ofstream::app);       
-	JsonFile << "{\n";
-	JsonFile << "\"cmds\":{\n";
-	JsonFile << "\"from\":\"" << fromString[payloadFlag] << "\",\n";
-	JsonFile << "\"numEchos\":" << fCmdEchoMap[payloadFlag].size() << ",\n";
-	JsonFile << "\"cmdList\":[\n";
+ 
 		
-	int firstTime=1;
 	for(it=fCmdEchoMap[payloadFlag].begin();it!=fCmdEchoMap[payloadFlag].end();it++) {
 	   CommandEcho_t *echoPtr=&(it->second);	
 	   CommandEcho echo(-1,echoPtr->unixTime,echoPtr);
-	   if(!firstTime) JsonFile << ",";
+	  
+	   while(1) {
+	     sprintf(fileName,"%s/ANITA3/cmdEcho/%s/cmdEcho%d.json",fAwareDir.c_str(),fromString[payloadFlag],cmdCount);
+	     if(gSystem->GetPathInfo(fileName,staty)) {
+	       //File doesn't exist
+	       break;
+	     }
+	     cmdCount++;
+	   }
+	   JsonFile.open(fileName);  
+
+
 	   JsonFile << "{\n";
 	   JsonFile << "\"unixTime\":" << echo.realTime << ",\n";
 	   JsonFile << "\"flag\":" << (int)echo.goodFlag << ",\n";
@@ -85,12 +94,8 @@ void AnitaCmdEchoHandler::loopMaps()
 	   }
 	   JsonFile << "]\n";
 	   JsonFile << "}\n";
-	   firstTime=0;
+	   JsonFile.close();	      
 	}
-	JsonFile << "]\n";
-	JsonFile << "}\n";
-	JsonFile << "}\n";
-	JsonFile.close();	      
      }
   }  
 }

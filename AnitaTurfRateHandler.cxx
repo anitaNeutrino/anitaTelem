@@ -23,8 +23,8 @@
 #define EVENT_FILES_PER_DIR 100
 #define HK_PER_FILE 1000
 
-AnitaTurfRateHandler::AnitaTurfRateHandler(std::string rawDir,int run)
-  :fRawDir(rawDir),fRun(run)
+AnitaTurfRateHandler::AnitaTurfRateHandler(std::string rawDir)
+  :fRawDir(rawDir)
 {
 
 
@@ -36,26 +36,51 @@ AnitaTurfRateHandler::~AnitaTurfRateHandler()
 
 }
     
-void AnitaTurfRateHandler::addTurfRate(TurfRateStruct_t *hkPtr)
+void AnitaTurfRateHandler::addTurfRate(TurfRateStruct_t *hkPtr,int run)
 {
-  fTurfRateMap.insert(std::pair<UInt_t,TurfRateStruct_t>(hkPtr->unixTime,*hkPtr));
+ 
+  std::map<UInt_t,std::map<UInt_t, TurfRateStruct_t> >::iterator it=fTurfRateMap.find(run);
+  if(it!=fTurfRateMap.end()) {
+    it->second.insert(std::pair<UInt_t,TurfRateStruct_t>(hkPtr->unixTime,*hkPtr));
+  }
+  else {
+    std::map<UInt_t, TurfRateStruct_t> runMap;
+    runMap.insert(std::pair<UInt_t,TurfRateStruct_t>(hkPtr->unixTime,*hkPtr));
+    fTurfRateMap.insert(std::pair<UInt_t,std::map<UInt_t, TurfRateStruct_t> >(run,runMap));
+  }
+   
 
 }
 
-void AnitaTurfRateHandler::addSumTurfRate(SummedTurfRateStruct_t *hkPtr)
+void AnitaTurfRateHandler::addSumTurfRate(SummedTurfRateStruct_t *hkPtr,int run)
 {
-  fSumTurfRateMap.insert(std::pair<UInt_t,SummedTurfRateStruct_t>(hkPtr->unixTime,*hkPtr));
+ 
 
+  std::map<UInt_t,std::map<UInt_t, SummedTurfRateStruct_t> >::iterator it=fSumTurfRateMap.find(run);
+  if(it!=fSumTurfRateMap.end()) {
+    it->second.insert(std::pair<UInt_t,SummedTurfRateStruct_t>(hkPtr->unixTime,*hkPtr));
+  }
+  else {
+    std::map<UInt_t, SummedTurfRateStruct_t> runMap;
+    runMap.insert(std::pair<UInt_t,SummedTurfRateStruct_t>(hkPtr->unixTime,*hkPtr));
+    fSumTurfRateMap.insert(std::pair<UInt_t,std::map<UInt_t, SummedTurfRateStruct_t> >(run,runMap));
+  }
+   
 }
 
 
 void AnitaTurfRateHandler::loopMap() 
 {
   char fileName[FILENAME_MAX];
-  int fileCount=0;
-  std::map<UInt_t,TurfRateStruct_t>::iterator it;
+
+  std::map<UInt_t,std::map<UInt_t, TurfRateStruct_t> >::iterator runIt;
+  for(runIt=fTurfRateMap.begin();runIt!=fTurfRateMap.end();runIt++) {
+    int fRun=runIt->first;
+    
+    int fileCount=0;
+    std::map<UInt_t,TurfRateStruct_t>::iterator it;
   FILE *outFile=NULL;
-  for(it=fTurfRateMap.begin();it!=fTurfRateMap.end();it++) {
+  for(it=runIt->second.begin();it!=runIt->second.end();it++) {
     TurfRateStruct_t *hkPtr=&(it->second);
     //    std::cout << hkPtr->unixTime << "\t" << hkPtr->unixTime << "\t" << 100*(hkPtr->unixTime/100) << "\n";    
     
@@ -88,6 +113,7 @@ void AnitaTurfRateHandler::loopMap()
   
   if(outFile) fclose(outFile);
   outFile=NULL;
+  }
 
 }
 
@@ -95,10 +121,16 @@ void AnitaTurfRateHandler::loopMap()
 void AnitaTurfRateHandler::loopSumMap() 
 {
   char fileName[FILENAME_MAX];
+
+
+  std::map<UInt_t,std::map<UInt_t, SummedTurfRateStruct_t> >::iterator runIt;
+  for(runIt=fSumTurfRateMap.begin();runIt!=fSumTurfRateMap.end();runIt++) {
+    int fRun=runIt->first;
+
   int fileCount=0;
   std::map<UInt_t,SummedTurfRateStruct_t>::iterator it;
   FILE *outFile=NULL;
-  for(it=fSumTurfRateMap.begin();it!=fSumTurfRateMap.end();it++) {
+  for(it=runIt->second.begin();it!=runIt->second.end();it++) {
     SummedTurfRateStruct_t *hkPtr=&(it->second);
     //    std::cout << hkPtr->unixTime << "\t" << hkPtr->unixTime << "\t" << 100*(hkPtr->unixTime/100) << "\n";    
     
@@ -131,5 +163,5 @@ void AnitaTurfRateHandler::loopSumMap()
   
   if(outFile) fclose(outFile);
   outFile=NULL;
-
+  }
 }
