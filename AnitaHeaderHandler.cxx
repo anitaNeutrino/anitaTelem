@@ -38,8 +38,12 @@ AnitaHeaderHandler::AnitaHeaderHandler(std::string rawDir,std::string awareDir,i
   :fRawDir(rawDir),fAwareDir(awareDir),fMakeEventDisplaysForAware(makeEventPngsForAware),startedEvent(0)
 {
   zeroCounters();
-
+  char fileName[FILENAME_MAX];
+  sprintf(fileName,"%s/event/rf",fAwareDir.c_str());
+  sprintf(fileName,"%s/event/all",fAwareDir.c_str());
 }
+
+
 
 AnitaHeaderHandler::~AnitaHeaderHandler()
 {
