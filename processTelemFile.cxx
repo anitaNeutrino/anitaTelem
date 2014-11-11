@@ -52,6 +52,8 @@ UInt_t getRunNumberFromTime(UInt_t unixTime);
 UInt_t getRunNumberFromEvent(UInt_t eventNumber);
 void addRunToMap(UInt_t run, UInt_t eventNumber, UInt_t unixTime);
 
+int needToSaveRunMap=0;
+
 unsigned short *bigBuffer;
 
 
@@ -119,7 +121,7 @@ int main (int argc, char ** argv)
   fileHandler = new AnitaFileHandler(awareOutputDir);
   
 
-  for(int i=3;i<argc;i++) {
+  for(int i=1;i<argc;i++) {
     if(losOrTdrss)
       processLOSFile(argv[i]);
     else 
@@ -152,6 +154,7 @@ int main (int argc, char ** argv)
   updateLastLosRunNumber();
   updateLastLosFileNumber();
   updateLastLosNumBytesNumber();
+  if(needToSaveRunMap) saveRunNumberMap();
 }
 
 
@@ -258,6 +261,7 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
     time_t nowTime;
     time(&nowTime);
     unsigned long lastCount=count-1;
+    static UInt_t lastEventNumber=0;
     int run=0;
     while(count<(unsigned long)(numBytes-1)) {
       if(count==lastCount)
@@ -314,6 +318,8 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	RawWaveformPacket_t *pack4=0;
 	RawSurfPacket_t *rsp=0;
 	RunStart_t *runStartPtr=0;
+	LogWatchdStart_t *logWatchStart=0;
+	OtherMonitorStruct_t *otherMonPtr=0;
 	if((checkVal==0) && testGHdr>0) {	  
 	  //	  if(testGHdr->code>0) ghdHandler->addHeader(testGHdr);
 	    //	    printf("Got %s (%#x) -- (%d bytes)\n",
@@ -325,6 +331,8 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	      hdPtr= (AnitaEventHeader_t*)testGHdr;
 	      run=getRunNumberFromTime(hdPtr->unixTime);
 	      headHandler->addHeader(hdPtr,run);
+	      if(hdPtr->eventNumber>lastEventNumber)
+		lastEventNumber=hdPtr->eventNumber;
 	      break;
 	    case PACKET_SURF_HK:
 	      //	      cout << "Got SurfHk\n";
@@ -351,7 +359,9 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	      break;
 	    case PACKET_OTHER_MONITOR:
 	      //	      cout << "Got OtherMonitorStruct_t\n";
-	      monHandler->addOtherMonitor((OtherMonitorStruct_t*)testGHdr,getRunNumberFromTime(((OtherMonitorStruct_t*) testGHdr)->unixTime));
+	      otherMonPtr=(OtherMonitorStruct_t*)testGHdr;
+	      monHandler->addOtherMonitor(otherMonPtr,otherMonPtr->runNumber);
+	      addRunToMap(otherMonPtr->runNumber,otherMonPtr->runStartEventNumber,otherMonPtr->runStartTime);
 	      break;
 	    case PACKET_GPS_G12_SAT:
 	      //	      cout << "Got GpsG12SatStruct_t\n";
@@ -446,7 +456,10 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	      break;
 	    case PACKET_LOGWATCHD_START:
 	      //	      cout << "Got Log Watchd Start Packet\n";
-	      auxHandler->addLogWatchdStart((LogWatchdStart_t*)testGHdr,getRunNumberFromTime(((LogWatchdStart_t*) testGHdr)->unixTime));
+	      logWatchStart=(LogWatchdStart_t*)testGHdr;
+	      auxHandler->addLogWatchdStart(logWatchStart,logWatchStart->runNumber);
+	      
+	      addRunToMap(logWatchStart->runNumber,lastEventNumber,logWatchStart->unixTime);
 	      break;
 	    case PACKET_RUN_START:
 	      cout << "Got Run Start Packet\n";
@@ -725,7 +738,7 @@ void loadRunNumberMap()
   std::ifstream RunFile(fileName);
   if(RunFile) {    
     while(RunFile >> runNumber >> unixTime >> eventNumber) {
-      std::cout << runNumber << "\t" << unixTime << "\t" << eventNumber << "\n";
+      //      std::cout << runNumber << "\t" << unixTime << "\t" << eventNumber << "\n";
       fTimeRunMap.insert(std::pair<UInt_t,UInt_t>(unixTime,runNumber));      
       fEventRunMap.insert(std::pair<UInt_t,UInt_t>(eventNumber,runNumber));      
       fRunToEventMap.insert(std::pair<UInt_t,UInt_t>(runNumber,eventNumber));      
@@ -760,7 +773,12 @@ UInt_t getRunNumberFromTime(UInt_t unixTime)
     //    std::cout << it->first << "\t" << it->second << "\t" << unixTime << "\n";
     return it->second;
   }
-  std::cout << "Couldn't get run number from unixTime\n";
+  if(fTimeRunMap.size()>0) {
+    it=fTimeRunMap.end();
+    it--;  
+    return it->second;
+  }
+  std::cout << "Couldn't get run number from unixTime " << unixTime << "\n" ;
   return -1;
 }
 
@@ -771,14 +789,23 @@ UInt_t getRunNumberFromEvent(UInt_t eventNumber)
     //    std::cout << it->first << "\t" << it->second << "\t" << unixTime << "\n";
     return it->second;
   }
+  if(fEventRunMap.size()>0) {
+    it=fEventRunMap.end();
+    it--;
+    return it->second;
+  }
   std::cout << "Couldn't get run number from eventNumber " << eventNumber << "\n" ;
   return -1;
 }
 
 void addRunToMap(UInt_t run, UInt_t eventNumber, UInt_t unixTime) 
 {
+  std::cout << run << "\t" << eventNumber << "\t" << unixTime << "\n";
+
   std::map<UInt_t,UInt_t>::iterator it=fRunToEventMap.find(run);
   if(it==fRunToEventMap.end()) {
+    std::cout << "Adding new run to run map\n";
+    needToSaveRunMap=1;
     //Don't have this run
     fTimeRunMap.insert(std::pair<UInt_t,UInt_t>(unixTime,run));      
     fEventRunMap.insert(std::pair<UInt_t,UInt_t>(eventNumber,run));      
@@ -786,6 +813,8 @@ void addRunToMap(UInt_t run, UInt_t eventNumber, UInt_t unixTime)
   }
   else {
     //Maybe do something clever
+    std::cout << "Already have this run in the map\n";
+    std::cout << it->second << "\n";
     if(it->second > eventNumber) it->second=eventNumber;    
   }
 }
