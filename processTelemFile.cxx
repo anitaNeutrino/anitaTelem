@@ -823,5 +823,3 @@ void addRunToMap(UInt_t run, UInt_t eventNumber, UInt_t unixTime)
     if(it->second > eventNumber) it->second=eventNumber;    
   }
 }
-
->>>>>>> 5bb9a4114b48412f4da8633b66097842f3bd2932
