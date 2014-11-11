@@ -111,7 +111,7 @@ int main (int argc, char ** argv)
   loadRunNumberMap();
   
 
-  headHandler = new AnitaHeaderHandler(rawDir);
+  headHandler = new AnitaHeaderHandler(rawDir,awareOutputDir,1);
   hkHandler = new AnitaHkHandler(rawDir);
   gpsHandler = new AnitaGpsHandler(rawDir);
   monHandler = new AnitaMonitorHandler(rawDir);
@@ -575,8 +575,6 @@ int getLastLosFileNumber()  {
 
 int processLOSFile(char *filename) {
   static int lastNumBytes=0;
-  static int lastRunNumberThisTime=0;
-  static int lastFileNumberThisTime=0;
   //  static unsigned int lastUnixTime=0;
   lastNumBytes=0;
   int thisFileNumber=0;

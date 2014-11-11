@@ -18,7 +18,7 @@
 class AnitaHeaderHandler 
 {   
 public:
-  AnitaHeaderHandler(std::string rawDir);
+  AnitaHeaderHandler(std::string rawDir,std::string awareDir,int makeEventPngsForAware=0);
   ~AnitaHeaderHandler();
   
   void addHeader(AnitaEventHeader_t *hdPtr, UInt_t run);
@@ -42,11 +42,14 @@ private:
   int processEncSurfPacket(EncodedSurfPacketHeader_t *esPkt);
   int processPedSubbedEncSurfPacket(EncodedPedSubbedSurfPacketHeader_t *epssPkt);
   int processPedSubbedEncWavePacket(EncodedPedSubbedChannelPacketHeader_t *epscPkt);
-    
+  void plotEvent(AnitaEventHeader_t *hdPtr,PedSubbedEventBody_t *bdPtr,int run) ;
 
   std::string fRawDir;
+  std::string fAwareDir;
   std::map<UInt_t,std::map<UInt_t, AnitaEventHeader_t> > fHeadMap;
   std::map<UInt_t,std::map<UInt_t, PedSubbedEventBody_t> > fEventMap;
+
+  int fMakeEventDisplaysForAware;
 
   int startedEvent;
   int currentEventRun;

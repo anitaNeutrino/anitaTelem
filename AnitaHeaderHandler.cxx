@@ -8,23 +8,34 @@
 #include "AnitaHeaderHandler.h"
 
 #include <iostream>
+#include <fstream>
+#include <utime.h>
+#include <sys/stat.h>
 #include "TTree.h"
 #include "TFile.h"
 #include "TSystem.h"
+#include "TCanvas.h"
+#include "TPad.h"
 #include "AnitaPacketUtil.h"
 #include "simpleStructs.h"
+#include "RawAnitaEvent.h"
+#include "RawAnitaHeader.h"
+#include "UsefulAnitaEvent.h"
+#include "AnitaCanvasMaker.h"
+
 
 
 #define HACK_FOR_ROOT
 
 #define C3PO_AVG 20
 
+#define EVENTS_PER_DIR 1000
 #define EVENTS_PER_FILE 100
 #define EVENT_FILES_PER_DIR 100
 
 
-AnitaHeaderHandler::AnitaHeaderHandler(std::string rawDir)
-  :fRawDir(rawDir),startedEvent(0)
+AnitaHeaderHandler::AnitaHeaderHandler(std::string rawDir,std::string awareDir,int makeEventPngsForAware)
+  :fRawDir(rawDir),fAwareDir(awareDir),fMakeEventDisplaysForAware(makeEventPngsForAware),startedEvent(0)
 {
   zeroCounters();
 
@@ -32,7 +43,7 @@ AnitaHeaderHandler::AnitaHeaderHandler(std::string rawDir)
 
 AnitaHeaderHandler::~AnitaHeaderHandler()
 {
-
+  //RJN Add something here to store curPSBody and gotSurf,gotWave
 
 }
     
@@ -101,15 +112,30 @@ void AnitaHeaderHandler::loopEventMap()
   char fileName[FILENAME_MAX];
   int lastFileNumber=-1;
 
+  std::map<UInt_t,std::map<UInt_t, AnitaEventHeader_t> >::iterator headRunIt;
   std::map<UInt_t,std::map<UInt_t, PedSubbedEventBody_t> >::iterator runIt;
   for(runIt=fEventMap.begin();runIt!=fEventMap.end();runIt++) {    
-    
+    headRunIt=fHeadMap.find(runIt->first);
+
+    std::map<UInt_t,AnitaEventHeader_t>::iterator headIt;
+
     std::map<UInt_t,PedSubbedEventBody_t>::iterator it;
     FILE *outFile=NULL;
     UInt_t run=runIt->first;
     for(it=(runIt->second).begin();it!=(runIt->second).end();it++) {
       PedSubbedEventBody_t *bdPtr=&(it->second);
+      AnitaEventHeader_t *hdPtr=NULL;
       //    std::cout << bdPtr->unixTime << "\t" << bdPtr->eventNumber << "\t" << 100*(bdPtr->eventNumber/100) << "\n";    
+      if(headRunIt!=fHeadMap.end()) {
+	headIt=headRunIt->second.find(bdPtr->eventNumber);
+	if(headIt!=headRunIt->second.end()) {
+	  hdPtr=&(headIt->second);
+	}
+      }
+      
+      plotEvent(hdPtr,bdPtr,run);
+
+
       int fileNumber=100*(bdPtr->eventNumber/100);
       //    processHeader(bdPtr);
       
@@ -401,5 +427,149 @@ void AnitaHeaderHandler::addCurPSBody()
     runMap.insert(std::pair<UInt_t,PedSubbedEventBody_t>(curPSBody.eventNumber,curPSBody));
     fEventMap.insert(std::pair<UInt_t,std::map<UInt_t, PedSubbedEventBody_t> >(currentEventRun,runMap));    
   }
+
+}
+
+void AnitaHeaderHandler::plotEvent(AnitaEventHeader_t *hdPtr,PedSubbedEventBody_t *bdPtr,int run) {
+
+  static RawAnitaEvent *fTheEvent = new RawAnitaEvent(&curPSBody);
+  static RawAnitaHeader *fTheHead=NULL;
+  static TCanvas *fMagicCanvas=NULL;
+  static TPad *fMagicMainPad=NULL;
+  static TPad *fMagicEventInfoPad=NULL;
+  char eventDir[FILENAME_MAX];
+  sprintf(eventDir,"%s/event",fAwareDir.c_str());
+
+  if(hdPtr) {
+    UInt_t triggerTimeNs=hdPtr->turfio.trigTime/hdPtr->turfio.c3poNum;
+    fTheHead = new RawAnitaHeader(hdPtr,run,hdPtr->unixTime,hdPtr->unixTime,triggerTimeNs,1);
+  }
+  else {
+    AnitaEventHeader_t tempHeader;
+    memset(&tempHeader,0,sizeof(AnitaEventHeader_t));
+    fillGenericHeader(&tempHeader,PACKET_HD,sizeof(AnitaEventHeader_t));
+    if(fTheHead) delete fTheHead;
+    fTheHead = new RawAnitaHeader(&tempHeader,0,0,0,0,0);
+    fTheHead->eventNumber=bdPtr->eventNumber;    
+  }
+
+
+  AnitaCanvasMaker *gEventCanvasMaker=AnitaCanvasMaker::Instance();
+  char pngName[180];
+  if(!fMagicCanvas) {
+    fMagicCanvas = new TCanvas("canMagic","canMagic",1200,800);
+    fMagicCanvas->cd();
+  }
+  if(!fMagicMainPad) {
+    fMagicCanvas->cd();
+    fMagicMainPad= new TPad("canMagicMain","canMagicMain",0,0,1,0.9);
+    fMagicMainPad->Draw();
+    fMagicCanvas->Update();
+  }
+  if(!fMagicEventInfoPad) {
+    fMagicCanvas->cd();
+    fMagicEventInfoPad= new TPad("canMagicEventInfo","canMagicEventInfo",0.2,0.91,0.8,0.99);
+    fMagicEventInfoPad->Draw();
+    fMagicCanvas->Update();
+  } 
+  
+  UsefulAnitaEvent *usefulEventPtr = new UsefulAnitaEvent(fTheEvent,WaveCalType::kVoltageTime);  
+  gEventCanvasMaker->getEventInfoCanvas(usefulEventPtr,fTheHead,fMagicEventInfoPad);
+  gEventCanvasMaker->fMinVoltLimit=-100;
+  gEventCanvasMaker->fMaxVoltLimit=100;
+  
+  gEventCanvasMaker->quickGetEventViewerCanvasForWebPlottter(usefulEventPtr,fTheHead,fMagicMainPad);
+    
+  
+  
+  
+  
+  char dirName[FILENAME_MAX];
+  sprintf(dirName,"%s/all/ev%u",eventDir,EVENTS_PER_DIR*(fTheEvent->eventNumber/EVENTS_PER_DIR));
+  gSystem->mkdir(dirName,kTRUE);
+  sprintf(pngName,"%s/event_%u.png",dirName,fTheEvent->eventNumber);
+  unlink(pngName);
+  fMagicCanvas->Print(pngName);
+  //  fMagicMainPad->Clear();
+  
+  char lastName[FILENAME_MAX];
+  sprintf(lastName,"%s/lastEvent.png",eventDir);
+  unlink(lastName);
+  link(pngName,lastName);
+  
+  if(fTheHead->eventNumber == fTheEvent->eventNumber) {
+    //Now make priority link
+    char linkName[FILENAME_MAX];
+    sprintf(dirName,"%s/pri%d/ev%u",eventDir,fTheHead->priority&0xf,10000*(fTheEvent->eventNumber/10000));
+    //       if(!is_dir(dirName)) 
+    gSystem->mkdir(dirName,kTRUE);   
+    sprintf(linkName,"%s/event_%u.png",dirName,fTheEvent->eventNumber);
+    link(pngName,linkName);
+    
+    sprintf(linkName,"%s/currentPri%d.png",eventDir,fTheHead->priority&0xf);
+    unlink(linkName);
+    link(pngName,linkName);
+    
+    
+    char evTouchFile[FILENAME_MAX];
+    sprintf(evTouchFile,"%s/lastPri%d",eventDir,fTheHead->priority&0xf);
+    
+    //Touch File
+    struct utimbuf ut;
+    ut.actime=fTheHead->realTime;
+    ut.modtime=fTheHead->realTime;
+    
+    struct stat buf;
+    int retVal2=stat(evTouchFile,&buf);
+    if(retVal2==0) {
+      if(buf.st_mtime<ut.modtime)
+	utime(evTouchFile,&ut);
+    }
+    else {
+      ofstream Touch(evTouchFile);
+      Touch.close();
+      utime(evTouchFile,&ut);
+    }
+    
+    
+    
+    
+    //Now make trig type link       
+    const char *trigNames[4]={"rf","pps1","pps2","soft"};
+    int trigTypes[4]={0x1,0x2,0x4,0x8};
+    
+    for(int trigInd=0;trigInd<4;trigInd++) {
+      if(fTheHead->trigType&trigTypes[trigInd]) {
+	sprintf(dirName,"%s/%s/ev%u",eventDir,trigNames[trigInd],10000*(fTheEvent->eventNumber/10000));
+	gSystem->mkdir(dirName,kTRUE);   
+	sprintf(linkName,"%s/event_%u.png",dirName,fTheEvent->eventNumber);
+	link(pngName,linkName);
+	
+	sprintf(linkName,"%s/current%sTrig.png",eventDir,trigNames[trigInd]);
+	unlink(linkName);
+	link(pngName,linkName);
+	
+	
+	sprintf(evTouchFile,"%s/last%sTrig",eventDir,trigNames[trigInd]);
+	
+	//Touch File
+	ut.actime=fTheHead->realTime;
+	ut.modtime=fTheHead->realTime;
+	
+	retVal2=stat(evTouchFile,&buf);
+	if(retVal2==0) {
+	  if(buf.st_mtime<ut.modtime)
+	    utime(evTouchFile,&ut);
+	}
+	else {
+	  ofstream Touch(evTouchFile);
+	  Touch.close();
+	  utime(evTouchFile,&ut);
+	}
+	
+      }
+    }
+  }
+  delete usefulEventPtr;
 
 }

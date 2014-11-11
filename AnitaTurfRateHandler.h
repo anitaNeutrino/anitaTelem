@@ -30,7 +30,6 @@ public:
 
 private:
     std::string fRawDir;
-    int fRun;
     std::map<UInt_t,std::map<UInt_t,TurfRateStruct_t> > fTurfRateMap;
     std::map<UInt_t,std::map<UInt_t,SummedTurfRateStruct_t> > fSumTurfRateMap;
 

@@ -54,7 +54,7 @@ ROOTLIBS += -lGui -lTreePlayer
 CXXFLAGS     += -I. $(ROOTCFLAGS) $(FFTFLAG) $(SYSINCLUDES) $(INC_ANITA_UTIL)
 LDFLAGS      += -L. -g $(ROOTLDFLAGS) 
 
-LIBS          = $(ROOTLIBS) -lMathMore -lMinuit -lGeom $(SYSLIBS) $(LD_ANITA_UTIL) $(FFTLIBS)  -lAnitaEvent 
+LIBS          = $(ROOTLIBS) -lMathMore -lMinuit -lGeom $(SYSLIBS) $(LD_ANITA_UTIL) $(FFTLIBS)  -lAnitaEvent -lMagicDisplay
 GLIBS         = $(ROOTGLIBS) $(SYSLIBS)
 
 #Now the bits we're actually compiling
