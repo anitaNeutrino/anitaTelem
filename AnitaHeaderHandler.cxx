@@ -22,7 +22,7 @@
 #include "RawAnitaHeader.h"
 #include "UsefulAnitaEvent.h"
 #include "AnitaCanvasMaker.h"
-
+#include "AwareRunDatabase.h"
 
 
 #define HACK_FOR_ROOT
@@ -38,9 +38,8 @@ AnitaHeaderHandler::AnitaHeaderHandler(std::string rawDir,std::string awareDir,i
   :fRawDir(rawDir),fAwareDir(awareDir),fMakeEventDisplaysForAware(makeEventPngsForAware),startedEvent(0)
 {
   zeroCounters();
-  char fileName[FILENAME_MAX];
-  sprintf(fileName,"%s/event/rf",fAwareDir.c_str());
-  sprintf(fileName,"%s/event/all",fAwareDir.c_str());
+  fHeaderTouchFile=fAwareDir+"/ANITA3/lastHeader";
+  fEventTouchFile=fAwareDir+"/ANITA3/lastEvent";
 }
 
 
@@ -53,6 +52,12 @@ AnitaHeaderHandler::~AnitaHeaderHandler()
     
 void AnitaHeaderHandler::addHeader(AnitaEventHeader_t *hdPtr, UInt_t run)
 {
+  static unsigned int lastTime=0;
+  if(hdPtr->unixTime>lastTime) {
+    lastTime=hdPtr->unixTime;
+    AwareRunDatabase::updateTouchFile(fHeaderTouchFile.c_str(),run,hdPtr->unixTime);
+  }
+
   std::map<UInt_t,std::map<UInt_t, AnitaEventHeader_t> >::iterator it= fHeadMap.find(run);
   if(it!=fHeadMap.end()) {
     it->second.insert(std::pair<UInt_t,AnitaEventHeader_t>(hdPtr->eventNumber,*hdPtr));
@@ -514,6 +519,14 @@ void AnitaHeaderHandler::plotEvent(AnitaEventHeader_t *hdPtr,PedSubbedEventBody_
   link(pngName,lastName);
   
   if(fTheHead->eventNumber == fTheEvent->eventNumber) {
+
+    static unsigned int lastTime=0;
+    if(fTheHead->realTime>lastTime) {
+      lastTime=fTheHead->realTime;
+      AwareRunDatabase::updateTouchFile(fEventTouchFile.c_str(),run,lastTime);
+    }
+
+
     //Now make priority link
     char linkName[FILENAME_MAX];
     sprintf(dirName,"%s/pri%d/ev%u",eventDir,fTheHead->priority&0xf,10000*(fTheEvent->eventNumber/10000));
