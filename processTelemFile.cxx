@@ -263,7 +263,9 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
     time_t nowTime;
     time(&nowTime);
     unsigned long lastCount=count-1;
-    static UInt_t lastEventNumber=0;
+    static UInt_t latestHeaderEventNumber=0;
+    static UInt_t lastHeaderEventNumber=0;
+    static UInt_t lastHeaderRunNumber=0;
     int run=0;
     while(count<(unsigned long)(numBytes-1)) {
       if(count==lastCount)
@@ -329,12 +331,15 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	    //		   testGHdr->code,testGHdr->numBytes);
 	    switch(testGHdr->code&BASE_PACKET_MASK) {
 	    case PACKET_HD:
-	      //	      cout << "Got Header\n";
+
 	      hdPtr= (AnitaEventHeader_t*)testGHdr;
 	      run=getRunNumberFromTime(hdPtr->unixTime);
+	      //	      cout << "Got Header\t" << run << "\t" << hdPtr->eventNumber << "\n";
 	      headHandler->addHeader(hdPtr,run);
-	      if(hdPtr->eventNumber>lastEventNumber)
-		lastEventNumber=hdPtr->eventNumber;
+	      lastHeaderRunNumber=run;
+	      lastHeaderEventNumber=hdPtr->eventNumber;
+	      if(hdPtr->eventNumber>latestHeaderEventNumber)
+		latestHeaderEventNumber=hdPtr->eventNumber;
 	      break;
 	    case PACKET_SURF_HK:
 	      //	      cout << "Got SurfHk\n";
@@ -417,9 +422,11 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	      headHandler->addEncSurfPacket(pack3,getRunNumberFromEvent(pack3->eventNumber));
 	      break;
 	    case PACKET_ENC_SURF_PEDSUB:
-	      //	      	      cout << "Got EncodedPedSubbedSurfPacketHeader_t\n";
+	      //	      cout << "Got EncodedPedSubbedSurfPacketHeader_t\n";
 	      pack2=(EncodedPedSubbedSurfPacketHeader_t*)testGHdr;
-	      headHandler->addEncPedSubbedSurfPacket(pack2,getRunNumberFromEvent(pack2->eventNumber));
+	      run=getRunNumberFromEvent(pack2->eventNumber);
+	      if(pack2->eventNumber==lastHeaderEventNumber) run=lastHeaderRunNumber;
+	      headHandler->addEncPedSubbedSurfPacket(pack2,run);
 	      break;
 	    case PACKET_ENC_WV_PEDSUB:
 	      //	      cout << "Got EncodedPedSubbeWavePacketHeader_t\n";
@@ -461,7 +468,7 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	      logWatchStart=(LogWatchdStart_t*)testGHdr;
 	      auxHandler->addLogWatchdStart(logWatchStart,logWatchStart->runNumber);
 	      
-	      addRunToMap(logWatchStart->runNumber,lastEventNumber,logWatchStart->unixTime);
+	      addRunToMap(logWatchStart->runNumber,latestHeaderEventNumber,logWatchStart->unixTime);
 	      break;
 	    case PACKET_RUN_START:
 	      cout << "Got Run Start Packet\n";
@@ -787,9 +794,21 @@ UInt_t getRunNumberFromTime(UInt_t unixTime)
 
 UInt_t getRunNumberFromEvent(UInt_t eventNumber)
 {
+  // std:cout << "getRunNumberFromEvent\t" << eventNumber << "\n";
   std::map<UInt_t,UInt_t>::iterator it=fEventRunMap.lower_bound(eventNumber);
+  
+  //  std::map<UInt_t,UInt_t>::iterator it3;
+  //  for(it3=fEventRunMap.begin();it3!=fEventRunMap.end();it3++) {
+  //    std::cout << it3->first << "\t" << it3->second << "\t" << eventNumber << "\n";
+  //  }
   if(it!=fEventRunMap.end()) {
-    //    std::cout << it->first << "\t" << it->second << "\t" << unixTime << "\n";
+
+    //    std::cout << "it: " << it->first << "\t" << it->second << "\t" << eventNumber << "\n";
+    while(it->first>eventNumber && it!=fEventRunMap.begin()) {
+      it--;
+    }
+    //    std::cout << it->first << "\t" << it->second << "\t" << eventNumber << "\n"; 
+    
     return it->second;
   }
   if(fEventRunMap.size()>0) {
@@ -800,6 +819,7 @@ UInt_t getRunNumberFromEvent(UInt_t eventNumber)
   std::cout << "Couldn't get run number from eventNumber " << eventNumber << "\n" ;
   return -1;
 }
+
 
 void addRunToMap(UInt_t run, UInt_t eventNumber, UInt_t unixTime) 
 {
