@@ -16,7 +16,7 @@
 
 #include "TSystem.h"
 
-#define MAX_FILE_SIZE 10000
+#define MAX_FILE_SIZE 100000
 char unzippedBuffer[MAX_FILE_SIZE];
 
 using namespace std;
@@ -30,16 +30,16 @@ AnitaFileHandler::AnitaFileHandler(std::string awareDir)
     
 void AnitaFileHandler::processFile(ZippedFile_t *zfPtr,int run)
 {
-  //  cout << "Got ZippedFile_t " << zfPtr->filename << "\t" 
-  //       << zfPtr->segmentNumber << endl;
+  cout << "Got ZippedFile_t " << zfPtr->filename << "\t" 
+       << zfPtr->segmentNumber << endl;
   
   char segmentName[FILENAME_MAX];
   char outputFilename[FILENAME_MAX];
-  sprintf(outputFilename,"%s/ANITA3/log/run%d",fAwareDir.c_str(),run);
+  sprintf(outputFilename,"%s/ANITA3/log/run%d/archive",fAwareDir.c_str(),run);
   gSystem->mkdir(outputFilename,kTRUE);
-  sprintf(outputFilename,"%s/ANITA3/aux/run%d",fAwareDir.c_str(),run);
+  sprintf(outputFilename,"%s/ANITA3/aux/run%d/archive",fAwareDir.c_str(),run);
   gSystem->mkdir(outputFilename,kTRUE);
-  sprintf(outputFilename,"%s/ANITA3/config/run%d",fAwareDir.c_str(),run);
+  sprintf(outputFilename,"%s/ANITA3/config/run%d/archive",fAwareDir.c_str(),run);
   gSystem->mkdir(outputFilename,kTRUE);
 
   char linkName[FILENAME_MAX];
@@ -59,6 +59,8 @@ void AnitaFileHandler::processFile(ZippedFile_t *zfPtr,int run)
   
   getOutputName(outputFilename,linkName,zfPtr,1,run);
   
+  std::cout << "Got " << outputFilename << "\t" << linkName << "\n";
+
   FILE *fpOut = fopen(outputFilename,"w");
   retVal=fwrite(unzippedBuffer,numOutputBytes,1,fpOut);
   fclose(fpOut);
@@ -113,13 +115,13 @@ void AnitaFileHandler::getOutputName(char *outputFilename,char *linkName,ZippedF
 	}
     else if(strstr(zfPtr->filename,"anita")) {
       //Have /var/log/messages
-      sprintf(outputFilename,"%s/ANITA3//log/run%darchive/anita.log.%u_%u",fAwareDir.c_str(),fRun,
+      sprintf(outputFilename,"%s/ANITA3/log/run%d/archive/anita.log.%u_%u",fAwareDir.c_str(),fRun,
 		  zfPtr->unixTime,zfPtr->segmentNumber);
       sprintf(linkName,"%s/ANITA3/log/run%d/anita.log",fAwareDir.c_str(),fRun);
     }
     else {
       //Other file
-      sprintf(outputFilename,"%s/ANITA3/aux/run%darchive/%s.%u_%u",
+      sprintf(outputFilename,"%s/ANITA3/aux/run%d/archive/%s.%u_%u",
 	      fAwareDir.c_str(),fRun,zfPtr->filename,
 	      zfPtr->unixTime,zfPtr->segmentNumber);
       sprintf(linkName,"%s/ANITA3/aux/run%d/%s",fAwareDir.c_str(),fRun,zfPtr->filename);
