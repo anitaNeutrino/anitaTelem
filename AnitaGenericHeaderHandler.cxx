@@ -85,7 +85,8 @@ void AnitaGenericHeaderHandler::writeFileSummary()
     if(logicCode>=7 && logicCode<=14)
       numFileEventBytes+=it->second.numBytes;
   }
-  
+  fGhdMap.clear();
+
   TCanvas canGhd("canGhd","canGhd");
   canGhd.SetLogy();
   histPacket.SetFillColor(9);
@@ -163,7 +164,7 @@ void AnitaGenericHeaderHandler::newFile(AnitaTelemFileType::AnitaTelemFileType_t
   }
   fFileType=fileType;
   fCurrentRun=runNum;
-  fCurrentFile=fileType;
+  fCurrentFile=fileNum;
   fCurrentFileTime=unixTime;  
 }
 
