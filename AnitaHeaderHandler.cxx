@@ -128,6 +128,10 @@ void AnitaHeaderHandler::loopMap()
 	
 	sprintf(fileName,"%s/run%d/event/ev%d/ev%d",fRawDir.c_str(),run,dirNumber,subDirNumber);
 	gSystem->mkdir(fileName,kTRUE);
+	
+	sprintf(fileName,"%s/run%d/event/last",fRawDir.c_str(),run);
+	AwareRunDatabase::touchFile(fileName);
+
 	sprintf(fileName,"%s/run%d/event/ev%d/ev%d/hd_%d.dat.gz",fRawDir.c_str(),run,dirNumber,subDirNumber,fileNumber);
 	outFile=fopen(fileName,"ab");
 	if(!outFile ) {
@@ -201,6 +205,10 @@ void AnitaHeaderHandler::loopEventMap()
 	
 	sprintf(fileName,"%s/run%d/event/ev%d/ev%d",fRawDir.c_str(),run,dirNumber,subDirNumber);
 	gSystem->mkdir(fileName,kTRUE);
+	
+	sprintf(fileName,"%s/run%d/event/last",fRawDir.c_str(),run);
+	AwareRunDatabase::touchFile(fileName);
+
 	//	std::cerr << fileName << "\n";
 	sprintf(fileName,"%s/run%d/event/ev%d/ev%d/psev_%d.dat.gz",fRawDir.c_str(),run,dirNumber,subDirNumber,fileNumber);
 	eventFile=fopen(fileName,"ab");

@@ -13,7 +13,7 @@
 #include "TSystem.h"
 #include "TurfRate.h"
 #include "simpleStructs.h"
-
+#include "AwareRunDatabase.h"
 
 #define HACK_FOR_ROOT
 
@@ -94,6 +94,8 @@ void AnitaTurfRateHandler::loopMap()
 
       sprintf(fileName,"%s/run%d/house/turfhk/sub_%d/sub_%d/",fRawDir.c_str(),fRun,hkPtr->unixTime,hkPtr->unixTime);       
       gSystem->mkdir(fileName,kTRUE);
+      sprintf(fileName,"%s/run%d/house/turfhk/last",fRawDir.c_str(),fRun);
+      AwareRunDatabase::touchFile(fileName);
       sprintf(fileName,"%s/run%d/house/turfhk/sub_%d/sub_%d/turfrate_%d.dat.gz",fRawDir.c_str(),fRun,hkPtr->unixTime,hkPtr->unixTime,hkPtr->unixTime);
       std::cout << fileName << "\n";
       outFile=fopen(fileName,"wb");
@@ -144,6 +146,8 @@ void AnitaTurfRateHandler::loopSumMap()
 
       sprintf(fileName,"%s/run%d/house/turfhk/sub_%d/sub_%d/",fRawDir.c_str(),fRun,hkPtr->unixTime,hkPtr->unixTime);       
       gSystem->mkdir(fileName,kTRUE);
+      sprintf(fileName,"%s/run%d/house/turfhk/last",fRawDir.c_str(),fRun);
+      AwareRunDatabase::touchFile(fileName);
       sprintf(fileName,"%s/run%d/house/turfhk/sub_%d/sub_%d/sumturfrate_%d.dat.gz",fRawDir.c_str(),fRun,hkPtr->unixTime,hkPtr->unixTime,hkPtr->unixTime);
       std::cout << fileName << "\n";
       outFile=fopen(fileName,"wb");
