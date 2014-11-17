@@ -46,6 +46,8 @@ private:
 
   std::string fRawDir;
   std::string fAwareDir;
+  std::string fEventTouchFile;
+  std::string fHeaderTouchFile;
   std::map<UInt_t,std::map<UInt_t, AnitaEventHeader_t> > fHeadMap;
   std::map<UInt_t,std::map<UInt_t, PedSubbedEventBody_t> > fEventMap;
 

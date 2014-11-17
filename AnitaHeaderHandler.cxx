@@ -22,7 +22,7 @@
 #include "RawAnitaHeader.h"
 #include "UsefulAnitaEvent.h"
 #include "AnitaCanvasMaker.h"
-
+#include "AwareRunDatabase.h"
 
 
 #define HACK_FOR_ROOT
@@ -38,9 +38,22 @@ AnitaHeaderHandler::AnitaHeaderHandler(std::string rawDir,std::string awareDir,i
   :fRawDir(rawDir),fAwareDir(awareDir),fMakeEventDisplaysForAware(makeEventPngsForAware),startedEvent(0)
 {
   zeroCounters();
+  fHeaderTouchFile=fAwareDir+"/ANITA3/lastHeader";
+  fEventTouchFile=fAwareDir+"/ANITA3/lastEvent";
+
   char fileName[FILENAME_MAX];
-  sprintf(fileName,"%s/event/rf",fAwareDir.c_str());
-  sprintf(fileName,"%s/event/all",fAwareDir.c_str());
+  sprintf(fileName,"%s/db/currentEvent.dat",fAwareDir.c_str());
+  
+  FILE *fp = fopen(fileName,"rb");
+  if(fp) {
+    fread(&curPSBody,sizeof(PedSubbedEventBody_t),1,fp);
+    fread(&startedEvent,sizeof(int),1,fp);
+    fread(&currentEventRun,sizeof(int),1,fp);
+    fread(gotSurf,sizeof(int),ACTIVE_SURFS,fp);
+    fread(gotWave,sizeof(int),ACTIVE_SURFS*9,fp);
+    fclose(fp);
+  }
+
 }
 
 
@@ -48,11 +61,32 @@ AnitaHeaderHandler::AnitaHeaderHandler(std::string rawDir,std::string awareDir,i
 AnitaHeaderHandler::~AnitaHeaderHandler()
 {
   //RJN Add something here to store curPSBody and gotSurf,gotWave
-
+  char fileName[FILENAME_MAX];
+  sprintf(fileName,"%s/db/currentEvent.dat",fAwareDir.c_str());
+  if(startedEvent) {
+    //Need to save the current state of the event
+    FILE *fp = fopen(fileName,"wb");
+    if(fp) {
+      fwrite(&curPSBody,sizeof(PedSubbedEventBody_t),1,fp);
+      fwrite(&startedEvent,sizeof(int),1,fp);
+      fwrite(&currentEventRun,sizeof(int),1,fp);
+      fwrite(gotSurf,sizeof(int),ACTIVE_SURFS,fp);
+      fwrite(gotWave,sizeof(int),ACTIVE_SURFS*9,fp);
+      fclose(fp);
+    }
+    else unlink(fileName);
+  }
+  else unlink(fileName);
 }
     
 void AnitaHeaderHandler::addHeader(AnitaEventHeader_t *hdPtr, UInt_t run)
 {
+  static unsigned int lastTime=0;
+  if(hdPtr->unixTime>lastTime) {
+    lastTime=hdPtr->unixTime;
+    AwareRunDatabase::updateTouchFile(fHeaderTouchFile.c_str(),run,hdPtr->unixTime);
+  }
+
   std::map<UInt_t,std::map<UInt_t, AnitaEventHeader_t> >::iterator it= fHeadMap.find(run);
   if(it!=fHeadMap.end()) {
     it->second.insert(std::pair<UInt_t,AnitaEventHeader_t>(hdPtr->eventNumber,*hdPtr));
@@ -107,6 +141,7 @@ void AnitaHeaderHandler::loopMap()
   
     if(outFile) fclose(outFile);
     outFile=NULL;
+    lastFileNumber=0;
   }
 }
 
@@ -116,29 +151,40 @@ void AnitaHeaderHandler::loopEventMap()
   char fileName[FILENAME_MAX];
   int lastFileNumber=-1;
 
-  std::map<UInt_t,std::map<UInt_t, AnitaEventHeader_t> >::iterator headRunIt;
-  std::map<UInt_t,std::map<UInt_t, PedSubbedEventBody_t> >::iterator runIt;
-  for(runIt=fEventMap.begin();runIt!=fEventMap.end();runIt++) {    
-    headRunIt=fHeadMap.find(runIt->first);
 
-    std::map<UInt_t,AnitaEventHeader_t>::iterator headIt;
+  std::map<UInt_t,std::map<UInt_t, PedSubbedEventBody_t> >::iterator runIt;
+  std::map<UInt_t,std::map<UInt_t, AnitaEventHeader_t> >::iterator headRunIt;
+  //  std::cerr << "loopEventMap: " << fEventMap.size() << "\n";
+  for(runIt=fEventMap.begin();runIt!=fEventMap.end();runIt++) { 
 
     std::map<UInt_t,PedSubbedEventBody_t>::iterator it;
-    FILE *outFile=NULL;
+    FILE *eventFile=NULL;
+    FILE *headFile=NULL;
     UInt_t run=runIt->first;
+   
+    headRunIt=fHeadMap.find(run);
+  
+    //    std::cerr << "Run: " << run << "\t" << runIt->second.size() << "\n";
     for(it=(runIt->second).begin();it!=(runIt->second).end();it++) {
       PedSubbedEventBody_t *bdPtr=&(it->second);
       AnitaEventHeader_t *hdPtr=NULL;
       //      std::cout << bdPtr->unixTime << "\t" << bdPtr->eventNumber << "\t" << 100*(bdPtr->eventNumber/100) << "\n";    
+      std::map<UInt_t,AnitaEventHeader_t>::iterator headIt;
       if(headRunIt!=fHeadMap.end()) {
 	headIt=headRunIt->second.find(bdPtr->eventNumber);
 	if(headIt!=headRunIt->second.end()) {
 	  hdPtr=&(headIt->second);
 	}
       }
+      if(fMakeEventDisplaysForAware)
+	plotEvent(hdPtr,bdPtr,run);
       
-      plotEvent(hdPtr,bdPtr,run);
-
+      if(!hdPtr) {
+	AnitaEventHeader_t tempHeader;
+	tempHeader.eventNumber=bdPtr->eventNumber;
+	memset(&tempHeader,0,sizeof(AnitaEventHeader_t));
+	fillGenericHeader(&tempHeader,PACKET_HD,sizeof(AnitaEventHeader_t));
+      }
 
       int fileNumber=100*(bdPtr->eventNumber/100);
       //    processHeader(bdPtr);
@@ -147,27 +193,39 @@ void AnitaHeaderHandler::loopEventMap()
       int dirNumber=(EVENTS_PER_FILE*EVENT_FILES_PER_DIR*EVENT_FILES_PER_DIR)*(bdPtr->eventNumber/(EVENTS_PER_FILE*EVENT_FILES_PER_DIR*EVENT_FILES_PER_DIR));    
       //Make sub dir
       int subDirNumber=(EVENTS_PER_FILE*EVENT_FILES_PER_DIR)*(bdPtr->eventNumber/(EVENTS_PER_FILE*EVENT_FILES_PER_DIR));
-      
+      //      std::cerr << fileNumber << "\t" << lastFileNumber << "\n";
       if(fileNumber!=lastFileNumber) {
 	//Create a file
-	if(outFile) fclose(outFile);
-	outFile=NULL;
+	if(eventFile) fclose(eventFile);
+	eventFile=NULL;
 	
 	sprintf(fileName,"%s/run%d/event/ev%d/ev%d",fRawDir.c_str(),run,dirNumber,subDirNumber);
 	gSystem->mkdir(fileName,kTRUE);
+	//	std::cerr << fileName << "\n";
 	sprintf(fileName,"%s/run%d/event/ev%d/ev%d/psev_%d.dat.gz",fRawDir.c_str(),run,dirNumber,subDirNumber,fileNumber);
-	outFile=fopen(fileName,"ab");
-	if(!outFile ) {
+	eventFile=fopen(fileName,"ab");
+	if(!eventFile ) {
+	  printf("Couldn't open: %s\n",fileName);
+	  return;
+	}
+	sprintf(fileName,"%s/run%d/event/ev%d/ev%d/evhd_%d.dat.gz",fRawDir.c_str(),run,dirNumber,subDirNumber,fileNumber);
+	headFile=fopen(fileName,"ab");
+	if(!headFile ) {
 	  printf("Couldn't open: %s\n",fileName);
 	  return;
 	}
       }
       lastFileNumber=fileNumber;
-      fwrite(bdPtr,sizeof(PedSubbedEventBody_t),1,outFile);
+      //      std::cerr << "Before write\t" << eventFile  << "\t" << bdPtr << "\n";
+      fwrite(bdPtr,sizeof(PedSubbedEventBody_t),1,eventFile);
+      fwrite(hdPtr,sizeof(AnitaEventHeader_t),1,headFile);
     }
     
-    if(outFile) fclose(outFile);
-    outFile=NULL;
+    if(eventFile) fclose(eventFile);
+    eventFile=NULL;
+    if(headFile) fclose(headFile);
+    headFile=NULL;
+    lastFileNumber=0;
   }
 }
 
@@ -241,13 +299,13 @@ void AnitaHeaderHandler::addEncSurfPacket(EncodedSurfPacketHeader_t *esPkt, UInt
 
 void AnitaHeaderHandler::addEncPedSubbedSurfPacket(EncodedPedSubbedSurfPacketHeader_t *epssPkt, UInt_t run)
 {
-  //  cout << "addEncPedSubbedSurfPacket\t" << epssPkt->eventNumber
-  //   << "\t" << curPSBody.eventNumber << endl;
+  //    std::cout << "addEncPedSubbedSurfPacket\t" << epssPkt->eventNumber
+  //       << "\t" << curPSBody.eventNumber << std::endl;
   if(epssPkt->eventNumber == curPSBody.eventNumber) {
     startedEvent=1;
     currentEventRun=run;
     int finished=processPedSubbedEncSurfPacket(epssPkt);
-    //      cout << startedEvent << "\t" << finished << endl;
+    //    std::cout << startedEvent << "\t" << finished << std::endl;
     if(finished) {
       addCurPSBody();
       zeroCounters();
@@ -420,8 +478,11 @@ void AnitaHeaderHandler::zeroCounters() {
 
 void AnitaHeaderHandler::addCurPSBody()
 {
-  //  cout << "plotEvent:\t" << curPSBody.eventNumber << endl;
+  //  std::cout << "addCurPSBody:\t" << curPSBody.eventNumber << std::endl;
   fillGenericHeader(&curPSBody,PACKET_PED_SUBBED_EVENT,sizeof(PedSubbedEventBody_t));
+  //  std::cout << "curPSBody.gHdr.code\t" << curPSBody.gHdr.code << std::endl;
+  //  std::cout << "curPSBody.gHdr.numBytes\t" << curPSBody.gHdr.numBytes << std::endl;
+  //  std::cout << "curPSBody.gHdr.version\t" << (int)curPSBody.gHdr.verId << std::endl;
   std::map<UInt_t,std::map<UInt_t, PedSubbedEventBody_t> >::iterator it= fEventMap.find(currentEventRun);
   if(it!=fEventMap.end()) {
     it->second.insert(std::pair<UInt_t,PedSubbedEventBody_t>(curPSBody.eventNumber,curPSBody));
@@ -432,17 +493,41 @@ void AnitaHeaderHandler::addCurPSBody()
     fEventMap.insert(std::pair<UInt_t,std::map<UInt_t, PedSubbedEventBody_t> >(currentEventRun,runMap));    
   }
 
+
+  // AnitaEventHeader_t *hdPtr=NULL;
+  // //std::cout << bdPtr->eventNumber << "\t" << 100*(bdPtr->eventNumber/100) << "\n";    
+   
+
+  // if(headRunIt!=fHeadMap.end()) {
+  //   headIt=headRunIt->second.find(curPSBody.eventNumber);
+  //   if(headIt!=headRunIt->second.end()) {
+  //     hdPtr=&(headIt->second);
+  //   }
+  // }
+  // //  std::cerr << "Before plotEvent\t" << hdPtr << "\n";;
+  // if(fMakeEventDisplaysForAware)
+  //   plotEvent(hdPtr,&curPSBody,currentEventRun);
+  // //      std::cerr << "After plotEvent\n";
+
+
+
 }
 
 void AnitaHeaderHandler::plotEvent(AnitaEventHeader_t *hdPtr,PedSubbedEventBody_t *bdPtr,int run) {
+  //  std::cout << "plotEvent:\t"  << hdPtr << "\t" << bdPtr << "\t" << run <<  "\n";
+  //  for(int channel=0;channel<NUM_DIGITZED_CHANNELS;channel++) {
+  //    std::cout << channel << "\t" << (int)bdPtr->channel[channel].header.firstHitbus << "\n";
+  //  }
 
-  static RawAnitaEvent *fTheEvent = new RawAnitaEvent(&curPSBody);
-  static RawAnitaHeader *fTheHead=NULL;
+  
+  RawAnitaEvent *fTheEvent = new RawAnitaEvent(bdPtr);
+  //  std::cout << "Made fTheEvent\n";
+  RawAnitaHeader *fTheHead=NULL;
   static TCanvas *fMagicCanvas=NULL;
   static TPad *fMagicMainPad=NULL;
   static TPad *fMagicEventInfoPad=NULL;
   char eventDir[FILENAME_MAX];
-  sprintf(eventDir,"%s/event",fAwareDir.c_str());
+  sprintf(eventDir,"%s/ANITA3/event",fAwareDir.c_str());
 
   if(hdPtr) {
     UInt_t triggerTimeNs=hdPtr->turfio.trigTime/hdPtr->turfio.c3poNum;
@@ -478,6 +563,9 @@ void AnitaHeaderHandler::plotEvent(AnitaEventHeader_t *hdPtr,PedSubbedEventBody_
   } 
   
   UsefulAnitaEvent *usefulEventPtr = new UsefulAnitaEvent(fTheEvent,WaveCalType::kVoltageTime);  
+  
+
+
   gEventCanvasMaker->getEventInfoCanvas(usefulEventPtr,fTheHead,fMagicEventInfoPad);
   gEventCanvasMaker->fMinVoltLimit=-100;
   gEventCanvasMaker->fMaxVoltLimit=100;
@@ -489,7 +577,7 @@ void AnitaHeaderHandler::plotEvent(AnitaEventHeader_t *hdPtr,PedSubbedEventBody_
   
   
   char dirName[FILENAME_MAX];
-  sprintf(dirName,"%s/all/ev%u",eventDir,EVENTS_PER_DIR*(fTheEvent->eventNumber/EVENTS_PER_DIR));
+  sprintf(dirName,"%s/all/run%d/ev%u",eventDir,run,EVENTS_PER_DIR*(fTheEvent->eventNumber/EVENTS_PER_DIR));
   gSystem->mkdir(dirName,kTRUE);
   sprintf(pngName,"%s/event_%u.png",dirName,fTheEvent->eventNumber);
   unlink(pngName);
@@ -502,6 +590,14 @@ void AnitaHeaderHandler::plotEvent(AnitaEventHeader_t *hdPtr,PedSubbedEventBody_
   link(pngName,lastName);
   
   if(fTheHead->eventNumber == fTheEvent->eventNumber) {
+
+    static unsigned int lastTime=0;
+    if(fTheHead->realTime>lastTime) {
+      lastTime=fTheHead->realTime;
+      AwareRunDatabase::updateTouchFile(fEventTouchFile.c_str(),run,lastTime);
+    }
+
+
     //Now make priority link
     char linkName[FILENAME_MAX];
     sprintf(dirName,"%s/pri%d/ev%u",eventDir,fTheHead->priority&0xf,10000*(fTheEvent->eventNumber/10000));

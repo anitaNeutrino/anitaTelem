@@ -39,7 +39,6 @@ public:
     
 private:
     std::string fRawDir;
-    int fRun;
     std::map<UInt_t,std::map<UInt_t, RunStart_t> > fRunStartMap;
     std::map<UInt_t,std::map<UInt_t, AcqdStartStruct_t> > fAcqdStartMap;
     std::map<UInt_t,std::map<UInt_t, GpsdStartStruct_t> > fGpsdStartMap;

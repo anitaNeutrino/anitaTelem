@@ -15,24 +15,37 @@
 #include "plotUtils.h"    
 
 
+namespace AnitaTelemFileType {
+  typedef enum {
+    kAnitaTelemLos=0,
+    kAnitaTelemTdrss,
+    kAnitaTelemOpenport,
+    kNotATelemType
+  } AnitaTelemFileType_t;
+}
+
 class AnitaGenericHeaderHandler 
 {   
 public:
-  AnitaGenericHeaderHandler(std::string rawDir,int run);
+  AnitaGenericHeaderHandler(std::string awareDir);
   ~AnitaGenericHeaderHandler();
   
   void addGenericHeader(GenericHeader_t *hdPtr);
-  void startNewRun(int losOrTdrss, int dirNumber, int runNumber);
 
-
-  void loopMap();
+  void newFile(AnitaTelemFileType::AnitaTelemFileType_t fileType,int runNum, int fileNum, unsigned int unixTime);
+  void writeFileSummary();
   
 
 private:
 
-  std::string fRawDir;
-  int fRun;
-  std::map<UInt_t, GenericHeader_t> fGhdMap;
+  int getLogicalPacketCode(PacketCode_t code);
+  PacketCode_t getRealPacketCode(int logicCode);
+  std::string fAwareDir;
+  AnitaTelemFileType::AnitaTelemFileType_t fFileType;
+  int fCurrentFile;
+  int fCurrentRun;
+  unsigned int fCurrentFileTime;
+  std::map<UInt_t,GenericHeader_t> fGhdMap;
 
 
 

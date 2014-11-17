@@ -24,6 +24,7 @@ using namespace std;
 #include "AnitaAuxiliaryHandler.h"
 #include "AnitaCmdEchoHandler.h" 
 #include "AnitaFileHandler.h" 
+#include "AnitaGenericHeaderHandler.h" 
 
 // #include "configLib/configLib.h"
 // #include "kvpLib/keyValuePair.h"
@@ -39,13 +40,14 @@ using namespace std;
 void handleScience(unsigned char *buffer,unsigned short numBytes);
 int processHighRateTDRSSFile(char *filename);
 int processLOSFile(char *filename);
+int processOpenportFile(char *filename);
 int guessCode(SSHkDataStruct_t *hkPtr);
-int getLastLosRunNumber() ;
-int getLastLosFileNumber() ;
-int getLastLosNumBytesNumber();
-void updateLastLosFileNumber();
-void updateLastLosRunNumber();
-void updateLastLosNumBytesNumber();
+int getLastRunNumber(AnitaTelemFileType::AnitaTelemFileType_t telemType) ;
+int getLastFileNumber(AnitaTelemFileType::AnitaTelemFileType_t telemType) ;
+int getLastNumBytesNumber(AnitaTelemFileType::AnitaTelemFileType_t telemType);
+void updateLastFileNumber();
+void updateLastRunNumber();
+void updateLastNumBytesNumber();
 void loadRunNumberMap();
 void saveRunNumberMap();
 UInt_t getRunNumberFromTime(UInt_t unixTime);
@@ -67,12 +69,15 @@ AnitaGpsHandler *gpsHandler;
 AnitaAuxiliaryHandler *auxHandler;
 AnitaCmdEchoHandler *cmdHandler;
 AnitaFileHandler *fileHandler;
+AnitaGenericHeaderHandler *ghdHandler;
 
 char *awareOutputDir;
 
-int lastLosNumBytesNumber=0;
-int lastLosRunNumber=0;
-int lastLosFileNumber=0;
+const char *telemTypeForFile[3]={"Los","Tdrss","Openport"};
+
+int lastNumBytesNumber[3]={0};
+int lastRunNumber[3]={0};
+int lastFileNumber[3]={0};
 
 std::map<UInt_t,UInt_t> fTimeRunMap;
 std::map<UInt_t,UInt_t> fEventRunMap;
@@ -94,7 +99,6 @@ int main (int argc, char ** argv)
     std::cerr << "Usage: " << argv[0] << "  <telem file> <telem file>\n";
     return -1;
   }
-  int losOrTdrss=1;
   std::cout << "sizeof(unsigned long): " << sizeof(unsigned long) << "\n";
   //`  return -1;
   //Create the handlers
@@ -106,12 +110,15 @@ int main (int argc, char ** argv)
     awareOutputDir=(char*)"/anitaStorage/antarctica14/telem/aware/output";
   }
  
-  lastLosRunNumber=getLastLosRunNumber();
-  lastLosFileNumber=getLastLosFileNumber();
+  for(int i=AnitaTelemFileType::kAnitaTelemLos;i<=AnitaTelemFileType::kAnitaTelemOpenport;i++) {
+    lastRunNumber[i]=getLastRunNumber((AnitaTelemFileType::AnitaTelemFileType_t)i);
+    lastFileNumber[i]=getLastFileNumber((AnitaTelemFileType::AnitaTelemFileType_t)i);
+    std::cout << telemTypeForFile[i] << "\t" << lastRunNumber[i] << "\t" << lastFileNumber[i] << "\n";
+  }
   loadRunNumberMap();
   
 
-  headHandler = new AnitaHeaderHandler(rawDir,awareOutputDir,1);
+  headHandler = new AnitaHeaderHandler(rawDir,awareOutputDir,0);
   hkHandler = new AnitaHkHandler(rawDir);
   gpsHandler = new AnitaGpsHandler(rawDir);
   monHandler = new AnitaMonitorHandler(rawDir);
@@ -119,19 +126,30 @@ int main (int argc, char ** argv)
   turfRateHandler = new AnitaTurfRateHandler(rawDir);
   auxHandler = new AnitaAuxiliaryHandler(rawDir);
 
+  ghdHandler = new AnitaGenericHeaderHandler(awareOutputDir);
   cmdHandler = new AnitaCmdEchoHandler(awareOutputDir);
   fileHandler = new AnitaFileHandler(awareOutputDir);
   
-
+  //Lazy hack way of determing which type of file we are dealing with
   for(int i=1;i<argc;i++) {
-    if(losOrTdrss)
-      processLOSFile(argv[i]);
-    else 
+    if(strstr(argv[i],"tdrss")!=NULL) {
+      std::cout << "Got TDRSS:\t" << strstr(argv[i],"tdrss") << "\n";
       processHighRateTDRSSFile(argv[i]);
+
+    }
+    else if(strstr(argv[i],"los")!=NULL) {
+      std::cout << "Got LOS:\t" << strstr(argv[i],"los") << "\n";
+      processLOSFile(argv[i]);
+    }
+    else if(strstr(argv[i],"openport")!=NULL) {
+      std::cout << "Got Openport:\t" << strstr(argv[i],"openport") << "\n";
+      processOpenportFile(argv[i]);
+    }
   }
 
   free(bigBuffer);
 
+  ghdHandler->writeFileSummary();
   headHandler->loopMap();
   headHandler->loopEventMap();
   hkHandler->loopMap();
@@ -153,9 +171,9 @@ int main (int argc, char ** argv)
   auxHandler->loopLogWatchdStartMap();
   cmdHandler->loopMaps();
 
-  updateLastLosRunNumber();
-  updateLastLosFileNumber();
-  updateLastLosNumBytesNumber();
+  updateLastRunNumber();
+  updateLastFileNumber();
+  updateLastNumBytesNumber();
   if(needToSaveRunMap) saveRunNumberMap();
 }
 
@@ -192,7 +210,7 @@ int processHighRateTDRSSFile(char *filename) {
     struct stat buf;
     //    int retVal2=
     stat(filename,&buf);
-    //    ghdHandler->newTdrssFile(currentTdrssRun,currentTdrssFile,buf.st_mtime);
+    //    ghdHandler->newFile(AnitaTelemFileType::kAnitaTelemTdrss,currentTdrssRun,currentTdrssFile,buf.st_mtime);
 
     static int triedThisOne=0;
     numBytes=fread(bigBuffer,1,BIG_BUF_SIZE,tdrssFile);
@@ -263,7 +281,9 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
     time_t nowTime;
     time(&nowTime);
     unsigned long lastCount=count-1;
-    static UInt_t lastEventNumber=0;
+    static UInt_t latestHeaderEventNumber=0;
+    static UInt_t lastHeaderEventNumber=0;
+    static UInt_t lastHeaderRunNumber=0;
     int run=0;
     while(count<(unsigned long)(numBytes-1)) {
       if(count==lastCount)
@@ -323,18 +343,21 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	LogWatchdStart_t *logWatchStart=0;
 	OtherMonitorStruct_t *otherMonPtr=0;
 	if((checkVal==0) && testGHdr>0) {	  
-	  //	  if(testGHdr->code>0) ghdHandler->addHeader(testGHdr);
+	  if(testGHdr->code>0) ghdHandler->addGenericHeader(testGHdr);
 	    //	    printf("Got %s (%#x) -- (%d bytes)\n",
 	    //		   packetCodeAsString(testGHdr->code),
 	    //		   testGHdr->code,testGHdr->numBytes);
 	    switch(testGHdr->code&BASE_PACKET_MASK) {
 	    case PACKET_HD:
-	      //	      cout << "Got Header\n";
+
 	      hdPtr= (AnitaEventHeader_t*)testGHdr;
 	      run=getRunNumberFromTime(hdPtr->unixTime);
+	      //	      cout << "Got Header\t" << run << "\t" << hdPtr->eventNumber << "\n";
 	      headHandler->addHeader(hdPtr,run);
-	      if(hdPtr->eventNumber>lastEventNumber)
-		lastEventNumber=hdPtr->eventNumber;
+	      lastHeaderRunNumber=run;
+	      lastHeaderEventNumber=hdPtr->eventNumber;
+	      if(hdPtr->eventNumber>latestHeaderEventNumber)
+		latestHeaderEventNumber=hdPtr->eventNumber;
 	      break;
 	    case PACKET_SURF_HK:
 	      //	      cout << "Got SurfHk\n";
@@ -417,9 +440,11 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	      headHandler->addEncSurfPacket(pack3,getRunNumberFromEvent(pack3->eventNumber));
 	      break;
 	    case PACKET_ENC_SURF_PEDSUB:
-	      //	      	      cout << "Got EncodedPedSubbedSurfPacketHeader_t\n";
+	      //	      cout << "Got EncodedPedSubbedSurfPacketHeader_t\n";
 	      pack2=(EncodedPedSubbedSurfPacketHeader_t*)testGHdr;
-	      headHandler->addEncPedSubbedSurfPacket(pack2,getRunNumberFromEvent(pack2->eventNumber));
+	      run=getRunNumberFromEvent(pack2->eventNumber);
+	      if(pack2->eventNumber==lastHeaderEventNumber) run=lastHeaderRunNumber;
+	      headHandler->addEncPedSubbedSurfPacket(pack2,run);
 	      break;
 	    case PACKET_ENC_WV_PEDSUB:
 	      //	      cout << "Got EncodedPedSubbeWavePacketHeader_t\n";
@@ -461,7 +486,7 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	      logWatchStart=(LogWatchdStart_t*)testGHdr;
 	      auxHandler->addLogWatchdStart(logWatchStart,logWatchStart->runNumber);
 	      
-	      addRunToMap(logWatchStart->runNumber,lastEventNumber,logWatchStart->unixTime);
+	      addRunToMap(logWatchStart->runNumber,latestHeaderEventNumber,logWatchStart->unixTime);
 	      break;
 	    case PACKET_RUN_START:
 	      cout << "Got Run Start Packet\n";
@@ -504,70 +529,80 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
        
 }
 
-void updateLastLosRunNumber() {
-  std::cout << "updateLastLosRunNumber\t" << lastLosRunNumber << "\n";
+void updateLastRunNumber() {
+  for(int telemType=AnitaTelemFileType::kAnitaTelemLos;telemType<=AnitaTelemFileType::kAnitaTelemOpenport;telemType++) {
+    std::cout << "updateRunNumber\t" << telemTypeForFile[telemType] << "\t" << lastRunNumber[telemType] << "\n";
+    
+    char fileName[FILENAME_MAX];
+    sprintf(fileName,"%s/ANITA3/db/last%sRun",awareOutputDir,telemTypeForFile[telemType]);
+    std::ofstream RunFile(fileName);
+    if(RunFile) {
+      RunFile << lastRunNumber[telemType] << "\n";
+      RunFile.close();
+    } 
+  }
+}
+
+void updateLastFileNumber() {
+  for(int telemType=AnitaTelemFileType::kAnitaTelemLos;telemType<=AnitaTelemFileType::kAnitaTelemOpenport;telemType++) {
+    std::cout << "updateLastFileNumber\t" << telemTypeForFile[telemType] << "\t" << lastFileNumber[telemType] << "\n";
+    char fileName[FILENAME_MAX];
+    sprintf(fileName,"%s/ANITA3/db/last%sFile",awareOutputDir,telemTypeForFile[telemType]);
+    std::ofstream FileFile(fileName);
+    if(FileFile) {
+      FileFile << lastFileNumber[telemType] << "\n";
+      FileFile.close();
+    } 
+  }
+}
+
+
+void updateLastNumBytesNumber() {
+  for(int telemType=AnitaTelemFileType::kAnitaTelemLos;telemType<=AnitaTelemFileType::kAnitaTelemOpenport;telemType++) {
+    std::cout << "updateLastNumBytesNumber\t" << telemTypeForFile[telemType] << "\t" <<  lastNumBytesNumber[telemType] << "\n";
+    char fileName[FILENAME_MAX];
+    sprintf(fileName,"%s/ANITA3/db/last%sNumBytes",awareOutputDir,telemTypeForFile[telemType]);
+    std::ofstream NumBytesNumBytes(fileName);
+    if(NumBytesNumBytes) {
+      NumBytesNumBytes << lastNumBytesNumber[telemType] << "\n";
+      NumBytesNumBytes.close();
+    } 
+  }
+}
+
+int getLastRunNumber(AnitaTelemFileType::AnitaTelemFileType_t telemType)  {
   char fileName[FILENAME_MAX];
-  sprintf(fileName,"%s/ANITA3/db/lastLosRun",awareOutputDir);
-  std::ofstream RunFile(fileName);
+  sprintf(fileName,"%s/ANITA3/db/last%sRun",awareOutputDir,telemTypeForFile[telemType]);
+  std::ifstream RunFile(fileName);
   if(RunFile) {
-    RunFile << lastLosRunNumber << "\n";
+    RunFile >> lastRunNumber[telemType];
     RunFile.close();
-  } 
-}
-
-void updateLastLosFileNumber() {
-  std::cout << "updateLastLosFileNumber\t" << lastLosFileNumber << "\n";
-  char fileName[FILENAME_MAX];
-  sprintf(fileName,"%s/ANITA3/db/lastLosFile",awareOutputDir);
-  std::ofstream FileFile(fileName);
-  if(FileFile) {
-    FileFile << lastLosFileNumber << "\n";
-    FileFile.close();
-  } 
-}
-
-
-void updateLastLosNumBytesNumber() {
-  std::cout << "updateLastLosNumBytesNumber\t" << lastLosNumBytesNumber << "\n";
-  char fileName[FILENAME_MAX];
-  sprintf(fileName,"%s/ANITA3/db/lastLosNumBytes",awareOutputDir);
-  std::ofstream NumBytesNumBytes(fileName);
-  if(NumBytesNumBytes) {
-    NumBytesNumBytes << lastLosNumBytesNumber << "\n";
-    NumBytesNumBytes.close();
-  } 
-}
-
-
-int getLastLosRunNumber()  {
-  char fileName[FILENAME_MAX];
-  sprintf(fileName,"%s/ANITA3/db/lastLosRun",awareOutputDir);
-  std::ifstream RunFile(fileName);
-  if(RunFile) {
-    RunFile >> lastLosRunNumber;
-    return lastLosRunNumber;
+    return lastRunNumber[telemType];
   }
   return -1;
 }
 
-int getLastLosNumBytesNumber()  {
+int getLastNumBytesNumber(AnitaTelemFileType::AnitaTelemFileType_t telemType)  {
   char fileName[FILENAME_MAX];
-  sprintf(fileName,"%s/ANITA3/db/lastLosNumBytes",awareOutputDir);
+  sprintf(fileName,"%s/ANITA3/db/last%sNumBytes",awareOutputDir,telemTypeForFile[telemType]);
   std::ifstream RunFile(fileName);
   if(RunFile) {
-    RunFile >> lastLosNumBytesNumber;
-    return lastLosNumBytesNumber;
+    RunFile >> lastNumBytesNumber[telemType];
+    RunFile.close();
+    return lastNumBytesNumber[telemType];
   }
   return -1;
 }
 
-int getLastLosFileNumber()  {
+int getLastFileNumber(AnitaTelemFileType::AnitaTelemFileType_t telemType)  {
   char fileName[FILENAME_MAX];
-  sprintf(fileName,"%s/ANITA3/db/lastLosFile",awareOutputDir);
-  std::ifstream LosFile(fileName);
-  if(LosFile) {
-    LosFile >> lastLosFileNumber;
-    return lastLosFileNumber;
+  sprintf(fileName,"%s/ANITA3/db/last%sFile",awareOutputDir,telemTypeForFile[telemType]);
+  std::cout << fileName << "\n";
+  std::ifstream LastFile(fileName);
+  if(LastFile) {
+    LastFile >> lastFileNumber[telemType];
+    LastFile.close();
+    return lastFileNumber[telemType];
   }
   return -1;
 }
@@ -585,17 +620,17 @@ int processLOSFile(char *filename) {
 
   sscanf(losFileString,"%06d",&thisFileNumber);
   sscanf(losDirString,"%06d",&thisRunNumber);
-  cout << "processLOSFile: " << filename << "\t" << losFileString << "\t" << losDirString << "\t" << thisFileNumber <<  "\t" << thisRunNumber << "\t" << lastLosFileNumber << "\t" << lastLosRunNumber << endl;
+  cout << "processLOSFile: " << filename << "\t" << losFileString << "\t" << losDirString << "\t" << thisFileNumber <<  "\t" << thisRunNumber << "\t" << lastFileNumber[AnitaTelemFileType::kAnitaTelemLos] << "\t" << lastRunNumber[AnitaTelemFileType::kAnitaTelemLos] << endl;
 
   int newRun=-1;
-  if(thisRunNumber>lastLosRunNumber)
+  if(thisRunNumber>lastRunNumber[AnitaTelemFileType::kAnitaTelemLos])
     newRun=1;
-  else if(thisRunNumber==lastLosRunNumber) {
-    if(thisFileNumber==lastLosFileNumber) {
+  else if(thisRunNumber==lastRunNumber[AnitaTelemFileType::kAnitaTelemLos]) {
+    if(thisFileNumber==lastFileNumber[AnitaTelemFileType::kAnitaTelemLos]) {
       newRun=0;
-      lastNumBytes=getLastLosNumBytesNumber();
+      lastNumBytes=getLastNumBytesNumber(AnitaTelemFileType::kAnitaTelemLos);
     }
-    else if(thisFileNumber>lastLosFileNumber) {
+    else if(thisFileNumber>lastFileNumber[AnitaTelemFileType::kAnitaTelemLos]) {
       newRun=1;
       lastNumBytes=0;
     }
@@ -643,7 +678,7 @@ int processLOSFile(char *filename) {
   }
   count=lastNumBytes;
   lastNumBytes=numBytes;
-  lastLosNumBytesNumber=numBytes;
+  lastNumBytesNumber[AnitaTelemFileType::kAnitaTelemLos]=numBytes;
   cout << "losFile: " << filename << endl;
   struct stat buf;
   //    int retVal2=
@@ -651,7 +686,7 @@ int processLOSFile(char *filename) {
   
     
   stat(filename,&buf);
-  //    ghdHandler->newLosFile(currentLosRun,currentLosFile,buf.st_mtime);
+  ghdHandler->newFile(AnitaTelemFileType::kAnitaTelemLos,thisRunNumber,thisFileNumber,buf.st_mtime);
   printf("Read %d bytes from %s\n",numBytes,filename);
   fclose(losFile);
   int count3=0;
@@ -708,8 +743,151 @@ int processLOSFile(char *filename) {
     }
 
 
-  lastLosRunNumber=thisRunNumber;
-  lastLosFileNumber=thisFileNumber;
+  lastRunNumber[AnitaTelemFileType::kAnitaTelemLos]=thisRunNumber;
+  lastFileNumber[AnitaTelemFileType::kAnitaTelemLos]=thisFileNumber;
+
+  return 0;
+
+}
+
+int processOpenportFile(char *filename) {
+  static int lastNumBytes=0;
+  //  static unsigned int lastUnixTime=0;
+  lastNumBytes=0;
+  int thisFileNumber=0;
+  int thisRunNumber=0;
+
+  const char *openportFileString = gSystem->BaseName(filename);
+  const char *openportDirString = gSystem->BaseName(gSystem->DirName(filename));
+
+  sscanf(openportFileString,"%06d",&thisFileNumber);
+  sscanf(openportDirString,"%06d",&thisRunNumber);
+  cout << "processOpenportFile: " << filename << "\t" << openportFileString << "\t" << openportDirString << "\t" << thisFileNumber <<  "\t" << thisRunNumber << "\t" << lastFileNumber[AnitaTelemFileType::kAnitaTelemOpenport] << "\t" << lastRunNumber[AnitaTelemFileType::kAnitaTelemOpenport] << endl;
+
+  int newRun=-1;
+  if(thisRunNumber>lastRunNumber[AnitaTelemFileType::kAnitaTelemOpenport])
+    newRun=1;
+  else if(thisRunNumber==lastRunNumber[AnitaTelemFileType::kAnitaTelemOpenport]) {
+    if(thisFileNumber==lastFileNumber[AnitaTelemFileType::kAnitaTelemOpenport]) {
+      newRun=0;
+      lastNumBytes=getLastNumBytesNumber(AnitaTelemFileType::kAnitaTelemOpenport);
+    }
+    else if(thisFileNumber>lastFileNumber[AnitaTelemFileType::kAnitaTelemOpenport]) {
+      newRun=1;
+      lastNumBytes=0;
+    }
+  }
+  
+  if(newRun<0) return 0;
+
+  int numBytes=0,count=0;
+  FILE *openportFile;
+  
+    //data stuff
+  unsigned short numWords;
+  //  unsigned short unused;
+  unsigned short foodHdr;
+  unsigned short doccHdr;
+  unsigned short ae00Hdr;
+  int losOrSip;
+  int oddOrEven;
+  unsigned long bufferCount;
+  unsigned long *ulPtr;
+  unsigned short numSciBytes;
+  unsigned short checksum;
+  unsigned short endHdr;
+  unsigned short swEndHdr;
+  unsigned short auxHdr2;
+
+  openportFile=fopen(filename,"rb");
+  if(!openportFile) {
+    //	printf("Couldn't open: %s\n",filename);
+    return -1;
+  }
+  
+  
+  numBytes=fread(bigBuffer,1,BIG_BUF_SIZE,openportFile);
+  if(numBytes<=0) {
+    fclose(openportFile);
+    return -1;
+  }
+  
+  printf("numBytes %d, lastNumBytes %d\n",numBytes,lastNumBytes);
+  if(numBytes==lastNumBytes) {
+    //No new data
+    fclose(openportFile);
+    return 2;
+  }
+  count=lastNumBytes;
+  lastNumBytes=numBytes;
+  lastNumBytesNumber[AnitaTelemFileType::kAnitaTelemOpenport]=numBytes;
+  cout << "openportFile: " << filename << endl;
+  struct stat buf;
+  //    int retVal2=
+  
+  
+    
+  stat(filename,&buf);
+
+  ghdHandler->newFile(AnitaTelemFileType::kAnitaTelemOpenport,thisRunNumber,thisFileNumber,buf.st_mtime);
+  printf("Read %d bytes from %s\n",numBytes,filename);
+  fclose(openportFile);
+  int count3=0;
+
+    //    for(int i=0;i<100;i++)
+      //      printf("%d\t%#x\n",i,bigBuffer[i]);
+  while(count<numBytes) {
+      //      printf("%d -- %x\n",count,bigBuffer[count]);
+      //      printf("%d of %d\n",count,numBytes);
+	count3++;
+	//	if(count3>100) break;
+	if(bigBuffer[count]==0xf00d) {
+	    count3=0;
+	    //	    printf("Got f00d %d\n",count);
+	    //Maybe new openport buffer
+
+	    foodHdr=bigBuffer[count];
+	    doccHdr=bigBuffer[count+1];
+	    ae00Hdr=bigBuffer[count+2];
+	    numWords=bigBuffer[count+3];
+
+	    // printf("numWords -- %d -- %x\n",numWords,numWords);
+	    // printf("foodHdr -- %x\n",foodHdr);
+	    // printf("doccHdr -- %x\n",doccHdr);
+	    // printf("ae00Hdr -- %x\n",ae00Hdr);
+
+	    //	    exit(0);
+	    if(foodHdr==0xf00d && doccHdr==0xd0cc && (ae00Hdr&0xfff0)==0xae00) {
+		//Got a openport buffer
+		losOrSip=ae00Hdr&0x1;
+		oddOrEven=ae00Hdr&0x2>>1;
+		ulPtr = (unsigned long*) &bigBuffer[count+3];
+		bufferCount=*ulPtr;
+		numSciBytes=bigBuffer[count+2+5];
+		//		printf("Buffer %u -- %d bytes\n",bufferCount,numSciBytes);
+		checksum=bigBuffer[count+2+6+(numSciBytes/2)];		
+		swEndHdr=bigBuffer[count+2+7+(numSciBytes/2)];
+		endHdr=bigBuffer[count+2+8+(numSciBytes/2)];
+		auxHdr2=bigBuffer[count+2+9+(numSciBytes/2)];
+
+		//Now do something with buffer
+		handleScience((unsigned char*)&bigBuffer[count+2+6],numSciBytes);
+		// printf("swEndHdr -- %x\n",swEndHdr);
+		// printf("endHdr -- %x\n",endHdr);
+		// printf("auxHdr2 -- %x\n",auxHdr2);	
+		
+		//		exit(0);
+//		return 0;
+		count+=12+(numSciBytes/2);
+		continue;
+	    }
+	}
+	count++;
+    }
+
+
+  lastRunNumber[AnitaTelemFileType::kAnitaTelemOpenport]=thisRunNumber;
+  lastFileNumber[AnitaTelemFileType::kAnitaTelemOpenport]=thisFileNumber;
 
   return 0;
 
@@ -787,9 +965,21 @@ UInt_t getRunNumberFromTime(UInt_t unixTime)
 
 UInt_t getRunNumberFromEvent(UInt_t eventNumber)
 {
+  // std:cout << "getRunNumberFromEvent\t" << eventNumber << "\n";
   std::map<UInt_t,UInt_t>::iterator it=fEventRunMap.lower_bound(eventNumber);
+  
+  //  std::map<UInt_t,UInt_t>::iterator it3;
+  //  for(it3=fEventRunMap.begin();it3!=fEventRunMap.end();it3++) {
+  //    std::cout << it3->first << "\t" << it3->second << "\t" << eventNumber << "\n";
+  //  }
   if(it!=fEventRunMap.end()) {
-    //    std::cout << it->first << "\t" << it->second << "\t" << unixTime << "\n";
+
+    //    std::cout << "it: " << it->first << "\t" << it->second << "\t" << eventNumber << "\n";
+    while(it->first>eventNumber && it!=fEventRunMap.begin()) {
+      it--;
+    }
+    //    std::cout << it->first << "\t" << it->second << "\t" << eventNumber << "\n"; 
+    
     return it->second;
   }
   if(fEventRunMap.size()>0) {
@@ -800,6 +990,7 @@ UInt_t getRunNumberFromEvent(UInt_t eventNumber)
   std::cout << "Couldn't get run number from eventNumber " << eventNumber << "\n" ;
   return -1;
 }
+
 
 void addRunToMap(UInt_t run, UInt_t eventNumber, UInt_t unixTime) 
 {
