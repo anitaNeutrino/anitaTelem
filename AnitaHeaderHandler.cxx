@@ -109,10 +109,11 @@ void AnitaHeaderHandler::loopMap()
     std::map<UInt_t,AnitaEventHeader_t>::iterator it;
     FILE *outFile=NULL;
     UInt_t run=runIt->first;
+    //    std::cerr << "Loop Map Run " << run << "\n";
     for(it=(runIt->second).begin();it!=(runIt->second).end();it++) {
 
       AnitaEventHeader_t *hdPtr=&(it->second);
-      //    std::cout << hdPtr->unixTime << "\t" << hdPtr->eventNumber << "\t" << 100*(hdPtr->eventNumber/100) << "\n";    
+      //      std::cout << hdPtr->unixTime << "\t" << hdPtr->eventNumber << "\t" << 100*(hdPtr->eventNumber/100) << "\n";    
       int fileNumber=100*(hdPtr->eventNumber/100);
       //    processHeader(hdPtr);
       
@@ -130,10 +131,12 @@ void AnitaHeaderHandler::loopMap()
 	gSystem->mkdir(fileName,kTRUE);
 	
 	sprintf(fileName,"%s/run%d/event/last",fRawDir.c_str(),run);
+	//	std::cerr << fileName << "\n";
 	AwareRunDatabase::touchFile(fileName);
 
 	sprintf(fileName,"%s/run%d/event/ev%d/ev%d/hd_%d.dat.gz",fRawDir.c_str(),run,dirNumber,subDirNumber,fileNumber);
 	outFile=fopen(fileName,"ab");
+	//	std::cout << fileName << "\t" << outFile << "\n";
 	if(!outFile ) {
 	  printf("Couldn't open: %s\n",fileName);
 	  return;
@@ -142,7 +145,6 @@ void AnitaHeaderHandler::loopMap()
       lastFileNumber=fileNumber;
       fwrite(hdPtr,sizeof(AnitaEventHeader_t),1,outFile);
     }
-  
     if(outFile) fclose(outFile);
     outFile=NULL;
     lastFileNumber=0;
@@ -169,6 +171,7 @@ void AnitaHeaderHandler::loopEventMap()
     headRunIt=fHeadMap.find(run);
   
     //    std::cerr << "Run: " << run << "\t" << runIt->second.size() << "\n";
+    AnitaEventHeader_t tempHeader; 
     for(it=(runIt->second).begin();it!=(runIt->second).end();it++) {
       PedSubbedEventBody_t *bdPtr=&(it->second);
       AnitaEventHeader_t *hdPtr=NULL;
@@ -183,11 +186,11 @@ void AnitaHeaderHandler::loopEventMap()
       if(fMakeEventDisplaysForAware)
 	plotEvent(hdPtr,bdPtr,run);
       
-      if(!hdPtr) {
-	AnitaEventHeader_t tempHeader;
+      if(!hdPtr) {	
 	tempHeader.eventNumber=bdPtr->eventNumber;
 	memset(&tempHeader,0,sizeof(AnitaEventHeader_t));
 	fillGenericHeader(&tempHeader,PACKET_HD,sizeof(AnitaEventHeader_t));
+	hdPtr=&tempHeader;
       }
 
       int fileNumber=100*(bdPtr->eventNumber/100);
