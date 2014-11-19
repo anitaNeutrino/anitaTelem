@@ -102,7 +102,15 @@ int main (int argc, char ** argv)
   std::cout << "sizeof(unsigned long): " << sizeof(unsigned long) << "\n";
   //`  return -1;
   //Create the handlers
-  std::string rawDir("/anitaStorage/antarctica14//telem/raw");
+  
+  char *anitaTelemDataDir=getenv("ANITA_TELEM_DATA_DIR");
+  if(!anitaTelemDataDir) {
+    anitaTelemDataDir="/anitaStorage/antarctica14/telem";
+  }
+  
+  std::string rawDir(anitaTelemDataDir);
+  rawDir+="/raw";
+  std::cout << rawDir << "\n";
 
   awareOutputDir=getenv("AWARE_OUTPUT_DIR");
   if(!awareOutputDir) {
