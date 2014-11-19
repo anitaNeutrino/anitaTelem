@@ -66,6 +66,7 @@ def main():
         subprocess.call([processCommand],shell=True)
         processCommand=anitaTreeMakerDir+"/runTelemHeaderMaker.sh "+str(runNum)+" "+rawDir+" "+rootDir
         subprocess.call([processCommand],shell=True)
+        #Here insert call to aware file maker
 
       
     rawTime=getRawTimeModified(runNum,"house/hk/last")
