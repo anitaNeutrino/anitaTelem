@@ -84,7 +84,7 @@ void AnitaHeaderHandler::addHeader(AnitaEventHeader_t *hdPtr, UInt_t run)
   static unsigned int lastTime=0;
   if(hdPtr->unixTime>lastTime) {
     lastTime=hdPtr->unixTime;
-    AwareRunDatabase::updateTouchFile(fHeaderTouchFile.c_str(),run,hdPtr->unixTime);
+    //    AwareRunDatabase::updateTouchFile(fHeaderTouchFile.c_str(),run,hdPtr->unixTime);
   }
 
   std::map<UInt_t,std::map<UInt_t, AnitaEventHeader_t> >::iterator it= fHeadMap.find(run);
@@ -605,7 +605,7 @@ void AnitaHeaderHandler::plotEvent(AnitaEventHeader_t *hdPtr,PedSubbedEventBody_
     static unsigned int lastTime=0;
     if(fTheHead->realTime>lastTime) {
       lastTime=fTheHead->realTime;
-      AwareRunDatabase::updateTouchFile(fEventTouchFile.c_str(),run,lastTime);
+      //      AwareRunDatabase::updateTouchFile(fEventTouchFile.c_str(),run,lastTime);
     }
 
 

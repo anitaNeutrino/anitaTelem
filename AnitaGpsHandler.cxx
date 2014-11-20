@@ -151,7 +151,7 @@ void AnitaGpsHandler::loopG12PosMap()
 	
 	sprintf(fileName,"%s/run%d/house/gps/g12/pos/sub_%d/sub_%d/",fRawDir.c_str(),fRun,gpsPtr->unixTime,gpsPtr->unixTime);       
 	gSystem->mkdir(fileName,kTRUE);
-	sprintf(fileName,"%s/run%d/house/gps/g12/pos/last",fRawDir.c_str(),fRun);
+	sprintf(fileName,"%s/run%d/house/gps/last",fRawDir.c_str(),fRun);
 	AwareRunDatabase::touchFile(fileName);
 	sprintf(fileName,"%s/run%d/house/gps/g12/pos/sub_%d/sub_%d/pos_%d.dat.gz",fRawDir.c_str(),fRun,gpsPtr->unixTime,gpsPtr->unixTime,gpsPtr->unixTime);
 	std::cout << fileName << "\n";
@@ -203,7 +203,7 @@ void AnitaGpsHandler::loopG12SatMap()
 	
 	sprintf(fileName,"%s/run%d/house/gps/g12/sat/sub_%d/sub_%d/",fRawDir.c_str(),fRun,gpsPtr->unixTime,gpsPtr->unixTime);       
 	gSystem->mkdir(fileName,kTRUE);
-	sprintf(fileName,"%s/run%d/house/gps/g12/sat/last",fRawDir.c_str(),fRun);
+	sprintf(fileName,"%s/run%d/house/gps/last",fRawDir.c_str(),fRun);
 	AwareRunDatabase::touchFile(fileName);
 	sprintf(fileName,"%s/run%d/house/gps/g12/sat/sub_%d/sub_%d/sat_%d.dat.gz",fRawDir.c_str(),fRun,gpsPtr->unixTime,gpsPtr->unixTime,gpsPtr->unixTime);
 	std::cout << fileName << "\n";
@@ -257,7 +257,7 @@ void AnitaGpsHandler::loopGpsGgaMaps()
 	
 	sprintf(fileName,"%s/run%d/house/gps/%s/gga/sub_%d/sub_%d/",fRawDir.c_str(),fRun,getGpsName(gpsId),gpsPtr->unixTime,gpsPtr->unixTime);       
 	gSystem->mkdir(fileName,kTRUE);
-	sprintf(fileName,"%s/run%d/house/%s/gga/last",fRawDir.c_str(),fRun,getGpsName(gpsId));
+	sprintf(fileName,"%s/run%d/house/last",fRawDir.c_str(),fRun);
 	AwareRunDatabase::touchFile(fileName);
 	sprintf(fileName,"%s/run%d/house/gps/%s/gga/sub_%d/sub_%d/gga_%d.dat.gz",fRawDir.c_str(),fRun,getGpsName(gpsId),gpsPtr->unixTime,gpsPtr->unixTime,gpsPtr->unixTime);
 	std::cout << fileName << "\n";
@@ -312,7 +312,7 @@ void AnitaGpsHandler::loopAdu5PatMaps()
 	
 	sprintf(fileName,"%s/run%d/house/gps/%s/pat/sub_%d/sub_%d/",fRawDir.c_str(),fRun,getGpsName(gpsId),gpsPtr->unixTime,gpsPtr->unixTime);       
 	gSystem->mkdir(fileName,kTRUE);
-	sprintf(fileName,"%s/run%d/house/%s/pat/last",fRawDir.c_str(),fRun,getGpsName(gpsId));
+	sprintf(fileName,"%s/run%d/house/last",fRawDir.c_str(),fRun);
 	AwareRunDatabase::touchFile(fileName);
 	sprintf(fileName,"%s/run%d/house/gps/%s/pat/sub_%d/sub_%d/pat_%d.dat.gz",fRawDir.c_str(),fRun,getGpsName(gpsId),gpsPtr->unixTime,gpsPtr->unixTime,gpsPtr->unixTime);
 	std::cout << fileName << "\n";
@@ -365,7 +365,7 @@ void AnitaGpsHandler::loopAdu5SatMaps()
 	
 	sprintf(fileName,"%s/run%d/house/gps/%s/sat/sub_%d/sub_%d/",fRawDir.c_str(),fRun,getGpsName(gpsId),gpsPtr->unixTime,gpsPtr->unixTime);       
 	gSystem->mkdir(fileName,kTRUE);
-	sprintf(fileName,"%s/run%d/house/%s/sat/last",fRawDir.c_str(),fRun,getGpsName(gpsId));
+	sprintf(fileName,"%s/run%d/house/last",fRawDir.c_str(),fRun);
 	AwareRunDatabase::touchFile(fileName);
 	sprintf(fileName,"%s/run%d/house/gps/%s/sat/sub_%d/sub_%d/sat_%d.dat.gz",fRawDir.c_str(),fRun,getGpsName(gpsId),gpsPtr->unixTime,gpsPtr->unixTime,gpsPtr->unixTime);
 	std::cout << fileName << "\n";
@@ -418,7 +418,7 @@ void AnitaGpsHandler::loopAdu5VtgMaps()
 	
 	sprintf(fileName,"%s/run%d/house/gps/%s/vtg/sub_%d/sub_%d/",fRawDir.c_str(),fRun,getGpsName(gpsId),gpsPtr->unixTime,gpsPtr->unixTime);       
 	gSystem->mkdir(fileName,kTRUE);
-	sprintf(fileName,"%s/run%d/house/%s/vtg/last",fRawDir.c_str(),fRun,getGpsName(gpsId));
+	sprintf(fileName,"%s/run%d/house/last",fRawDir.c_str(),fRun);
 	AwareRunDatabase::touchFile(fileName);
 	sprintf(fileName,"%s/run%d/house/gps/%s/vtg/sub_%d/sub_%d/vtg_%d.dat.gz",fRawDir.c_str(),fRun,getGpsName(gpsId),gpsPtr->unixTime,gpsPtr->unixTime,gpsPtr->unixTime);
 	std::cout << fileName << "\n";

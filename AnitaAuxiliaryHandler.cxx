@@ -13,7 +13,7 @@
 #include "TSystem.h"
 #include "RawHk.h"
 #include "simpleStructs.h"
-
+#include "AwareRunDatabase.h"
 
 #define HACK_FOR_ROOT
 
@@ -125,6 +125,8 @@ void AnitaAuxiliaryHandler::loopAcqdStartMap()
 
       sprintf(fileName,"%s/run%d/start",fRawDir.c_str(),fRun);       
       gSystem->mkdir(fileName,kTRUE);
+      sprintf(fileName,"%s/run%d/start/last",fRawDir.c_str(),fRun);       
+      AwareRunDatabase::touchFile(fileName);
       sprintf(fileName,"%s/run%d/start/acqd_%d.dat",fRawDir.c_str(),fRun,hkPtr->unixTime);
       std::cout << fileName << "\n";
       outFile=fopen(fileName,"wb");
@@ -170,6 +172,8 @@ void AnitaAuxiliaryHandler::loopGpsdStartMap()
 
       sprintf(fileName,"%s/run%d/start",fRawDir.c_str(),fRun);       
       gSystem->mkdir(fileName,kTRUE);
+      sprintf(fileName,"%s/run%d/start/last",fRawDir.c_str(),fRun);       
+      AwareRunDatabase::touchFile(fileName);
       sprintf(fileName,"%s/run%d/start/gpsd_%d.dat",fRawDir.c_str(),fRun,hkPtr->unixTime);
       std::cout << fileName << "\n";
       outFile=fopen(fileName,"wb");
@@ -215,6 +219,8 @@ void AnitaAuxiliaryHandler::loopLogWatchdStartMap()
       
       sprintf(fileName,"%s/run%d/start",fRawDir.c_str(),fRun);       
       gSystem->mkdir(fileName,kTRUE);
+      sprintf(fileName,"%s/run%d/start/last",fRawDir.c_str(),fRun);       
+      AwareRunDatabase::touchFile(fileName);
       sprintf(fileName,"%s/run%d/start/logwatchd_%d.dat",fRawDir.c_str(),fRun,hkPtr->unixTime);
       std::cout << fileName << "\n";
       outFile=fopen(fileName,"wb");

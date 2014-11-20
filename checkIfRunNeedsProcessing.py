@@ -8,7 +8,7 @@ import subprocess
 
 
 anitaTelemDir = os.getenv('ANITA_TELEM_DIR', "/home/radio/anita14/anitaTelem")
-anitaTelemDataDir = os.getenv('ANITA_TELEM_DATA_DIR', "/anitaStorage/antarctica14/telem")
+anitaTelemDataDir = os.getenv('ANITA_TELEM_DATA_DIR', "/anitaStorage2/antarctica14/telem")
 anitaTreeMakerDir = os.getenv("ANITA_TREE_MAKER_DIR","/home/radio/anita14/simpleTreeMaker")
 anitaAwareFilemakerDir= os.getenv("ANITA_AWARE_FILEMAKER_DIR","/home/radio/anita14/anitaAwareFileMaker")
 
@@ -29,13 +29,18 @@ def doesRootDirExist(runNum):
 
 def getRawTimeModified(runNum,filePath):
     fullDir=anitaTelemDataDir+"/raw/run"+str(runNum)+"/"+filePath
-    return os.path.getmtime(fullDir)
+    if(os.path.isfile(fullDir)):
+        return os.path.getmtime(fullDir)
+    return 0;
 
 def getRootFilename(runNum,fileName):
-     return anitaTelemDataDir+"/root/run"+str(runNum)+"/"+fileName+str(runNum)+".root"
+    return anitaTelemDataDir+"/root/run"+str(runNum)+"/"+fileName+str(runNum)+".root"
 
 def getRootTimeModified(runNum,fileName):    
-    return os.path.getmtime(getRootFilename(runNum,fileName))
+    rootFile=getRootFilename(runNum,fileName)
+    if(os.path.isfile(rootFile)):
+        return os.path.getmtime(rootFile)
+    return 1
 
 def main():
  
@@ -55,6 +60,8 @@ def main():
         print "Root dir does not exist for run ",runNum
         processCommand=anitaTreeMakerDir+"/runAnitaIIIFileMakerTelem.sh "+str(runNum)
         subprocess.call([processCommand],shell=True)
+        processCommand=anitaAwareFilemakerDir+"/antarctica/processRunTelem.sh "+str(runNum)
+        subprocess.call([processCommand],shell=True)
         sys.exit()
 
 #Step three check if individual root files need to be remade
@@ -70,9 +77,10 @@ def main():
         subprocess.call([processCommand],shell=True)
         processCommand=anitaTreeMakerDir+"/runTelemHeaderMaker.sh "+str(runNum)+" "+rawDir+" "+rootDir
         subprocess.call([processCommand],shell=True)
-        #Here insert call to aware file maker
-        processCommand=anitaAwareFileMaker+"/makeHeaderJsonFiles"+" "+getRootFilename(runNum,"eventFile")
-        subprocess.call([processCommand])
+        #Here insert call to aware file maker    
+        processCommand=anitaAwareFilemakerDir+"/makeHeaderJsonFiles"
+        print processCommand
+        subprocess.call([processCommand,getRootFilename(runNum,"headFile")])
 
       
     rawTime=getRawTimeModified(runNum,"house/hk/last")
@@ -82,8 +90,8 @@ def main():
         processCommand=anitaTreeMakerDir+"/runTelemHkMaker.sh "+str(runNum)+" "+rawDir+" "+rootDir
         subprocess.call([processCommand],shell=True)
         #Here insert call to aware file maker
-        processCommand=anitaAwareFileMaker+"/makePrettyHkJsonFiles"+" "+getRootFilename(runNum,"hkFile")
-        subprocess.call([processCommand])
+        processCommand=anitaAwareFilemakerDir+"/makePrettyHkJsonFiles"
+        subprocess.call([processCommand,getRootFilename(runNum,"hkFile")])
 
     rawTime=getRawTimeModified(runNum,"house/monitor/last")
     rootTime=getRootTimeModified(runNum,"hkFile")
@@ -94,10 +102,10 @@ def main():
         processCommand=anitaTreeMakerDir+"/runTelemOtherMonitorMaker.sh "+str(runNum)+" "+rawDir+" "+rootDir
         subprocess.call([processCommand],shell=True)
         #Here insert call to aware file maker
-        processCommand=anitaAwareFileMaker+"/makeMonitorHkJsonFiles"+" "+getRootFilename(runNum,"monitorFile")
-        subprocess.call([processCommand])
-        processCommand=anitaAwareFileMaker+"/makeOtherMonitorHkJsonFiles"+" "+getRootFilename(runNum,"monitorFile")
-        subprocess.call([processCommand])
+        processCommand=anitaAwareFilemakerDir+"/makeMonitorHkJsonFiles"
+        subprocess.call([processCommand,getRootFilename(runNum,"monitorFile")])
+        processCommand=anitaAwareFilemakerDir+"/makeOtherMonitorHkJsonFiles"
+        subprocess.call([processCommand,getRootFilename(runNum,"monitorFile")])
 
     rawTime=getRawTimeModified(runNum,"house/turfhk/last")
     rootTime=getRootTimeModified(runNum,"turfRateFile")
@@ -107,10 +115,11 @@ def main():
         subprocess.call([processCommand],shell=True)
         processCommand=anitaTreeMakerDir+"/runTelemSumTurfRateMaker.sh "+str(runNum)+" "+rawDir+" "+rootDir
         subprocess.call([processCommand],shell=True)
-        processCommand=anitaAwareFileMaker+"/makeTurfRateJsonFiles"+" "+getRootFilename(runNum,"turfRateFile")
-        subprocess.call([processCommand])
-        processCommand=anitaAwareFileMaker+"/makeSumTurfRateJsonFiles"+" "+getRootFilename(runNum,"sumTurfRateFile")
-        subprocess.call([processCommand])
+        processCommand=anitaAwareFilemakerDir+"/makeTurfRateJsonFiles"
+        subprocess.call([processCommand,getRootFilename(runNum,"turfRateFile")])
+        processCommand=anitaAwareFilemakerDir+"/makeSumTurfRateJsonFiles"
+        print processCommand
+        subprocess.call([processCommand,getRootFilename(runNum,"sumTurfRateFile")])
 
     rawTime=getRawTimeModified(runNum,"house/surfhk/last")
     rootTime=getRootTimeModified(runNum,"surfHkFile")
@@ -120,44 +129,45 @@ def main():
         subprocess.call([processCommand],shell=True)
         processCommand=anitaTreeMakerDir+"/runTelemAvgSurfHkMaker.sh "+str(runNum)+" "+rawDir+" "+rootDir
         subprocess.call([processCommand],shell=True)
-        processCommand=anitaAwareFileMaker+"/makeSurfHkJsonFiles"+" "+getRootFilename(runNum,"surfHkFile")
-        subprocess.call([processCommand])
-        processCommand=anitaAwareFileMaker+"/makeAvgSurfHkJsonFiles"+" "+getRootFilename(runNum,"avgSurfHkFile")
-        subprocess.call([processCommand])
+        processCommand=anitaAwareFilemakerDir+"/makeSurfHkJsonFiles"
+        subprocess.call([processCommand,getRootFilename(runNum,"surfHkFile")])
+        processCommand=anitaAwareFilemakerDir+"/makeAvgSurfHkJsonFiles"
+        subprocess.call([processCommand,getRootFilename(runNum,"avgSurfHkFile")])
 
 
-    rawTime=getRawTimeModified(runNum,"start")
+    rawTime=getRawTimeModified(runNum,"start/last")
     rootTime=getRootTimeModified(runNum,"auxFile")
     if(rawTime>rootTime):
         print "Need new aux ROOT file"
         processCommand=anitaTreeMakerDir+"/runTelemAuxMaker.sh "+str(runNum)+" "+rawDir+" "+rootDir
         subprocess.call([processCommand],shell=True)
-        processCommand=anitaAwareFileMaker+"/makeAcqdStartRunJsonFiles"+" "+getRootFilename(runNum,"auxFile")
-        subprocess.call([processCommand])
+        processCommand=anitaAwareFilemakerDir+"/makeAcqdStartRunJsonFiles"
+        subprocess.call([processCommand,getRootFilename(runNum,"auxFile")])
 
 
-    rawTime=getRawTimeModified(runNum,"house/gps")
+    rawTime=getRawTimeModified(runNum,"house/gps/last")
     rootTime=getRootTimeModified(runNum,"gpsFile")
     if(rawTime>rootTime):
         print "Need new GPS ROOT file"
         processCommand=anitaTreeMakerDir+"/runTelemGpsMaker.sh "+str(runNum)+" "+rawDir+" "+rootDir
         subprocess.call([processCommand],shell=True)
-        processCommand=anitaAwareFileMaker+"/makeAdu5PatJsonFiles"+" "+getRootFilename(runNum,"gpsFile")+" 0"
-        subprocess.call([processCommand])
-        processCommand=anitaAwareFileMaker+"/makeAdu5PatJsonFiles"+" "+getRootFilename(runNum,"gpsFile")+" 1"
-        subprocess.call([processCommand])
-        processCommand=anitaAwareFileMaker+"/makeAdu5SatJsonFiles"+" "+getRootFilename(runNum,"gpsFile")+" 0"
-        subprocess.call([processCommand])
-        processCommand=anitaAwareFileMaker+"/makeAdu5SatJsonFiles"+" "+getRootFilename(runNum,"gpsFile")+" 1"
-        subprocess.call([processCommand])
-        processCommand=anitaAwareFileMaker+"/makeAdu5VtgJsonFiles"+" "+getRootFilename(runNum,"gpsFile")+" 0"
-        subprocess.call([processCommand])
-        processCommand=anitaAwareFileMaker+"/makeAdu5VtgJsonFiles"+" "+getRootFilename(runNum,"gpsFile")+" 1"
-        subprocess.call([processCommand])
-        processCommand=anitaAwareFileMaker+"/makeG12PosJsonFiles"+" "+getRootFilename(runNum,"gpsFile")
-        subprocess.call([processCommand])
-        processCommand=anitaAwareFileMaker+"/makeG12SatJsonFiles"+" "+getRootFilename(runNum,"gpsFile")
-        subprocess.call([processCommand])
+        processCommand=anitaAwareFilemakerDir+"/makeAdu5PatJsonFiles"
+        subprocess.call([processCommand,getRootFilename(runNum,"gpsFile"),"0"])
+        processCommand=anitaAwareFilemakerDir+"/makeAdu5PatJsonFiles"
+        subprocess.call([processCommand,getRootFilename(runNum,"gpsFile"),"1"])
+        processCommand=anitaAwareFilemakerDir+"/makeAdu5SatJsonFiles"
+        subprocess.call([processCommand,getRootFilename(runNum,"gpsFile"),"0"])
+        processCommand=anitaAwareFilemakerDir+"/makeAdu5SatJsonFiles"
+        subprocess.call([processCommand,getRootFilename(runNum,"gpsFile"),"1"])
+        processCommand=anitaAwareFilemakerDir+"/makeAdu5VtgJsonFiles"
+        subprocess.call([processCommand,getRootFilename(runNum,"gpsFile"),"0"])
+        processCommand=anitaAwareFilemakerDir+"/makeAdu5VtgJsonFiles"
+        subprocess.call([processCommand,getRootFilename(runNum,"gpsFile"),"1"])
+      
+        processCommand=anitaAwareFilemakerDir+"/makeG12PosJsonFiles"
+        subprocess.call([processCommand,getRootFilename(runNum,"gpsFile")])
+        processCommand=anitaAwareFilemakerDir+"/makeG12SatJsonFiles"
+        subprocess.call([processCommand,getRootFilename(runNum,"gpsFile")])
 
     
 
