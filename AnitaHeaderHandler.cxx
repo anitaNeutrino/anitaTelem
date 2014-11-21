@@ -204,7 +204,9 @@ void AnitaHeaderHandler::loopEventMap()
       if(fileNumber!=lastFileNumber) {
 	//Create a file
 	if(eventFile) fclose(eventFile);
+	if(headFile) fclose(headFile);
 	eventFile=NULL;
+	headFile=NULL;
 	
 	sprintf(fileName,"%s/run%d/event/ev%d/ev%d",fRawDir.c_str(),run,dirNumber,subDirNumber);
 	gSystem->mkdir(fileName,kTRUE);
