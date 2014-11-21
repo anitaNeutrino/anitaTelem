@@ -90,11 +90,11 @@ def main():
         processCommand=anitaTreeMakerDir+"/runTelemHkMaker.sh "+str(runNum)+" "+rawDir+" "+rootDir
         subprocess.call([processCommand],shell=True)
         #Here insert call to aware file maker
-        processCommand=anitaAwareFilemakerDir+"/makePrettyHkJsonFiles"
+        processCommand=anitaAwareFilemakerDir+"/makeHkJsonFiles"
         subprocess.call([processCommand,getRootFilename(runNum,"hkFile")])
 
     rawTime=getRawTimeModified(runNum,"house/monitor/last")
-    rootTime=getRootTimeModified(runNum,"hkFile")
+    rootTime=getRootTimeModified(runNum,"monitorFile")
     if(rawTime>rootTime):
         print "Need new monitor ROOT file"
         processCommand=anitaTreeMakerDir+"/runTelemMonitorMaker.sh "+str(runNum)+" "+rawDir+" "+rootDir
