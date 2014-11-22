@@ -191,6 +191,7 @@ int processHighRateTDRSSFile(char *filename) {
 
     int numBytes=0,count=0;
     FILE *tdrssFile;
+    static int lastNumBytes=0;
 
     //data stuff
     //    unsigned short numWords;
@@ -208,6 +209,36 @@ int processHighRateTDRSSFile(char *filename) {
     unsigned short swEndHdr;
     unsigned short auxHdr2;
 
+    int thisFileNumber=0;
+    int thisRunNumber=0;
+    
+    const char *tdrssFileString = gSystem->BaseName(filename);
+    const char *tdrssDirString = gSystem->BaseName(gSystem->DirName(filename));
+    
+    sscanf(tdrssFileString,"%06d",&thisFileNumber);
+    sscanf(tdrssDirString,"%06d",&thisRunNumber);
+    cout << "processTDRSSFile: " << filename << "\t" << tdrssFileString << "\t" << tdrssDirString << "\t" << thisFileNumber <<  "\t" << thisRunNumber << "\t" << lastFileNumber[AnitaTelemFileType::kAnitaTelemTdrss] << "\t" << lastRunNumber[AnitaTelemFileType::kAnitaTelemTdrss] << endl;
+    
+    int newRun=-1;
+    if(thisRunNumber>lastRunNumber[AnitaTelemFileType::kAnitaTelemTdrss])
+      newRun=1;
+    else if(thisRunNumber==lastRunNumber[AnitaTelemFileType::kAnitaTelemTdrss]) {
+      if(thisFileNumber==lastFileNumber[AnitaTelemFileType::kAnitaTelemTdrss]) {
+	newRun=0;
+	lastNumBytes=getLastNumBytesNumber(AnitaTelemFileType::kAnitaTelemTdrss);
+      }
+      else if(thisFileNumber>lastFileNumber[AnitaTelemFileType::kAnitaTelemTdrss]) {
+	newRun=1;
+	lastNumBytes=0;
+      }
+    }
+  
+  if(newRun<0) return 0;
+
+
+
+
+
     tdrssFile=fopen(filename,"rb");
     if(!tdrssFile ) {
 //	printf("Couldn't open: %s\n",filename);
@@ -218,7 +249,7 @@ int processHighRateTDRSSFile(char *filename) {
     struct stat buf;
     //    int retVal2=
     stat(filename,&buf);
-    //    ghdHandler->newFile(AnitaTelemFileType::kAnitaTelemTdrss,currentTdrssRun,currentTdrssFile,buf.st_mtime);
+    ghdHandler->newFile(AnitaTelemFileType::kAnitaTelemTdrss,thisRunNumber,thisFileNumber,buf.st_mtime);
 
     static int triedThisOne=0;
     numBytes=fread(bigBuffer,1,BIG_BUF_SIZE,tdrssFile);
@@ -271,7 +302,8 @@ int processHighRateTDRSSFile(char *filename) {
 	count++;
     }
  
-
+  lastRunNumber[AnitaTelemFileType::kAnitaTelemTdrss]=thisRunNumber;
+  lastFileNumber[AnitaTelemFileType::kAnitaTelemTdrss]=thisFileNumber;
 
     return 0;
 
