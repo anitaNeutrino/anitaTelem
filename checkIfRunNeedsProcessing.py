@@ -92,6 +92,9 @@ def main():
         #Here insert call to aware file maker
         processCommand=anitaAwareFilemakerDir+"/makeHkJsonFiles"
         subprocess.call([processCommand,getRootFilename(runNum,"hkFile")])
+        #Here insert call to aware file maker
+        processCommand=anitaAwareFilemakerDir+"/makeSSHkJsonFiles"
+        subprocess.call([processCommand,getRootFilename(runNum,"sshkFile")])
 
     rawTime=getRawTimeModified(runNum,"house/monitor/last")
     rootTime=getRootTimeModified(runNum,"monitorFile")
