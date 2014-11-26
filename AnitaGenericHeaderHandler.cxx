@@ -60,7 +60,7 @@ void AnitaGenericHeaderHandler::writeFileSummary()
 
   unsigned int fakeRun=(fCurrentRun*1000000) + fCurrentFile;
 
-  AwareRunSummaryFileMaker summaryFile(fakeRun,fileTypeName,60);
+  AwareRunSummaryFileMaker summaryFile(fakeRun,fileTypeName,1);
 
   char histTitle[180];
   char pngName[FILENAME_MAX];
@@ -124,7 +124,7 @@ void AnitaGenericHeaderHandler::writeFileSummary()
   }
   for(int bin=1;bin<=histPacketBytes.GetNbinsX();bin++) {
     int logicCode=(int)histPacketBytes.GetBinCenter(bin);
-    sprintf(elementName,"packetByes%d",logicCode);
+    sprintf(elementName,"packetBytes%d",logicCode);
     sprintf(elementLabel,"Bytes %s",packetCodeAsString(getRealPacketCode(logicCode)));
     summaryFile.addVariablePoint(elementName,elementLabel,fCurrentFileTime,histPacketBytes.GetBinContent(bin));
   }
