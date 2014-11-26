@@ -57,13 +57,16 @@ void AnitaGenericHeaderHandler::writeFileSummary()
   char fileTypeName[20];
   sprintf(fileTypeName,telemTypeForFile[fFileType]);
 
+  char touchName[FILENAME_MAX];
+  sprintf(touchName,"%s/ANITA3/last%s",fAwareDir.c_str(),fileTypeName);
+  AwareRunDatabase::updateTouchFile(touchName,fCurrentFile,fCurrentFileTime);
 
   unsigned int fakeRun=(fCurrentRun*1000000) + fCurrentFile;
 
   AwareRunSummaryFileMaker summaryFile(fakeRun,fileTypeName,1);
 
   char histTitle[180];
-  char pngName[FILENAME_MAX];
+
   //    int packet;
   sprintf(histTitle,"Packet Distribution (%s, Run %d, File %d)",
 	  fileTypeName,fCurrentRun,fCurrentFile);
@@ -86,25 +89,6 @@ void AnitaGenericHeaderHandler::writeFileSummary()
       numFileEventBytes+=it->second.numBytes;
   }
   fGhdMap.clear();
-
-  TCanvas canGhd("canGhd","canGhd");
-  canGhd.SetLogy();
-  histPacket.SetFillColor(9);
-  histPacket.SetXTitle("Packet Type");
-  histPacket.Draw();
-  histPacket.SetStats(0);
-  sprintf(pngName,"%s/lastPacket%s.png",outputDir,fileTypeName);
-  unlink(pngName);
-  canGhd.Print(pngName);
-  
-  canGhd.Clear();
-  histPacketBytes.Draw("");
-  histPacketBytes.SetFillColor(50);
-  histPacketBytes.SetXTitle("Packet Type");
-  histPacketBytes.SetStats(0);
-  sprintf(pngName,"%s/lastBytes%s.png",outputDir,fileTypeName);
-  unlink(pngName);
-  canGhd.Print(pngName);
 
   char elementName[180];
   char elementLabel[180];
