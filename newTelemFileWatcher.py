@@ -69,6 +69,7 @@ def main():
 
     # Start watching a new directory
     losDirList=os.listdir(losDir)
+    losDirList.sort()
     currentLosDir=losDir+losDirList[len(losDirList)-1]
     if(os.path.isfile(currentLosDir)):
         currentLosDir=losDir+losDirList[len(losDirList)-2]
@@ -77,9 +78,13 @@ def main():
 
     print currentLosDir
     tdrssDirList=os.listdir(tdrssDir)
+    tdrssDirList.sort()
     currentTdrssDir=tdrssDir+tdrssDirList[len(tdrssDirList)-1]
+    if(os.path.isfile(currentTdrssDir)):
+        currentTdrssDir=tdrssDir+tdrssDirList[len(tdrssDirList)-2]
     print currentTdrssDir
     openportDirList=os.listdir(openportDir)
+    openportDirList.sort()
     currentOpenportDir=openportDir+openportDirList[len(openportDirList)-1]
     print currentOpenportDir
     #Need to watch the directories for new runs
