@@ -22,8 +22,8 @@ char unzippedBuffer[MAX_FILE_SIZE];
 using namespace std;
 
 
-AnitaFileHandler::AnitaFileHandler(std::string awareDir)
-:fAwareDir(awareDir)
+AnitaFileHandler::AnitaFileHandler(std::string rawDir,std::string awareDir)
+  :fAwareDir(awareDir),fRawDir(rawDir)
 {
 
 }
@@ -39,7 +39,7 @@ void AnitaFileHandler::processFile(ZippedFile_t *zfPtr,int run)
   gSystem->mkdir(outputFilename,kTRUE);
   sprintf(outputFilename,"%s/ANITA3/aux/run%d/archive",fAwareDir.c_str(),run);
   gSystem->mkdir(outputFilename,kTRUE);
-  sprintf(outputFilename,"%s/ANITA3/config/run%d/archive",fAwareDir.c_str(),run);
+  sprintf(outputFilename,"%s/run%d/config",fRawDir.c_str(),run);
   gSystem->mkdir(outputFilename,kTRUE);
 
   char linkName[FILENAME_MAX];
@@ -104,34 +104,34 @@ void AnitaFileHandler::getOutputName(char *outputFilename,char *linkName,ZippedF
   if(useSegment) {
     if(strstr(zfPtr->filename,"config")) {
       //Have a config file
-      sprintf(outputFilename,"%s/ANITA3/config/run%d/archive/%s.%u_%u",fAwareDir.c_str(),fRun,zfPtr->filename,zfPtr->unixTime,zfPtr->segmentNumber);
-      sprintf(linkName,"%s/ANITA3/run%d/config/%s",fAwareDir.c_str(),fRun,zfPtr->filename);
+      sprintf(outputFilename,"%s/run%d/config/%s.%u_%u",fRawDir.c_str(),fRun,zfPtr->filename,zfPtr->unixTime,zfPtr->segmentNumber);
+      sprintf(linkName,"%s/run%d/config/%s",fRawDir.c_str(),fRun,zfPtr->filename);
     }
     else if(strstr(zfPtr->filename,"messages")) {
 	  //Have /var/log/messages
       sprintf(outputFilename,"%s/ANITA3/log/run%d/archive/messages.%u_%u",fAwareDir.c_str(),fRun,
 		  zfPtr->unixTime,zfPtr->segmentNumber);
-      sprintf(linkName,"%s/ANITA3/log/run%d/messages",fAwareDir.c_str(),fRun);
+      sprintf(linkName,"%s/ANITA3/log/messages",fAwareDir.c_str());
 	}
     else if(strstr(zfPtr->filename,"anita")) {
       //Have /var/log/messages
       sprintf(outputFilename,"%s/ANITA3/log/run%d/archive/anita.log.%u_%u",fAwareDir.c_str(),fRun,
 		  zfPtr->unixTime,zfPtr->segmentNumber);
-      sprintf(linkName,"%s/ANITA3/log/run%d/anita.log",fAwareDir.c_str(),fRun);
+      sprintf(linkName,"%s/ANITA3/log/anita.log",fAwareDir.c_str());
     }
     else {
       //Other file
       sprintf(outputFilename,"%s/ANITA3/aux/run%d/archive/%s.%u_%u",
 	      fAwareDir.c_str(),fRun,zfPtr->filename,
 	      zfPtr->unixTime,zfPtr->segmentNumber);
-      sprintf(linkName,"%s/ANITA3/aux/run%d/%s",fAwareDir.c_str(),fRun,zfPtr->filename);
+      sprintf(linkName,"%s/ANITA3/aux/%s",fAwareDir.c_str(),zfPtr->filename);
     }
   }
   else {
     if(strstr(zfPtr->filename,"config")) {
       //Have a config file
-	  sprintf(outputFilename,"%s/ANITA3/config/run%d/archive/%s.%u",fAwareDir.c_str(),fRun,zfPtr->filename,zfPtr->unixTime);
-	  sprintf(linkName,"%s/ANITA3/config/run%d/%s",fAwareDir.c_str(),fRun,zfPtr->filename);
+	  sprintf(outputFilename,"%s/run%d/config/%s.%u",fRawDir.c_str(),fRun,zfPtr->filename,zfPtr->unixTime);
+	  sprintf(linkName,"%s/run%d/config/%s",fRawDir.c_str(),fRun,zfPtr->filename);
 	}
 	else if(strstr(zfPtr->filename,"messages")) {
 	  //Have /var/log/messages
@@ -147,10 +147,10 @@ void AnitaFileHandler::getOutputName(char *outputFilename,char *linkName,ZippedF
 	}
 	else {
 	  //Other file
-	  sprintf(outputFilename,"%s/ANITA3/aux/run%d/archive/%s.%u",
-		  fAwareDir.c_str(),fRun,zfPtr->filename,
+	  sprintf(outputFilename,"%s/ANITA3/aux/archive/%s.%u",
+		  fAwareDir.c_str(),zfPtr->filename,
 		  zfPtr->unixTime);
-	  sprintf(linkName,"%s/ANITA3/aux/run%d/%s",fAwareDir.c_str(),fRun,zfPtr->filename);
+	  sprintf(linkName,"%s/ANITA3/aux/%s",fAwareDir.c_str(),zfPtr->filename);
 	}
   }
 }

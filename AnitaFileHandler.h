@@ -16,7 +16,7 @@
 class AnitaFileHandler 
 {   
 public:
-    AnitaFileHandler(std::string awareDir);
+  AnitaFileHandler(std::string rawDir,std::string awareDir);
     ~AnitaFileHandler() {;}
     
     void processFile(ZippedFile_t *zfPtr,int run);
@@ -24,6 +24,7 @@ public:
 private:
     void getOutputName(char *outputFilename,char *linkName,ZippedFile_t *zfPtr,int useSegment,int fRun);
     std::string fAwareDir;
+    std::string fRawDir;
 
 };
 

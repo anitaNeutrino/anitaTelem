@@ -136,7 +136,7 @@ int main (int argc, char ** argv)
 
   ghdHandler = new AnitaGenericHeaderHandler(awareOutputDir);
   cmdHandler = new AnitaCmdEchoHandler(awareOutputDir);
-  fileHandler = new AnitaFileHandler(awareOutputDir);
+  fileHandler = new AnitaFileHandler(rawDir,awareOutputDir);
   
   //Lazy hack way of determing which type of file we are dealing with
   for(int i=1;i<argc;i++) {
