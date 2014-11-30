@@ -35,6 +35,7 @@ void AnitaFileHandler::processFile(ZippedFile_t *zfPtr,int run)
   
   char segmentName[FILENAME_MAX];
   char outputFilename[FILENAME_MAX];
+  char awareFilename[FILENAME_MAX];
   sprintf(outputFilename,"%s/ANITA3/log/run%d/archive",fAwareDir.c_str(),run);
   gSystem->mkdir(outputFilename,kTRUE);
   sprintf(outputFilename,"%s/ANITA3/aux/run%d/archive",fAwareDir.c_str(),run);
@@ -86,16 +87,41 @@ void AnitaFileHandler::processFile(ZippedFile_t *zfPtr,int run)
       
       unlink(linkName);
       link(outputFilename,linkName);
-      
-      
+           
       //Change modification times
       struct utimbuf ut;
       ut.actime=zfPtr->unixTime;
       ut.modtime=zfPtr->unixTime;
       retVal=utime(outputFilename,&ut);
       retVal=utime(linkName,&ut);
-    }
+      
+      if(getAwareName(awareFilename,zfPtr)) {
+	 struct stat buf;  
+	 int retVal2=stat(awareFilename,&buf);  
+	 if(retVal2==0) {    
+	   if(buf.st_mtime<ut.modtime) {
+	     unlink(awareFilename);
+	     link(outputFilename,linkName);
+	     utime(linkName,&ut);
+	   }
+	 }
+	 else {
+	     link(outputFilename,linkName);
+	     utime(linkName,&ut);
+	 }
+      }
+  }
 }
+
+int AnitaFileHandler::getAwareName(char *awareName,ZippedFile_t *zfPtr) {
+  if(strstr(zfPtr->filename,"config")) {
+    //Have a config file
+    sprintf(awareName,"%s/ANITA3/config/%s",fAwareDir.c_str(),zfPtr->filename);
+    return 1;
+  }
+  return 0;   
+}
+
 
 void AnitaFileHandler::getOutputName(char *outputFilename,char *linkName,ZippedFile_t *zfPtr,int useSegment,int fRun)
 {

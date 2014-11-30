@@ -23,6 +23,7 @@ public:
     
 private:
     void getOutputName(char *outputFilename,char *linkName,ZippedFile_t *zfPtr,int useSegment,int fRun);
+    int getAwareName(char *awareName,ZippedFile_t *zfPtr);
     std::string fAwareDir;
     std::string fRawDir;
 
