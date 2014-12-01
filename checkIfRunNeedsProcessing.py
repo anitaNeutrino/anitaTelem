@@ -13,7 +13,7 @@ anitaTelemDataDir = os.getenv('ANITA_TELEM_DATA_DIR', "/anitaStorage2/antarctica
 anitaTreeMakerDir = os.getenv("ANITA_TREE_MAKER_DIR","/home/radio/anita14/simpleTreeMaker")
 anitaAwareFilemakerDir= os.getenv("ANITA_AWARE_FILEMAKER_DIR","/home/radio/anita14/anitaAwareFileMaker")
 
-site="uh" # was "antarctica"
+site="antarctica"
 
 def doesRawDirExist(runNum):
     rawDir=anitaTelemDataDir+"/raw/run"+str(runNum)
