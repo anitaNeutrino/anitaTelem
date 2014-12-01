@@ -12,6 +12,7 @@ This script watches the telemetry directories and calls processTelemFile wheneve
 import pyinotify
 import subprocess
 import os
+import sys
 
 # The watch manager stores the watches and provides operations on watches
 wm = pyinotify.WatchManager()
@@ -23,9 +24,12 @@ anitaTelemDir = os.getenv('ANITA_TELEM_DIR', "/home/radio/anita14/anitaTelem")
 anitaTelemDataDir = os.getenv('ANITA_TELEM_DATA_DIR', "/anitaStorage/antarctica14/telem")
 awareOutputDir = os.getenv('AWARE_OUTPUT_DIR',"/anitaStorage/antarctica14/telem")
 print "Using ANITA_TELEM_DIR="+anitaTelemDir
+sys.stdout.flush()
 print "Using ANITA_TELEM_DATA_DIR="+anitaTelemDataDir
+sys.stdout.flush()
 processTelemCommand=anitaTelemDir+"/processTelemFile"
 print "Telem processing command: "+processTelemCommand
+sys.stdout.flush()
 def dot_filter(pathname):
     # return True to stop processing of event (to "stop chaining")
     return os.path.basename(pathname)[0]=='.'
@@ -39,20 +43,32 @@ class EventHandler(pyinotify.ProcessEvent):
     def process_IN_MOVED_TO(self, event):
         # # print out the message and the name of the file in question
         print "Moved file detected:", event.pathname, " launching telem...."
+        sys.stdout.flush()
         processLogFile=open(awareOutputDir+"/ANITA3/log/processTelem.log","w")
-                    
+
         print ["processTelemFile.sh",event.pathname]
+        sys.stdout.flush()
         subprocess.call([processTelemCommand,event.pathname],stdout=processLogFile,stderr=processLogFile)
 
     def process_IN_CREATE(self, event):
         # # print out the message and the name of the file in question
         print "process_IN_CREATE:", event.pathname
+        sys.stdout.flush()
         if(os.path.isdir(event.pathname)):
             print "New directory detected:", event.pathname, "will watch it"
+            sys.stdout.flush()
             wdd = wm.add_watch(event.pathname, mask, rec=False)
+        else :
+            print "New file detected:", event.pathname, " launching telem...."
+            sys.stdout.flush()
+            processLogFile=open(awareOutputDir+"/ANITA3/log/processTelem.log","w")
+            print ["processTelemFile.sh",event.pathname]
+            sys.stdout.flush()
+            subprocess.call([processTelemCommand,event.pathname],stdout=processLogFile,stderr=processLogFile)
 
     def process_IN_DELETE(self, event):
         print "Removing:", event.pathname
+        sys.stdout.flush()
         # print out the message and the name of the file in question
    
 def main():      
@@ -73,31 +89,48 @@ def main():
     currentLosDir=losDir+losDirList[len(losDirList)-1]
     if(os.path.isfile(currentLosDir)):
         currentLosDir=losDir+losDirList[len(losDirList)-2]
-        
-
-
     print currentLosDir
+    print "config: currentLosDir      = ",currentLosDir
+    sys.stdout.flush()
+
     tdrssDirList=os.listdir(tdrssDir)
     tdrssDirList.sort()
     currentTdrssDir=tdrssDir+tdrssDirList[len(tdrssDirList)-1]
     if(os.path.isfile(currentTdrssDir)):
         currentTdrssDir=tdrssDir+tdrssDirList[len(tdrssDirList)-2]
-    print currentTdrssDir
+    print "config: currentTdrssDir    = ",currentTdrssDir
+    sys.stdout.flush()
+
     openportDirList=os.listdir(openportDir)
     openportDirList.sort()
     currentOpenportDir=openportDir+openportDirList[len(openportDirList)-1]
-    print currentOpenportDir
+    print "config: currentOpenportDir = ",currentOpenportDir
+    sys.stdout.flush()
+
     #Need to watch the directories for new runs
     wdd4 = wm.add_watch(openportDir, mask, rec=False)
+    print "WatchSet: dir ", openportDir
+    sys.stdout.flush()
     wdd5 = wm.add_watch(losDir, mask, rec=False)
+    print "WatchSet: dir ", losDir
+    sys.stdout.flush()
     wdd6 = wm.add_watch(tdrssDir, mask, rec=False)
+    print "WatchSet: dir ", tdrssDir
+    sys.stdout.flush()
 
     #Need to watch the most recent directories for new files
     wdd1 = wm.add_watch(currentOpenportDir, mask, rec=False)
+    print "WatchSet: dir ", currentOpenportDir
+    sys.stdout.flush()
     wdd2 = wm.add_watch(currentLosDir, mask, rec=False)
+    print "WatchSet: dir ", currentLosDir
+    sys.stdout.flush()
     wdd3 = wm.add_watch(currentTdrssDir, mask, rec=False)
+    print "WatchSet: dir ", currentTdrssDir
+    sys.stdout.flush()
     # Loop forever catching and dealing wth the events
     notifier.loop()
 
 if __name__ == "__main__":
     main()
+
