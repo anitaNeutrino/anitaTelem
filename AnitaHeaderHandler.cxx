@@ -543,7 +543,34 @@ void AnitaHeaderHandler::plotEvent(AnitaEventHeader_t *hdPtr,PedSubbedEventBody_
   sprintf(eventDir,"%s/ANITA3/event",fAwareDir.c_str());
 
   if(hdPtr) {
-    UInt_t triggerTimeNs=hdPtr->turfio.trigTime/hdPtr->turfio.c3poNum;
+
+
+    if(hdPtr->errorFlag&0x2) {
+      //Have SURF 1 sync slip
+    }
+    else {
+      fTheEvent->surfEventId[0]=hdPtr->turfEventId;
+    }
+    if(hdPtr->errorFlag&0x4) {
+      //Have SURF 1 sync slip
+    }
+    else {
+      fTheEvent->surfEventId[9]=hdPtr->turfEventId;
+    }
+    for(int surf=0;surf<8;surf++) {
+      if(hdPtr->surfSlipFlag & (1<<surf)) {
+	//Have SURF +2 sync slip
+      }
+      else {
+	fTheEvent->surfEventId[surf+1]=hdPtr->turfEventId;
+      }
+    }
+    for(int surf=8;surf<ACTIVE_SURFS;surf++) {
+      fTheEvent->surfEventId[surf+1]=hdPtr->turfEventId;
+    }
+    
+
+    UInt_t triggerTimeNs=1e9*hdPtr->turfio.trigTime/hdPtr->turfio.c3poNum;
     fTheHead = new RawAnitaHeader(hdPtr,run,hdPtr->unixTime,hdPtr->unixTime,triggerTimeNs,1);
   }
   else {
@@ -607,7 +634,7 @@ void AnitaHeaderHandler::plotEvent(AnitaEventHeader_t *hdPtr,PedSubbedEventBody_
     static unsigned int lastTime=0;
     if(fTheHead->realTime>lastTime) {
       lastTime=fTheHead->realTime;
-      //      AwareRunDatabase::updateTouchFile(fEventTouchFile.c_str(),run,lastTime);
+      AwareRunDatabase::updateTouchFile(fEventTouchFile.c_str(),run,lastTime);
     }
 
 

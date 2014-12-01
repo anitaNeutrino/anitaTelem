@@ -126,7 +126,7 @@ int main (int argc, char ** argv)
   loadRunNumberMap();
   
 
-  headHandler = new AnitaHeaderHandler(rawDir,awareOutputDir,0);
+  headHandler = new AnitaHeaderHandler(rawDir,awareOutputDir,1);
   hkHandler = new AnitaHkHandler(rawDir);
   gpsHandler = new AnitaGpsHandler(rawDir);
   monHandler = new AnitaMonitorHandler(rawDir);
