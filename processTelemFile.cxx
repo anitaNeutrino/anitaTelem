@@ -34,6 +34,7 @@ using namespace std;
 #include "TStopwatch.h"
 #include "TTimeStamp.h" 
 #include "TSystem.h" 
+#include "TRandom.h" 
 
 
 //Functions
@@ -126,7 +127,14 @@ int main (int argc, char ** argv)
   loadRunNumberMap();
   
 
-  headHandler = new AnitaHeaderHandler(rawDir,awareOutputDir,1);
+  gRandom->SetSeed();
+  double val=gRandom->Rndm();
+  int plotEvents=0;
+  if(val>0.9) plotEvents=1;
+  if(plotEvents) std::cout << "Plotting events\n";
+  else std::cout << "Not plotting events\n";
+
+  headHandler = new AnitaHeaderHandler(rawDir,awareOutputDir,plotEvents);
   hkHandler = new AnitaHkHandler(rawDir);
   gpsHandler = new AnitaGpsHandler(rawDir);
   monHandler = new AnitaMonitorHandler(rawDir);
@@ -529,7 +537,7 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	      addRunToMap(logWatchStart->runNumber,latestHeaderEventNumber,logWatchStart->unixTime);
 	      break;
 	    case PACKET_RUN_START:
-	      cout << "Got Run Start Packet\n";
+	      //	      cout << "Got Run Start Packet\n";
 	      runStartPtr = (RunStart_t*)testGHdr;
 	      addRunToMap(runStartPtr->runNumber,runStartPtr->eventNumber,runStartPtr->unixTime);
 	      break;

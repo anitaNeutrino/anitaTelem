@@ -70,7 +70,7 @@ def main():
         print "--> [1 of 2] - running ",processCommand
         sys.stdout.flush()
         subprocess.call([processCommand],shell=True)
-        print "--> root dir generated ... exitting script"                                                            <
+        print "--> root dir generated ... exitting script"             
         sys.stdout.flush()
         sys.exit()
 
