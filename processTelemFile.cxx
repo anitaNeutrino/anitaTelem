@@ -683,7 +683,7 @@ int processLOSFile(char *filename) {
       lastNumBytes=0;
     }
   }
-  
+  cout << "New Run: " << newRun << "\n";
   if(newRun<0) return 0;
 
   int numBytes=0,count=0;
@@ -707,13 +707,14 @@ int processLOSFile(char *filename) {
 
   losFile=fopen(filename,"rb");
   if(!losFile) {
-    //	printf("Couldn't open: %s\n",filename);
+    printf("Couldn't open: %s\n",filename);
     return -1;
   }
   
   
   numBytes=fread(bigBuffer,1,BIG_BUF_SIZE,losFile);
   if(numBytes<=0) {
+    cout << "Read " << numBytes << " from file\n";
     fclose(losFile);
     return -1;
   }
