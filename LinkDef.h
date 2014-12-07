@@ -11,6 +11,7 @@
 #pragma link C++ class AnitaSurfHkHandler+;
 #pragma link C++ class AnitaCmdEchoHandler+;
 #pragma link C++ class AnitaFileHandler+;
+#pragma link C++ class AnitaGpuHandler+;
 
 
 

@@ -19,6 +19,7 @@ using namespace std;
 #include "AnitaHkHandler.h"
 #include "AnitaGpsHandler.h" 
 #include "AnitaMonitorHandler.h" 
+#include "AnitaGpuHandler.h" 
 #include "AnitaSurfHkHandler.h" 
 #include "AnitaTurfRateHandler.h"
 #include "AnitaAuxiliaryHandler.h"
@@ -63,6 +64,7 @@ unsigned short *bigBuffer;
 
 AnitaHeaderHandler *headHandler;
 AnitaMonitorHandler *monHandler;
+AnitaGpuHandler *gpuHandler;
 AnitaHkHandler *hkHandler;
 AnitaSurfHkHandler *surfhkHandler;
 AnitaTurfRateHandler *turfRateHandler;
@@ -138,6 +140,7 @@ int main (int argc, char ** argv)
   hkHandler = new AnitaHkHandler(rawDir);
   gpsHandler = new AnitaGpsHandler(rawDir);
   monHandler = new AnitaMonitorHandler(rawDir);
+  gpuHandler = new AnitaGpuHandler(rawDir);
   surfhkHandler = new AnitaSurfHkHandler(rawDir);
   turfRateHandler = new AnitaTurfRateHandler(rawDir);
   auxHandler = new AnitaAuxiliaryHandler(rawDir);
@@ -178,6 +181,7 @@ int main (int argc, char ** argv)
   gpsHandler->loopGpsGgaMaps();
   monHandler->loopMap();
   monHandler->loopOtherMap();
+  gpuHandler->loopMap();
   surfhkHandler->loopMap();
   surfhkHandler->loopAvgMap();
   turfRateHandler->loopMap();
@@ -425,6 +429,9 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	    case PACKET_SUM_TURF_RATE:
 	      //	      cout << "Got SummedTurfRateStruct_t\n";
 	      turfRateHandler->addSumTurfRate((SummedTurfRateStruct_t*)testGHdr,getRunNumberFromTime(((SummedTurfRateStruct_t*) testGHdr)->unixTime));
+	      break;
+	    case PACKET_GPU_AVE_POW_SPEC:
+	      gpuHandler->addGpu((GpuPhiSectorPowerSpectrumStruct_t*)testGHdr,getRunNumberFromTime(((GpuPhiSectorPowerSpectrumStruct_t*)testGHdr)->unixTimeFirstEvent));
 	      break;
 	    case PACKET_MONITOR:
 	      //	      cout << "Got MonitorStruct_t\n";
