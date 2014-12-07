@@ -13,6 +13,7 @@ import pyinotify
 import subprocess
 import os
 import sys
+import re
 
 # The watch manager stores the watches and provides operations on watches
 wm = pyinotify.WatchManager()
@@ -30,6 +31,11 @@ sys.stdout.flush()
 processTelemCommand=anitaTelemDir+"/processTelemFile"
 print "Telem processing command: "+processTelemCommand
 sys.stdout.flush()
+
+NameOfStorCommentsFile = "/stor_comments$"
+print "Ignoring stor_comments files via RegEx match to "+NameOfStorCommentsFile
+stor_comments_filename_re = re.compile( NameOfStorCommentsFile )
+
 def dot_filter(pathname):
     # return True to stop processing of event (to "stop chaining")
     return os.path.basename(pathname)[0]=='.'
@@ -59,12 +65,17 @@ class EventHandler(pyinotify.ProcessEvent):
             sys.stdout.flush()
             wdd = wm.add_watch(event.pathname, mask, rec=False)
         else :
-            print "New file detected:", event.pathname, " launching telem...."
-            sys.stdout.flush()
-            processLogFile=open(awareOutputDir+"/ANITA3/log/processTelem.log","w")
-            print ["processTelemFile.sh",event.pathname]
-            sys.stdout.flush()
-            subprocess.call([processTelemCommand,event.pathname],stdout=processLogFile,stderr=processLogFile)
+            match_check = stor_comments_filename_re.search( event.pathname )
+            if ( match_check ) :                                                          # no match
+               print "New file detected:", event.pathname, " <- match to stor_comments ... ignoring it ..."
+               sys.stdout.flush()
+            else :
+               print "New file detected:", event.pathname, " launching telem...."
+               sys.stdout.flush()
+               processLogFile=open(awareOutputDir+"/ANITA3/log/processTelem.log","w")
+               print ["processTelemFile.sh",event.pathname]
+               sys.stdout.flush()
+               subprocess.call([processTelemCommand,event.pathname],stdout=processLogFile,stderr=processLogFile)
 
     def process_IN_DELETE(self, event):
         print "Removing:", event.pathname
