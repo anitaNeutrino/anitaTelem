@@ -93,6 +93,8 @@ def main():
     losDir=anitaTelemDataDir+"raw_los/"
     tdrssDir=anitaTelemDataDir+"fast_tdrss/"
     openportDir=anitaTelemDataDir+"openport/"
+    slowTdrssDir=anitaTelemDataDir+"slow_tdrss/"
+    iridiumDir=anitaTelemDataDir+"iridium/"
 
     # Start watching a new directory
     losDirList=os.listdir(losDir)
@@ -112,6 +114,22 @@ def main():
     print "config: currentTdrssDir    = ",currentTdrssDir
     sys.stdout.flush()
 
+    iridiumDirList=os.listdir(iridiumDir)
+    iridiumDirList.sort()
+    currentIridiumDir=iridiumDir+iridiumDirList[len(iridiumDirList)-1]
+    if(os.path.isfile(currentIridiumDir)):
+        currentIridiumDir=iridiumDir+iridiumDirList[len(iridiumDirList)-2]
+    print "config: currentIridiumDir    = ",currentIridiumDir
+    sys.stdout.flush()
+
+    slowTdrssDirList=os.listdir(slowTdrssDir)
+    slowTdrssDirList.sort()
+    currentSlowTdrssDir=slowTdrssDir+slowTdrssDirList[len(slowTdrssDirList)-1]
+    if(os.path.isfile(currentSlowTdrssDir)):
+        currentSlowTdrssDir=slowTdrssDir+slowTdrssDirList[len(slowTdrssDirList)-2]
+    print "config: currentTdrssDir    = ",currentTdrssDir
+    sys.stdout.flush()
+
     openportDirList=os.listdir(openportDir)
     openportDirList.sort()
     currentOpenportDir=openportDir+openportDirList[len(openportDirList)-1]
@@ -128,6 +146,12 @@ def main():
     wdd6 = wm.add_watch(tdrssDir, mask, rec=False)
     print "WatchSet: dir ", tdrssDir
     sys.stdout.flush()
+    wdd7 = wm.add_watch(slowTdrssDir, mask, rec=False)
+    print "WatchSet: dir ", tdrssDir
+    sys.stdout.flush()
+    wdd8 = wm.add_watch(iridiumDir, mask, rec=False)
+    print "WatchSet: dir ", tdrssDir
+    sys.stdout.flush()
 
     #Need to watch the most recent directories for new files
     wdd1 = wm.add_watch(currentOpenportDir, mask, rec=False)
@@ -138,6 +162,12 @@ def main():
     sys.stdout.flush()
     wdd3 = wm.add_watch(currentTdrssDir, mask, rec=False)
     print "WatchSet: dir ", currentTdrssDir
+    sys.stdout.flush()
+    wdd3 = wm.add_watch(currentSlowTdrssDir, mask, rec=False)
+    print "WatchSet: dir ", currentSlowTdrssDir
+    sys.stdout.flush()
+    wdd3 = wm.add_watch(currentIridiumDir, mask, rec=False)
+    print "WatchSet: dir ", currentIridiumDir
     sys.stdout.flush()
     # Loop forever catching and dealing wth the events
     notifier.loop()

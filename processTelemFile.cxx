@@ -26,11 +26,10 @@ using namespace std;
 #include "AnitaCmdEchoHandler.h" 
 #include "AnitaFileHandler.h" 
 #include "AnitaGenericHeaderHandler.h" 
+#include "AnitaSlowRateHandler.h"
 
 // #include "configLib/configLib.h"
 // #include "kvpLib/keyValuePair.h"
-// #include "AnitaGenericHeaderHandler.h"
-// #include "AnitaSlowRateHandler.h"
 
 #include "TStopwatch.h"
 #include "TTimeStamp.h" 
@@ -43,6 +42,8 @@ void handleScience(unsigned char *buffer,unsigned short numBytes);
 int processHighRateTDRSSFile(char *filename);
 int processLOSFile(char *filename);
 int processOpenportFile(char *filename);
+int processIridiumFile(char *filename);
+int processSlowTdrssFile(char *filename);
 int guessCode(SSHkDataStruct_t *hkPtr);
 int getLastRunNumber(AnitaTelemFileType::AnitaTelemFileType_t telemType) ;
 int getLastFileNumber(AnitaTelemFileType::AnitaTelemFileType_t telemType) ;
@@ -73,14 +74,14 @@ AnitaAuxiliaryHandler *auxHandler;
 AnitaCmdEchoHandler *cmdHandler;
 AnitaFileHandler *fileHandler;
 AnitaGenericHeaderHandler *ghdHandler;
-
+AnitaSlowRateHandler *slowHandler;
 char *awareOutputDir;
 
-const char *telemTypeForFile[3]={"Los","Tdrss","Openport"};
+const char *telemTypeForFile[5]={"Los","Tdrss","Openport","SlowTdrss","Iridium"};
 
-int lastNumBytesNumber[3]={0};
-int lastRunNumber[3]={0};
-int lastFileNumber[3]={0};
+int lastNumBytesNumber[5]={0};
+int lastRunNumber[5]={0};
+int lastFileNumber[5]={0};
 
 std::map<UInt_t,UInt_t> fTimeRunMap;
 std::map<UInt_t,UInt_t> fEventRunMap;
@@ -121,7 +122,7 @@ int main (int argc, char ** argv)
     awareOutputDir=(char*)"/anitaStorage/antarctica14/telem/aware/output";
   }
  
-  for(int i=AnitaTelemFileType::kAnitaTelemLos;i<=AnitaTelemFileType::kAnitaTelemOpenport;i++) {
+  for(int i=AnitaTelemFileType::kAnitaTelemLos;i<AnitaTelemFileType::kNotATelemType;i++) {
     lastRunNumber[i]=getLastRunNumber((AnitaTelemFileType::AnitaTelemFileType_t)i);
     lastFileNumber[i]=getLastFileNumber((AnitaTelemFileType::AnitaTelemFileType_t)i);
     std::cout << telemTypeForFile[i] << "\t" << lastRunNumber[i] << "\t" << lastFileNumber[i] << "\n";
@@ -144,6 +145,8 @@ int main (int argc, char ** argv)
   surfhkHandler = new AnitaSurfHkHandler(rawDir);
   turfRateHandler = new AnitaTurfRateHandler(rawDir);
   auxHandler = new AnitaAuxiliaryHandler(rawDir);
+  slowHandler = new AnitaSlowRateHandler(rawDir);
+
 
   ghdHandler = new AnitaGenericHeaderHandler(awareOutputDir);
   cmdHandler = new AnitaCmdEchoHandler(awareOutputDir);
@@ -190,6 +193,7 @@ int main (int argc, char ** argv)
   auxHandler->loopGpsdStartMap();
   auxHandler->loopLogWatchdStartMap();
   cmdHandler->loopMaps();
+  slowHandler->loopMap();
 
   updateLastRunNumber();
   updateLastFileNumber();
@@ -585,7 +589,7 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 }
 
 void updateLastRunNumber() {
-  for(int telemType=AnitaTelemFileType::kAnitaTelemLos;telemType<=AnitaTelemFileType::kAnitaTelemOpenport;telemType++) {
+  for(int telemType=AnitaTelemFileType::kAnitaTelemLos;telemType<AnitaTelemFileType::kNotATelemType;telemType++) {
     std::cout << "updateRunNumber\t" << telemTypeForFile[telemType] << "\t" << lastRunNumber[telemType] << "\n";
     
     char fileName[FILENAME_MAX];
@@ -599,7 +603,7 @@ void updateLastRunNumber() {
 }
 
 void updateLastFileNumber() {
-  for(int telemType=AnitaTelemFileType::kAnitaTelemLos;telemType<=AnitaTelemFileType::kAnitaTelemOpenport;telemType++) {
+  for(int telemType=AnitaTelemFileType::kAnitaTelemLos;telemType<AnitaTelemFileType::kNotATelemType;telemType++) {
     std::cout << "updateLastFileNumber\t" << telemTypeForFile[telemType] << "\t" << lastFileNumber[telemType] << "\n";
     char fileName[FILENAME_MAX];
     sprintf(fileName,"%s/ANITA3/db/last%sFile",awareOutputDir,telemTypeForFile[telemType]);
@@ -613,7 +617,7 @@ void updateLastFileNumber() {
 
 
 void updateLastNumBytesNumber() {
-  for(int telemType=AnitaTelemFileType::kAnitaTelemLos;telemType<=AnitaTelemFileType::kAnitaTelemOpenport;telemType++) {
+  for(int telemType=AnitaTelemFileType::kAnitaTelemLos;telemType<AnitaTelemFileType::kNotATelemType;telemType++) {
     std::cout << "updateLastNumBytesNumber\t" << telemTypeForFile[telemType] << "\t" <<  lastNumBytesNumber[telemType] << "\n";
     char fileName[FILENAME_MAX];
     sprintf(fileName,"%s/ANITA3/db/last%sNumBytes",awareOutputDir,telemTypeForFile[telemType]);
@@ -1067,4 +1071,210 @@ void addRunToMap(UInt_t run, UInt_t eventNumber, UInt_t unixTime)
     std::cout << it->second << "\n";
     if(it->second > eventNumber) it->second=eventNumber;    
   }
+}
+
+
+int processIridiumFile(char *filename) {
+    int numBytes=0;
+    int lastNumBytes=lastNumBytesNumber[AnitaTelemFileType::kAnitaTelemIridium];
+    static unsigned int lastUnixTime=0;
+    int lastIridiumFile=lastFileNumber[AnitaTelemFileType::kAnitaTelemIridium];
+    int lastIridiumRun=lastRunNumber[AnitaTelemFileType::kAnitaTelemIridium];
+    int count=0;
+    int retVal=0;
+
+
+    int currentIridiumFile=0;
+    int currentIridiumRun=0;
+
+    const char *iridiumFileString = gSystem->BaseName(filename);
+    const char *iridiumDirString = gSystem->BaseName(gSystem->DirName(filename));
+    
+    sscanf(iridiumFileString,"%06d",&currentIridiumFile);
+    sscanf(iridiumDirString,"%06d",&currentIridiumRun);
+
+
+    if(currentIridiumRun!=lastIridiumRun) {
+      lastIridiumFile=-1;
+    }
+    if(currentIridiumFile!=lastIridiumFile) {
+	lastNumBytes=0;
+    }
+    //    std::cout << filename << "\n";
+
+    FILE *iridiumFile=fopen(filename,"rb");
+    if(!iridiumFile) {
+	//File doesn't exist
+	return 0;
+    }
+    numBytes=fread(bigBuffer,1,BIG_BUF_SIZE,iridiumFile);
+    if(numBytes<=0) {
+      fclose(iridiumFile);
+      return 0;
+    }
+    
+    if(numBytes==lastNumBytes) {
+	//No new data
+	fclose(iridiumFile);
+	return 2;
+    }
+    lastIridiumFile=currentIridiumFile;
+    cout << "Iridium: " << filename << endl;
+    //we have some new data
+    lastNumBytes=numBytes;
+
+    unsigned char *charBuffer=(unsigned char*)&bigBuffer[0];
+
+    while(count<numBytes) {	
+	unsigned char comm1or2=charBuffer[count];
+	if(comm1or2==0xc1 || comm1or2==0xc2) {
+	    unsigned char seqNum=charBuffer[count+1];
+	    unsigned char numBytes=charBuffer[count+2];
+	    unsigned char *sciData=&charBuffer[count+3];
+	    count+=numBytes+3;
+	    retVal=checkPacket((GenericHeader_t*)sciData);
+	    if(retVal==0) {
+		if(numBytes==sizeof(SlowRateFull_t)) {
+		    //Probably have SlowRateFull_t
+		    SlowRateFull_t *slowPtr = (SlowRateFull_t*)sciData;
+		    if(slowPtr->unixTime>lastUnixTime) {
+		    //Have new SlowRateFull_t
+			lastUnixTime=slowPtr->unixTime;
+			slowHandler->addSlowRate(slowPtr,getRunNumberFromTime(slowPtr->unixTime),AnitaTelemFileType::kAnitaTelemIridium,seqNum);
+			
+			// Int_t tempAlt=slowPtr->hk.altitude;
+			// if(tempAlt<-1000) {
+			//   tempAlt=65536+tempAlt;
+			// }
+			// gpsHandler->makeGpsMap(slowPtr->unixTime,slowPtr->hk.latitude,
+			// 		       slowPtr->hk.longitude,tempAlt);
+		    //Do something with GPS data
+		    }
+		}
+	    }
+	    else {
+	      std::cout << "Bad iridium data -- " << retVal << "\n";
+	    }
+	
+	}
+	else {
+	    count++;
+	}
+    }
+    fclose(iridiumFile);
+
+
+    lastRunNumber[AnitaTelemFileType::kAnitaTelemIridium]=currentIridiumRun;
+    lastFileNumber[AnitaTelemFileType::kAnitaTelemIridium]=currentIridiumFile;
+    lastNumBytesNumber[AnitaTelemFileType::kAnitaTelemIridium]=numBytes;
+
+    return 1;
+}
+
+
+int processSlowTdrssFile(char *filename) {
+    int numBytes=0;
+    int lastNumBytes=lastNumBytesNumber[AnitaTelemFileType::kAnitaTelemSlowTdrss];
+    static unsigned int lastUnixTime=0;
+    int lastSlowTdrssFile=lastFileNumber[AnitaTelemFileType::kAnitaTelemSlowTdrss];
+    int lastSlowTdrssRun=lastRunNumber[AnitaTelemFileType::kAnitaTelemSlowTdrss];
+    int count=0;
+    int retVal=0;
+
+
+    int currentSlowTdrssFile=0;
+    int currentSlowTdrssRun=0;
+
+    const char *slowTdrssFileString = gSystem->BaseName(filename);
+    const char *slowTdrssDirString = gSystem->BaseName(gSystem->DirName(filename));
+    
+    sscanf(slowTdrssFileString,"%06d",&currentSlowTdrssFile);
+    sscanf(slowTdrssDirString,"%06d",&currentSlowTdrssRun);
+
+
+    if(currentSlowTdrssRun!=lastSlowTdrssRun) {
+      lastSlowTdrssFile=-1;
+    }
+    if(currentSlowTdrssFile!=lastSlowTdrssFile) {
+	lastNumBytes=0;
+    }
+
+    FILE *slowTdrssFile=fopen(filename,"rb");
+    if(!slowTdrssFile) {
+	//File doesn't exist
+	return 0;
+    }
+    numBytes=fread(bigBuffer,1,BIG_BUF_SIZE,slowTdrssFile);
+    if(numBytes<=0) {
+      fclose(slowTdrssFile);
+      return 0;
+    }
+    if(numBytes==lastNumBytes) {
+	//No new data
+	fclose(slowTdrssFile);
+	return 2;
+    }
+
+    lastSlowTdrssFile=currentSlowTdrssFile;
+    cout << "Slow Tdrss: " << filename << endl;
+    //we have some new data
+    lastNumBytes=numBytes;
+
+    unsigned char *charBuffer=(unsigned char*)&bigBuffer[0];
+
+    while(count<numBytes) {
+      unsigned char comm1or2=charBuffer[count];
+    //  cout << count << " " << numBytes << "\t" << Int_t(comm1or2) << endl;
+
+	if(comm1or2==0xc1 || comm1or2==0xc2) {
+	    unsigned char seqNum=charBuffer[count+1];
+	    unsigned char numBytes=charBuffer[count+2];
+	    unsigned char *sciData=&charBuffer[count+3];
+	    count+=numBytes+3;
+	    
+	    //	    printf("count %d -- comm %#x, seqNum %d, numBytes %d\n",
+	    //		   count,comm1or2,seqNum,numBytes);
+	    //	    printf("sizeof(SlowRateFull_t) -- %d\n",sizeof(SlowRateFull_t));
+	    if(numBytes==sizeof(SlowRateFull_t)) {
+	      //		cout << "Yes" << endl;
+		//Probably have SlowRateFull_t
+		SlowRateFull_t *slowPtr = (SlowRateFull_t*)sciData;
+		//		cout << slowPtr->unixTime << " " << lastUnixTime << endl;
+		retVal=checkPacket((GenericHeader_t*)slowPtr);
+		if(retVal==0) {
+		    		    
+		    if(slowPtr->unixTime>lastUnixTime) {
+		      //			cout << "yep" << endl;
+			//Have new SlowRateFull_t
+			lastUnixTime=slowPtr->unixTime;
+			slowHandler->addSlowRate(slowPtr,getRunNumberFromTime(slowPtr->unixTime),AnitaTelemFileType::kAnitaTelemSlowTdrss,seqNum);
+//			cout << "Here" << endl;
+			// Int_t tempAlt=slowPtr->hk.altitude;
+			// if(tempAlt<-1000) {
+			//   tempAlt=65536+tempAlt;
+			// }
+			// gpsHandler->makeGpsMap(slowPtr->unixTime,slowPtr->hk.latitude,
+			// 		       slowPtr->hk.longitude,tempAlt);
+//			cout << "And Here" << endl;
+			//Do something with GPS data
+		    }
+		}
+		else {
+		  printf("Error with slow tdrss packet -- checkVal %d\n",retVal);
+		}
+	    }
+	    
+	}
+	else {
+	    count++;
+	}
+    }
+    fclose(slowTdrssFile);
+
+
+
+    lastRunNumber[AnitaTelemFileType::kAnitaTelemSlowTdrss]=currentSlowTdrssRun;
+    lastFileNumber[AnitaTelemFileType::kAnitaTelemSlowTdrss]=currentSlowTdrssFile;
+    lastNumBytesNumber[AnitaTelemFileType::kAnitaTelemSlowTdrss]=numBytes;
+    return 1;
 }
