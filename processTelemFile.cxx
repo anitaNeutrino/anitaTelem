@@ -1209,6 +1209,9 @@ int processSlowTdrssFile(char *filename) {
 	lastNumBytes=0;
     }
 
+    std::cout << currentSlowTdrssRun << "\t" << currentSlowTdrssFile << "\n";
+    std::cout << lastSlowTdrssRun << "\t" << lastSlowTdrssFile << "\t" << lastNumBytes << "\n";
+
     FILE *slowTdrssFile=fopen(filename,"rb");
     if(!slowTdrssFile) {
 	//File doesn't exist
