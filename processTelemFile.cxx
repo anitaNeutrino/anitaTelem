@@ -1226,7 +1226,7 @@ int processSlowTdrssFile(char *filename) {
     }
 
     lastSlowTdrssFile=currentSlowTdrssFile;
-    cout << "Slow Tdrss: " << filename << endl;
+    cout << "Slow Tdrss: " << filename << "\t" << numBytes << endl;
     //we have some new data
     lastNumBytes=numBytes;
 
@@ -1242,8 +1242,8 @@ int processSlowTdrssFile(char *filename) {
 	    unsigned char *sciData=&charBuffer[count+3];
 	    count+=numBytes+3;
 	    
-	    //	    printf("count %d -- comm %#x, seqNum %d, numBytes %d\n",
-	    //		   count,comm1or2,seqNum,numBytes);
+	    printf("count %d -- comm %#x, seqNum %d, numBytes %d\n",
+		   count,comm1or2,seqNum,numBytes);
 	    //	    printf("sizeof(SlowRateFull_t) -- %d\n",sizeof(SlowRateFull_t));
 	    if(numBytes==sizeof(SlowRateFull_t)) {
 	      //		cout << "Yes" << endl;
