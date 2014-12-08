@@ -1249,7 +1249,7 @@ int processSlowTdrssFile(char *filename) {
 	    
 	    printf("count %d -- comm %#x, seqNum %d, numBytes %d\n",
 		   count,comm1or2,seqNum,numBytes);
-	    //	    printf("sizeof(SlowRateFull_t) -- %d\n",sizeof(SlowRateFull_t));
+	    printf("sizeof(SlowRateFull_t) -- %d\n",sizeof(SlowRateFull_t));
 	    if(numBytes==sizeof(SlowRateFull_t)) {
 	      //		cout << "Yes" << endl;
 		//Probably have SlowRateFull_t

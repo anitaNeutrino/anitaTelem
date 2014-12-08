@@ -51,18 +51,20 @@ void AnitaSlowRateHandler::addSlowRate(SlowRateFull_t *slowPtr,int run,AnitaTele
 
 void AnitaSlowRateHandler::loopMap() 
 {
+  std::cout << "AnitaSlowRateHandler::loopMap()\n";
+  
   char fileName[FILENAME_MAX];
 
   std::map<UInt_t,std::map<UInt_t, SlowRateFull_t> >::iterator runIt;
   for(runIt=fSlowRateMap.begin();runIt!=fSlowRateMap.end();runIt++) {
     int fRun=runIt->first;
 
-  int fileCount=0;
-  std::map<UInt_t,SlowRateFull_t>::iterator it;
-  FILE *outFile=NULL;
-  for(it=runIt->second.begin();it!=runIt->second.end();it++) {
-    SlowRateFull_t *slowPtr=&(it->second);
-    //    std::cout << slowPtr->unixTime << "\t" << slowPtr->unixTime << "\t" << 100*(slowPtr->unixTime/100) << "\n";    
+    int fileCount=0;
+    std::map<UInt_t,SlowRateFull_t>::iterator it;
+    FILE *outFile=NULL;
+    for(it=runIt->second.begin();it!=runIt->second.end();it++) {
+      SlowRateFull_t *slowPtr=&(it->second);
+      //    std::cout << slowPtr->unixTime << "\t" << slowPtr->unixTime << "\t" << 100*(slowPtr->unixTime/100) << "\n";    
     
     //    processSlowRate(slowPtr);
        
