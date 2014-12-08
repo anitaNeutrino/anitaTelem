@@ -1086,6 +1086,7 @@ void addRunToMap(UInt_t run, UInt_t eventNumber, UInt_t unixTime)
 
 int processIridiumFile(char *filename) {
     int numBytes=0;
+    lastNumBytesNumber[AnitaTelemFileType::kAnitaTelemIridium]=getLastNumBytesNumber(AnitaTelemFileType::kAnitaTelemIridium);
     int lastNumBytes=lastNumBytesNumber[AnitaTelemFileType::kAnitaTelemIridium];
     static unsigned int lastUnixTime=0;
     int lastIridiumFile=lastFileNumber[AnitaTelemFileType::kAnitaTelemIridium];
@@ -1184,6 +1185,7 @@ int processIridiumFile(char *filename) {
 
 int processSlowTdrssFile(char *filename) {
     int numBytes=0;
+    lastNumBytesNumber[AnitaTelemFileType::kAnitaTelemSlowTdrss]=getLastNumBytesNumber(AnitaTelemFileType::kAnitaTelemSlowTdrss);
     int lastNumBytes=lastNumBytesNumber[AnitaTelemFileType::kAnitaTelemSlowTdrss];
     static unsigned int lastUnixTime=0;
     int lastSlowTdrssFile=lastFileNumber[AnitaTelemFileType::kAnitaTelemSlowTdrss];
