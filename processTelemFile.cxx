@@ -154,9 +154,19 @@ int main (int argc, char ** argv)
   
   //Lazy hack way of determing which type of file we are dealing with
   for(int i=1;i<argc;i++) {
-    if(strstr(argv[i],"tdrss")!=NULL) {
+    if(strstr(argv[i],"fast_tdrss")!=NULL) {
       std::cout << "Got TDRSS:\t" << strstr(argv[i],"tdrss") << "\n";
       processHighRateTDRSSFile(argv[i]);
+
+    }
+    else if(strstr(argv[i],"slow_tdrss")!=NULL) {
+      std::cout << "Got Slow TDRSS:\t" << strstr(argv[i],"tdrss") << "\n";
+      processSlowTdrssFile(argv[i]);
+
+    }
+    else if(strstr(argv[i],"iridium")!=NULL) {
+      std::cout << "Got Iridium:\t" << strstr(argv[i],"tdrss") << "\n";
+      processIridiumFile(argv[i]);
 
     }
     else if(strstr(argv[i],"los")!=NULL) {
