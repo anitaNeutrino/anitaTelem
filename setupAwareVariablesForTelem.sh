@@ -9,8 +9,8 @@ export ANITA_TREE_MAKER_DIR=/home/radio/anita14/simpleTreeMaker
 
 
 
-export AWARE_OUTPUT_DIR=/storage/antarctica14/telem/aware/output/
-export ANITA_TELEM_DATA_DIR=/storage/antarctica14/telem/
+export AWARE_OUTPUT_DIR=/storage/flight1415/telem/aware/output/
+export ANITA_TELEM_DATA_DIR=/storage/flight1415/telem/
 
 
 export PYTHONPATH=${AWARE_BASE_DIR}/python/:${ANITA_BASE_DIR}/pyinotify/python2
