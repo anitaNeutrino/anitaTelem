@@ -20,6 +20,8 @@ namespace AnitaTelemFileType {
     kAnitaTelemLos=0,
     kAnitaTelemTdrss,
     kAnitaTelemOpenport,
+    kAnitaTelemSlowTdrss,
+    kAnitaTelemIridium,
     kNotATelemType
   } AnitaTelemFileType_t;
 }

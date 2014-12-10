@@ -1,5 +1,5 @@
 #!/bin/bash
-source /home/radio/anita14/anitaAwareFileMaker/setupAwareVariablesForTelem.sh
+source /home/radio/anita14/anitaTelem/setupAwareVariablesForTelem.sh
 TDRSS_HOST=192.168.1.6
 TDRSS_USER=anita
 TDRSS_DIR=/home/anita/cmdSend/jsonLog/

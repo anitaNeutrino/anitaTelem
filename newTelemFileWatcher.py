@@ -13,6 +13,7 @@ import pyinotify
 import subprocess
 import os
 import sys
+import re
 
 # The watch manager stores the watches and provides operations on watches
 wm = pyinotify.WatchManager()
@@ -30,6 +31,11 @@ sys.stdout.flush()
 processTelemCommand=anitaTelemDir+"/processTelemFile"
 print "Telem processing command: "+processTelemCommand
 sys.stdout.flush()
+
+NameOfStorCommentsFile = "/stor_comments$"
+print "Ignoring stor_comments files via RegEx match to "+NameOfStorCommentsFile
+stor_comments_filename_re = re.compile( NameOfStorCommentsFile )
+
 def dot_filter(pathname):
     # return True to stop processing of event (to "stop chaining")
     return os.path.basename(pathname)[0]=='.'
@@ -59,12 +65,17 @@ class EventHandler(pyinotify.ProcessEvent):
             sys.stdout.flush()
             wdd = wm.add_watch(event.pathname, mask, rec=False)
         else :
-            print "New file detected:", event.pathname, " launching telem...."
-            sys.stdout.flush()
-            processLogFile=open(awareOutputDir+"/ANITA3/log/processTelem.log","w")
-            print ["processTelemFile.sh",event.pathname]
-            sys.stdout.flush()
-            subprocess.call([processTelemCommand,event.pathname],stdout=processLogFile,stderr=processLogFile)
+            match_check = stor_comments_filename_re.search( event.pathname )
+            if ( match_check ) :                                                          # no match
+               print "New file detected:", event.pathname, " <- match to stor_comments ... ignoring it ..."
+               sys.stdout.flush()
+            else :
+               print "New file detected:", event.pathname, " launching telem...."
+               sys.stdout.flush()
+               processLogFile=open(awareOutputDir+"/ANITA3/log/processTelem.log","w")
+               print ["processTelemFile.sh",event.pathname]
+               sys.stdout.flush()
+               subprocess.call([processTelemCommand,event.pathname],stdout=processLogFile,stderr=processLogFile)
 
     def process_IN_DELETE(self, event):
         print "Removing:", event.pathname
@@ -82,6 +93,8 @@ def main():
     losDir=anitaTelemDataDir+"raw_los/"
     tdrssDir=anitaTelemDataDir+"fast_tdrss/"
     openportDir=anitaTelemDataDir+"openport/"
+    slowTdrssDir=anitaTelemDataDir+"slow_tdrss/"
+    iridiumDir=anitaTelemDataDir+"iridium/"
 
     # Start watching a new directory
     losDirList=os.listdir(losDir)
@@ -101,6 +114,22 @@ def main():
     print "config: currentTdrssDir    = ",currentTdrssDir
     sys.stdout.flush()
 
+    iridiumDirList=os.listdir(iridiumDir)
+    iridiumDirList.sort()
+    currentIridiumDir=iridiumDir+iridiumDirList[len(iridiumDirList)-1]
+    if(os.path.isfile(currentIridiumDir)):
+        currentIridiumDir=iridiumDir+iridiumDirList[len(iridiumDirList)-2]
+    print "config: currentIridiumDir    = ",currentIridiumDir
+    sys.stdout.flush()
+
+    slowTdrssDirList=os.listdir(slowTdrssDir)
+    slowTdrssDirList.sort()
+    currentSlowTdrssDir=slowTdrssDir+slowTdrssDirList[len(slowTdrssDirList)-1]
+    if(os.path.isfile(currentSlowTdrssDir)):
+        currentSlowTdrssDir=slowTdrssDir+slowTdrssDirList[len(slowTdrssDirList)-2]
+    print "config: currentTdrssDir    = ",currentTdrssDir
+    sys.stdout.flush()
+
     openportDirList=os.listdir(openportDir)
     openportDirList.sort()
     currentOpenportDir=openportDir+openportDirList[len(openportDirList)-1]
@@ -117,6 +146,12 @@ def main():
     wdd6 = wm.add_watch(tdrssDir, mask, rec=False)
     print "WatchSet: dir ", tdrssDir
     sys.stdout.flush()
+    wdd7 = wm.add_watch(slowTdrssDir, mask, rec=False)
+    print "WatchSet: dir ", tdrssDir
+    sys.stdout.flush()
+    wdd8 = wm.add_watch(iridiumDir, mask, rec=False)
+    print "WatchSet: dir ", tdrssDir
+    sys.stdout.flush()
 
     #Need to watch the most recent directories for new files
     wdd1 = wm.add_watch(currentOpenportDir, mask, rec=False)
@@ -127,6 +162,12 @@ def main():
     sys.stdout.flush()
     wdd3 = wm.add_watch(currentTdrssDir, mask, rec=False)
     print "WatchSet: dir ", currentTdrssDir
+    sys.stdout.flush()
+    wdd3 = wm.add_watch(currentSlowTdrssDir, mask, rec=False)
+    print "WatchSet: dir ", currentSlowTdrssDir
+    sys.stdout.flush()
+    wdd3 = wm.add_watch(currentIridiumDir, mask, rec=False)
+    print "WatchSet: dir ", currentIridiumDir
     sys.stdout.flush()
     # Loop forever catching and dealing wth the events
     notifier.loop()
