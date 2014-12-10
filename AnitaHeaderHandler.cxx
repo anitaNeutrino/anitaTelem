@@ -172,6 +172,7 @@ void AnitaHeaderHandler::loopEventMap()
   
     //    std::cerr << "Run: " << run << "\t" << runIt->second.size() << "\n";
     AnitaEventHeader_t tempHeader; 
+
     for(it=(runIt->second).begin();it!=(runIt->second).end();it++) {
       PedSubbedEventBody_t *bdPtr=&(it->second);
       AnitaEventHeader_t *hdPtr=NULL;
@@ -183,15 +184,16 @@ void AnitaHeaderHandler::loopEventMap()
 	  hdPtr=&(headIt->second);
 	}
       }
-      if(fMakeEventDisplaysForAware)
-	plotEvent(hdPtr,bdPtr,run);
       
       if(!hdPtr) {	
-	tempHeader.eventNumber=bdPtr->eventNumber;
 	memset(&tempHeader,0,sizeof(AnitaEventHeader_t));
+	tempHeader.eventNumber=bdPtr->eventNumber;
 	fillGenericHeader(&tempHeader,PACKET_HD,sizeof(AnitaEventHeader_t));
 	hdPtr=&tempHeader;
       }
+
+      if(fMakeEventDisplaysForAware)
+	plotEvent(hdPtr,bdPtr,run);
 
       int fileNumber=100*(bdPtr->eventNumber/100);
       //    processHeader(bdPtr);
@@ -231,6 +233,10 @@ void AnitaHeaderHandler::loopEventMap()
       lastFileNumber=fileNumber;
       //      std::cerr << "Before write\t" << eventFile  << "\t" << bdPtr << "\n";
       fwrite(bdPtr,sizeof(PedSubbedEventBody_t),1,eventFile);
+      if(hdPtr->eventNumber!=bdPtr->eventNumber) {
+	std::cout << "Event number mismatch: " << hdPtr->eventNumber << "\t" << bdPtr->eventNumber << "\n";
+	hdPtr->eventNumber=bdPtr->eventNumber;
+      }
       fwrite(hdPtr,sizeof(AnitaEventHeader_t),1,headFile);
     }
     
@@ -562,11 +568,11 @@ void AnitaHeaderHandler::plotEvent(AnitaEventHeader_t *hdPtr,PedSubbedEventBody_
 	//Have SURF +2 sync slip
       }
       else {
-	fTheEvent->surfEventId[surf+1]=hdPtr->turfEventId;
+	fTheEvent->surfEventId[surf]=hdPtr->turfEventId;
       }
     }
     for(int surf=8;surf<ACTIVE_SURFS;surf++) {
-      fTheEvent->surfEventId[surf+1]=hdPtr->turfEventId;
+      fTheEvent->surfEventId[surf]=hdPtr->turfEventId;
     }
     
 
