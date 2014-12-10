@@ -44,7 +44,7 @@ if  test `ps x | grep rootAndJsonFileLoop.sh  | wc -l` -gt 1; then
   echo "    You should stop this before trying to start another one"
   exit 1
 else
-  echo "newTelemFileWatcher.py is not running."
+  echo "rootandJsonFileLoop.sh is not running."
 fi
 
 echo "Starting newTelemFileWatcher.py"
