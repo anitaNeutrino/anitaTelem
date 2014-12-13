@@ -283,6 +283,12 @@ def main():
         print "GPS ROOT file for run ",runNum," up-to-date - rawTime = ",rawTime," / rootTime = ",rootTime," <- from check on house/gps/last"
         sys.stdout.flush()
 
+    if(1):
+        print "Reprocess config file"
+        processCommand=anitaAwareFilemakerDir+"/"+site+"/processConfigTelem.sh "+str(runNum)
+        print "--> [1 of 1] - running ",processCommand
+        sys.stdout.flush()
+
 
 if __name__ == "__main__":
     main()
