@@ -238,47 +238,59 @@ def main():
         print "aux ROOT file for run ",runNum," up-to-date - rawTime = ",rawTime," / rootTime = ",rootTime," <- from check on start/last"
         sys.stdout.flush()
 
+
     rawTime=getRawTimeModified(runNum,"house/gps/last")
     rootTime=getRootTimeModified(runNum,"gpsFile")
     if(rawTime>rootTime):
         print "Need new GPS ROOT file"
         processCommand=anitaTreeMakerDir+"/runTelemGpsMaker.sh "+str(runNum)+" "+rawDir+" "+rootDir
-        print "--> [1 of 9] - running ",processCommand
+        print "--> [1 of 12] - running ",processCommand
         sys.stdout.flush()
         subprocess.call([processCommand],shell=True)
         processCommand=anitaAwareFilemakerDir+"/makeAdu5PatJsonFiles"
-        print "--> [2 of 9] - running ",processCommand
+        print "--> [2 of 12] - running ",processCommand
         sys.stdout.flush()
         subprocess.call([processCommand,getRootFilename(runNum,"gpsFile"),"0"])
         processCommand=anitaAwareFilemakerDir+"/makeAdu5PatJsonFiles"
-        print "--> [3 of 9] - running ",processCommand
+        print "--> [3 of 12] - running ",processCommand
         sys.stdout.flush()
         subprocess.call([processCommand,getRootFilename(runNum,"gpsFile"),"1"])
         processCommand=anitaAwareFilemakerDir+"/makeAdu5SatJsonFiles"
-        print "--> [4 of 9] - running ",processCommand
+        print "--> [4 of 12] - running ",processCommand
         sys.stdout.flush()
         subprocess.call([processCommand,getRootFilename(runNum,"gpsFile"),"0"])
         processCommand=anitaAwareFilemakerDir+"/makeAdu5SatJsonFiles"
-        print "--> [5 of 9] - running ",processCommand
+        print "--> [5 of 12] - running ",processCommand
         sys.stdout.flush()
         subprocess.call([processCommand,getRootFilename(runNum,"gpsFile"),"1"])
         processCommand=anitaAwareFilemakerDir+"/makeAdu5VtgJsonFiles"
-        print "--> [6 of 9] - running ",processCommand
+        print "--> [6 of 12] - running ",processCommand
         sys.stdout.flush()
         subprocess.call([processCommand,getRootFilename(runNum,"gpsFile"),"0"])
         processCommand=anitaAwareFilemakerDir+"/makeAdu5VtgJsonFiles"
-        print "--> [7 of 9] - running ",processCommand
+        print "--> [7 of 12] - running ",processCommand
         sys.stdout.flush()
-        subprocess.call([processCommand,getRootFilename(runNum,"gpsFile"),"1"])
-      
+        subprocess.call([processCommand,getRootFilename(runNum,"gpsFile"),"1"])      
         processCommand=anitaAwareFilemakerDir+"/makeG12PosJsonFiles"
-        print "--> [8 of 9] - running ",processCommand
+        print "--> [8 of 12] - running ",processCommand
         sys.stdout.flush()
         subprocess.call([processCommand,getRootFilename(runNum,"gpsFile")])
         processCommand=anitaAwareFilemakerDir+"/makeG12SatJsonFiles"
-        print "--> [9 of 9] - running ",processCommand
+        print "--> [9 of 12] - running ",processCommand
         sys.stdout.flush()
         subprocess.call([processCommand,getRootFilename(runNum,"gpsFile")])
+        processCommand=anitaAwareFilemakerDir+"/makeGpsGgaJsonFiles"
+        print "--> [10 of 12] - running ",processCommand
+        sys.stdout.flush()
+        subprocess.call([processCommand,getRootFilename(runNum,"gpsFile"),"0"])
+        processCommand=anitaAwareFilemakerDir+"/makeGpsGgaJsonFiles"
+        print "--> [11 of 12] - running ",processCommand
+        sys.stdout.flush()
+        subprocess.call([processCommand,getRootFilename(runNum,"gpsFile"),"1"])
+        processCommand=anitaAwareFilemakerDir+"/makeGpsGgaJsonFiles"
+        print "--> [12 of 12] - running ",processCommand
+        sys.stdout.flush()
+        subprocess.call([processCommand,getRootFilename(runNum,"gpsFile"),"2"])
     else:
         print "GPS ROOT file for run ",runNum," up-to-date - rawTime = ",rawTime," / rootTime = ",rootTime," <- from check on house/gps/last"
         sys.stdout.flush()
