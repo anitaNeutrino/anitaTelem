@@ -267,6 +267,19 @@ def main():
         print "GPS ROOT file for run ",runNum," up-to-date - rawTime = ",rawTime," / rootTime = ",rootTime," <- from check on house/gps/last"
         sys.stdout.flush()
 
+    rawTime=getRawTimeModified(runNum,"house/slowRate/last")
+    rootTime=getRootTimeModified(runNum,"slowFile")
+    if(rawTime>rootTime):
+        print "Need new Slow ROOT file"
+        processCommand=anitaTreeMakerDir+"/runTelemSlowMaker.sh "+str(runNum)+" "+rawDir+" "+rootDir
+        print "--> [1 of 2] - running ",processCommand
+        sys.stdout.flush()
+        subprocess.call([processCommand],shell=True)
+        processCommand=anitaAwareFilemakerDir+"/makeSlowRateHkJsonFiles"
+        print "--> [2 of 2] - running ",processCommand
+        sys.stdout.flush()
+        subprocess.call([processCommand,getRootFilename(runNum,"slowFile")])
+
     if(1):
         print "Reprocess config file"
         processCommand=anitaAwareFilemakerDir+"/"+site+"/processConfigTelem.sh "+str(runNum)
