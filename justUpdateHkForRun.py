@@ -62,16 +62,6 @@ def main():
     if not doesRootDirExist(runNum):
         print "Root dir does not exist for run ",runNum," <- generating root files"
         sys.stdout.flush()
-        processCommand=anitaTreeMakerDir+"/runAnitaIIIFileMakerTelem.sh "+str(runNum)
-        print "--> [1 of 2] - running ",processCommand
-        sys.stdout.flush()
-        subprocess.call([processCommand],shell=True)
-        processCommand=anitaAwareFilemakerDir+"/"+site+"/processRunTelem.sh "+str(runNum)
-        print "--> [1 of 2] - running ",processCommand
-        sys.stdout.flush()
-        subprocess.call([processCommand],shell=True)
-        print "--> root dir generated ... exitting script"             
-        sys.stdout.flush()
         sys.exit()
 
 #Step three check if individual root files need to be remade
@@ -82,12 +72,6 @@ def main():
     rawTime=getRawTimeModified(runNum,"event/last")
     rootTime=getRootTimeModified(runNum,"eventFile")
     if(rawTime>rootTime):
-        print "Need new event ROOT file for run ",runNum," - rawTime = ",rawTime," / rootTime = ",rootTime," <- from check on event/last"
-        sys.stdout.flush()
-        processCommand=anitaTreeMakerDir+"/runTelemEventMaker.sh "+str(runNum)+" "+rawDir+" "+rootDir
-        print "--> [1 of 3] - running ",processCommand
-        sys.stdout.flush()
-        subprocess.call([processCommand],shell=True)
         processCommand=anitaTreeMakerDir+"/runTelemHeaderMaker.sh "+str(runNum)+" "+rawDir+" "+rootDir
         print "--> [2 of 3] - running ",processCommand
         sys.stdout.flush()
@@ -164,7 +148,7 @@ def main():
         processCommand=anitaAwareFilemakerDir+"/makeGpuJsonFiles"
         print "--> [2 of 2] - running ",processCommand
         sys.stdout.flush()
-#RJN hack        subprocess.call([processCommand,getRootFilename(runNum,"gpuFile")])
+#        subprocess.call([processCommand,getRootFilename(runNum,"gpuFile")])
     else:
         print "gpu ROOT file for run ",runNum," up-to-date - rawTime = ",rawTime," / rootTime = ",rootTime," <- from check on house/gpu/last"
         sys.stdout.flush()
@@ -237,7 +221,6 @@ def main():
     else:
         print "aux ROOT file for run ",runNum," up-to-date - rawTime = ",rawTime," / rootTime = ",rootTime," <- from check on start/last"
         sys.stdout.flush()
-
 
     rawTime=getRawTimeModified(runNum,"house/gps/last")
     rootTime=getRootTimeModified(runNum,"gpsFile")
