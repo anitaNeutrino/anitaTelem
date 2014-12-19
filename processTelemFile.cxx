@@ -130,10 +130,11 @@ int main (int argc, char ** argv)
   loadRunNumberMap();
   
 
-  gRandom->SetSeed();
-  double val=gRandom->Rndm();
+  //  gRandom->SetSeed();
+  //  double val=gRandom->Rndm();
   int plotEvents=0;
-  if(val>0.9) plotEvents=1;
+  //  if(val>0.3) plotEvents=1;
+  plotEvents=1;
   if(plotEvents) std::cout << "Plotting events\n";
   else std::cout << "Not plotting events\n";
 
@@ -1249,7 +1250,7 @@ int processSlowTdrssFile(char *filename) {
 	    
 	    printf("count %d -- comm %#x, seqNum %d, numBytes %d\n",
 		   count,comm1or2,seqNum,numBytes);
-	    printf("sizeof(SlowRateFull_t) -- %d\n",sizeof(SlowRateFull_t));
+	    //	    printf("sizeof(SlowRateFull_t) -- %ul\n",sizeof(SlowRateFull_t));
 	    if(numBytes==sizeof(SlowRateFull_t)) {
 	      //		cout << "Yes" << endl;
 		//Probably have SlowRateFull_t

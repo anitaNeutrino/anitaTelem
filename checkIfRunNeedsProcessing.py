@@ -176,23 +176,35 @@ def main():
         print "Need new monitor ROOT file for run ",runNum," - rawTime = ",rawTime," / rootTime = ",rootTime," <- from check on house/turfhk/last"
         sys.stdout.flush()
         processCommand=anitaTreeMakerDir+"/runTelemTurfRateMaker.sh "+str(runNum)+" "+rawDir+" "+rootDir
-        print "--> [1 of 4] - running ",processCommand
-        sys.stdout.flush()
-        subprocess.call([processCommand],shell=True)
-        processCommand=anitaTreeMakerDir+"/runTelemSumTurfRateMaker.sh "+str(runNum)+" "+rawDir+" "+rootDir
-        print "--> [2 of 4] - running ",processCommand
+        print "--> [1 of 2] - running ",processCommand
         sys.stdout.flush()
         subprocess.call([processCommand],shell=True)
         processCommand=anitaAwareFilemakerDir+"/makeTurfRateJsonFiles"
-        print "--> [3 of 4] - running ",processCommand
+        print "--> [2 of 2] - running ",processCommand
         sys.stdout.flush()
         subprocess.call([processCommand,getRootFilename(runNum,"turfRateFile")])
+    else:
+        print "Turf Rate ROOT file for run ",runNum," up-to-date - rawTime = ",rawTime," / rootTime = ",rootTime," <- from check on house/turfhk/last"
+        sys.stdout.flush()
+
+
+
+        
+    rawTime=getRawTimeModified(runNum,"house/turfhk/last")
+    rootTime=getRootTimeModified(runNum,"sumTurfRateFile")
+    if(rawTime>rootTime):
+        print "Need new monitor ROOT file for run ",runNum," - rawTime = ",rawTime," / rootTime = ",rootTime," <- from check on house/turfhk/last"
+        sys.stdout.flush()
+        processCommand=anitaTreeMakerDir+"/runTelemSumTurfRateMaker.sh "+str(runNum)+" "+rawDir+" "+rootDir
+        print "--> [1 of 2] - running ",processCommand
+        sys.stdout.flush()
+        subprocess.call([processCommand],shell=True)
         processCommand=anitaAwareFilemakerDir+"/makeSumTurfRateJsonFiles"
-        print "--> [4 of 4] - running ",processCommand
+        print "--> [2 of 2] - running ",processCommand
         sys.stdout.flush()
         subprocess.call([processCommand,getRootFilename(runNum,"sumTurfRateFile")])
     else:
-        print "monitor ROOT file for run ",runNum," up-to-date - rawTime = ",rawTime," / rootTime = ",rootTime," <- from check on house/turfhk/last"
+        print "SummedTurfRate ROOT file for run ",runNum," up-to-date - rawTime = ",rawTime," / rootTime = ",rootTime," <- from check on house/turfhk/last"
         sys.stdout.flush()
 
     rawTime=getRawTimeModified(runNum,"house/surfhk/last")
@@ -310,8 +322,9 @@ def main():
 
     if(1):
         print "Reprocess config file"
-        processCommand=anitaAwareFilemakerDir+"/"+site+"/processConfigTelem.sh "+str(runNum)
+        processCommand=anitaAwareFilemakerDir+"/"+site+"/processConfigTelem.sh"
         print "--> [1 of 1] - running ",processCommand
+        subprocess.call([processCommand,str(runNum)])
         sys.stdout.flush()
 
 
