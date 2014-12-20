@@ -608,7 +608,7 @@ void AnitaHeaderHandler::plotEvent(AnitaEventHeader_t *hdPtr,PedSubbedEventBody_
     fMagicCanvas->Update();
   } 
   
-  UsefulAnitaEvent *usefulEventPtr = new UsefulAnitaEvent(fTheEvent,WaveCalType::kVoltageTime);  
+  UsefulAnitaEvent *usefulEventPtr = new UsefulAnitaEvent(fTheEvent,WaveCalType::kDefault);  
   
 
 
