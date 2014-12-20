@@ -85,18 +85,23 @@ def main():
         print "Need new event ROOT file for run ",runNum," - rawTime = ",rawTime," / rootTime = ",rootTime," <- from check on event/last"
         sys.stdout.flush()
         processCommand=anitaTreeMakerDir+"/runTelemEventMaker.sh "+str(runNum)+" "+rawDir+" "+rootDir
-        print "--> [1 of 3] - running ",processCommand
+        print "--> [1 of 4] - running ",processCommand
         sys.stdout.flush()
         subprocess.call([processCommand],shell=True)
         processCommand=anitaTreeMakerDir+"/runTelemHeaderMaker.sh "+str(runNum)+" "+rawDir+" "+rootDir
-        print "--> [2 of 3] - running ",processCommand
+        print "--> [2 of 4] - running ",processCommand
         sys.stdout.flush()
         subprocess.call([processCommand],shell=True)
         #Here insert call to aware file maker    
         processCommand=anitaAwareFilemakerDir+"/makeHeaderJsonFiles"
-        print "--> [3 of 3] - running ",processCommand
+        print "--> [3 of 4] - running ",processCommand
         sys.stdout.flush()
         subprocess.call([processCommand,getRootFilename(runNum,"headFile")])
+        #Now make the waveform summary files
+        processCommand=anitaAwareFilemakerDir+"/makeWaveformSummaryJsonFiles"
+        print "--> [4 of 4] - running ",processCommand
+        sys.stdout.flush()
+        subprocess.call([processCommand,getRootFilename(runNum,"headFile"),getRootFilename(runNum,"eventFile")])
     else:
         print "event ROOT file for run ",runNum," up-to-date - rawTime = ",rawTime," / rootTime = ",rootTime," <- from check on event/last"
         sys.stdout.flush()
