@@ -53,6 +53,7 @@ void AnitaCmdEchoHandler::loopMaps()
 {
   FileStat_t staty;
   char fileName[FILENAME_MAX];
+  char cmdCountFile[FILENAME_MAX];
   std::map<UInt_t,CommandEcho_t>::iterator it;
   const char *fromString[2]={"Ground","Payload"};
   
@@ -60,6 +61,14 @@ void AnitaCmdEchoHandler::loopMaps()
      std::ofstream JsonFile;
      
      int cmdCount=0;
+
+     sprintf(cmdCountFile,"%s/ANITA3/db/cmdCount%s.dat",fAwareDir.c_str(),fromString[payloadFlag]);
+     std::ifstream CmdCountFile(cmdCountFile);
+     if(CmdCountFile) {
+       CmdCountFile >> cmdCount;
+       CmdCountFile.close();
+     }
+
 
      if(fCmdEchoMap[payloadFlag].size()>0) {
 
@@ -96,8 +105,15 @@ void AnitaCmdEchoHandler::loopMaps()
 	   JsonFile << "}\n";
 	   JsonFile.close();	      
 	}
+
+
+	std::ofstream CmdCountFile(cmdCountFile);
+	if(CmdCountFile) {
+	  CmdCountFile << cmdCount << "\n";
+	  CmdCountFile.close();
+	}
      }
-  }  
+  }
 }
 
 
