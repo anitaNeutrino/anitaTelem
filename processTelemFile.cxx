@@ -115,12 +115,15 @@ int main (int argc, char ** argv)
   std::string rawDir(anitaTelemDataDir);
   rawDir+="/raw";
   std::cout << rawDir << "\n";
-
+  
+  char awareDbDir[FILENAME_MAX];
   awareOutputDir=getenv("AWARE_OUTPUT_DIR");
   if(!awareOutputDir) {
     std::cout << "AWARE_OUTPUT_DIR not set using default\n";
     awareOutputDir=(char*)"/anitaStorage/antarctica14/telem/aware/output";
   }
+  sprintf(awareDbDir,"%s/ANITA3/db",awareOutputDir);
+  gSystem->mkdir(awareDbDir);
  
   for(int i=AnitaTelemFileType::kAnitaTelemLos;i<AnitaTelemFileType::kNotATelemType;i++) {
     lastRunNumber[i]=getLastRunNumber((AnitaTelemFileType::AnitaTelemFileType_t)i);
@@ -210,6 +213,7 @@ int main (int argc, char ** argv)
   updateLastFileNumber();
   updateLastNumBytesNumber();
   if(needToSaveRunMap) saveRunNumberMap();
+  delete headHandler;
 }
 
 
