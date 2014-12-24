@@ -63,6 +63,7 @@ void AnitaHeaderHandler::newFile(AnitaTelemFileType::AnitaTelemFileType_t fileTy
       fread(gotWave,sizeof(int),ACTIVE_SURFS*9,fp);
       fread(&curEventHeader,sizeof(AnitaEventHeader_t),1,fp);
       fclose(fp);
+      std::cout << "Got header " << curEventHeader.eventNumber << "\n";
       for(int surf=0;surf<ACTIVE_SURFS;surf++) {
 	std::cout << gotSurf[surf]  << " ";
       }
