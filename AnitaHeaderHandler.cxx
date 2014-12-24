@@ -201,6 +201,7 @@ void AnitaHeaderHandler::loopEventMap()
       AnitaEventHeader_t *hdPtr=NULL;
       //      std::cout << bdPtr->unixTime << "\t" << bdPtr->eventNumber << "\t" << 100*(bdPtr->eventNumber/100) << "\n";    
       if(curEventHeader.eventNumber==bdPtr->eventNumber) {
+	std::cout << "Got current event header " << curEventHeader.eventNumber << "\n";
 	hdPtr=&curEventHeader;
       } 
       else {
