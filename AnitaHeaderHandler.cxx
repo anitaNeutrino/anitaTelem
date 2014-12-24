@@ -33,6 +33,7 @@
 #define EVENTS_PER_FILE 100
 #define EVENT_FILES_PER_DIR 100
 
+const char *telemTypeForFile[5]={"Los","Tdrss","Openport","SlowTdrss","Iridium"};
 
 AnitaHeaderHandler::AnitaHeaderHandler(std::string rawDir,std::string awareDir,int makeEventPngsForAware)
   :fRawDir(rawDir),fAwareDir(awareDir),fMakeEventDisplaysForAware(makeEventPngsForAware),startedEvent(0)
@@ -40,20 +41,30 @@ AnitaHeaderHandler::AnitaHeaderHandler(std::string rawDir,std::string awareDir,i
   zeroCounters();
   fHeaderTouchFile=fAwareDir+"/ANITA3/lastHeader";
   fEventTouchFile=fAwareDir+"/ANITA3/lastEvent";
+  fReadLastPartialEvent=0;
 
-  char fileName[FILENAME_MAX];
-  sprintf(fileName,"%s/db/currentEvent.dat",fAwareDir.c_str());
   
-  FILE *fp = fopen(fileName,"rb");
-  if(fp) {
-    fread(&curPSBody,sizeof(PedSubbedEventBody_t),1,fp);
-    fread(&startedEvent,sizeof(int),1,fp);
-    fread(&currentEventRun,sizeof(int),1,fp);
-    fread(gotSurf,sizeof(int),ACTIVE_SURFS,fp);
-    fread(gotWave,sizeof(int),ACTIVE_SURFS*9,fp);
-    fclose(fp);
+
+}
+
+void AnitaHeaderHandler::newFile(AnitaTelemFileType::AnitaTelemFileType_t fileType) {
+  if(!fReadLastPartialEvent) {
+    char fileName[FILENAME_MAX];
+    sprintf(fileName,"%s/db/currentEvent%s.dat",fAwareDir.c_str(),telemTypeForFile[fileType]);
+    
+    FILE *fp = fopen(fileName,"rb");
+    if(fp) {
+      fread(&curPSBody,sizeof(PedSubbedEventBody_t),1,fp);
+      fread(&startedEvent,sizeof(int),1,fp);
+      fread(&currentEventRun,sizeof(int),1,fp);
+      fread(gotSurf,sizeof(int),ACTIVE_SURFS,fp);
+      fread(gotWave,sizeof(int),ACTIVE_SURFS*9,fp);
+      fclose(fp);
+    }        
   }
 
+  fReadLastPartialEvent=1;
+  fLastFileType=fileType;
 }
 
 
@@ -62,7 +73,7 @@ AnitaHeaderHandler::~AnitaHeaderHandler()
 {
   //RJN Add something here to store curPSBody and gotSurf,gotWave
   char fileName[FILENAME_MAX];
-  sprintf(fileName,"%s/db/currentEvent.dat",fAwareDir.c_str());
+  sprintf(fileName,"%s/db/currentEvent%s.dat",fAwareDir.c_str(),telemTypeForFile[fLastFileType]);
   if(startedEvent) {
     //Need to save the current state of the event
     FILE *fp = fopen(fileName,"wb");
