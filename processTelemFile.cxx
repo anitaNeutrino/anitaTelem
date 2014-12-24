@@ -210,6 +210,7 @@ int main (int argc, char ** argv)
   updateLastFileNumber();
   updateLastNumBytesNumber();
   if(needToSaveRunMap) saveRunNumberMap();
+  delete headHandler;
 }
 
 
