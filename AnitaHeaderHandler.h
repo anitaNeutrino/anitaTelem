@@ -13,7 +13,7 @@
 
 #include "simpleStructs.h"
 #include "plotUtils.h"    
-
+#include "AnitaGenericHeaderHandler.h"
 
 class AnitaHeaderHandler 
 {   
@@ -33,6 +33,7 @@ public:
   void loopMap();
   void loopEventMap();
   
+  void newFile(AnitaTelemFileType::AnitaTelemFileType_t fileType);
 
 private:
   void zeroCounters();
@@ -53,11 +54,15 @@ private:
 
   int fMakeEventDisplaysForAware;
 
+  int fReadLastPartialEvent;
+
   int startedEvent;
   int currentEventRun;
 
   int gotSurf[ACTIVE_SURFS];
   int gotWave[ACTIVE_SURFS][9];
+
+  AnitaTelemFileType::AnitaTelemFileType_t fLastFileType;
 
   AnitaEventBody_t curBody; //Only needed as temp variable
   PedSubbedEventBody_t curPSBody; //What we actually plot with

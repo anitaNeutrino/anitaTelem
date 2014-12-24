@@ -277,6 +277,7 @@ int processHighRateTDRSSFile(char *filename) {
     //    int retVal2=
     stat(filename,&buf);
     ghdHandler->newFile(AnitaTelemFileType::kAnitaTelemTdrss,thisRunNumber,thisFileNumber,buf.st_mtime);
+    headHandler->newFile(AnitaTelemFileType::kAnitaTelemTdrss);
 
     static int triedThisOne=0;
     numBytes=fread(bigBuffer,1,BIG_BUF_SIZE,tdrssFile);
@@ -758,6 +759,7 @@ int processLOSFile(char *filename) {
     
   stat(filename,&buf);
   ghdHandler->newFile(AnitaTelemFileType::kAnitaTelemLos,thisRunNumber,thisFileNumber,buf.st_mtime);
+  headHandler->newFile(AnitaTelemFileType::kAnitaTelemLos);
   printf("Read %d bytes from %s\n",numBytes,filename);
   fclose(losFile);
   int count3=0;
@@ -901,6 +903,7 @@ int processOpenportFile(char *filename) {
   stat(filename,&buf);
 
   ghdHandler->newFile(AnitaTelemFileType::kAnitaTelemOpenport,thisRunNumber,thisFileNumber,buf.st_mtime);
+  headHandler->newFile(AnitaTelemFileType::kAnitaTelemOpenport);
   printf("Read %d bytes from %s\n",numBytes,filename);
   fclose(openportFile);
   int count3=0;
