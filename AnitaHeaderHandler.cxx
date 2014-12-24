@@ -9,6 +9,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <cstring>
 #include <utime.h>
 #include <sys/stat.h>
 #include "TTree.h"
@@ -60,6 +61,7 @@ void AnitaHeaderHandler::newFile(AnitaTelemFileType::AnitaTelemFileType_t fileTy
       fread(&currentEventRun,sizeof(int),1,fp);
       fread(gotSurf,sizeof(int),ACTIVE_SURFS,fp);
       fread(gotWave,sizeof(int),ACTIVE_SURFS*9,fp);
+      fread(&curEventHeader,sizeof(AnitaEventHeader_t),1,fp);
       fclose(fp);
       for(int surf=0;surf<ACTIVE_SURFS;surf++) {
 	std::cout << gotSurf[surf]  << " ";
@@ -91,6 +93,7 @@ AnitaHeaderHandler::~AnitaHeaderHandler()
       fwrite(&currentEventRun,sizeof(int),1,fp);
       fwrite(gotSurf,sizeof(int),ACTIVE_SURFS,fp);
       fwrite(gotWave,sizeof(int),ACTIVE_SURFS*9,fp);
+      fwrite(&curEventHeader,sizeof(AnitaEventHeader_t),1,fp);
       fclose(fp);
     }
     else unlink(fileName);
@@ -196,19 +199,24 @@ void AnitaHeaderHandler::loopEventMap()
       PedSubbedEventBody_t *bdPtr=&(it->second);
       AnitaEventHeader_t *hdPtr=NULL;
       //      std::cout << bdPtr->unixTime << "\t" << bdPtr->eventNumber << "\t" << 100*(bdPtr->eventNumber/100) << "\n";    
-      std::map<UInt_t,AnitaEventHeader_t>::iterator headIt;
-      if(headRunIt!=fHeadMap.end()) {
-	headIt=headRunIt->second.find(bdPtr->eventNumber);
-	if(headIt!=headRunIt->second.end()) {
-	  hdPtr=&(headIt->second);
+      if(curEventHeader.eventNumber==bdPtr->eventNumber) {
+	hdPtr=&curEventHeader;
+      } 
+      else {
+	std::map<UInt_t,AnitaEventHeader_t>::iterator headIt;
+	if(headRunIt!=fHeadMap.end()) {
+	  headIt=headRunIt->second.find(bdPtr->eventNumber);
+	  if(headIt!=headRunIt->second.end()) {
+	    hdPtr=&(headIt->second);
+	  }
 	}
-      }
-      
-      if(!hdPtr) {	
-	memset(&tempHeader,0,sizeof(AnitaEventHeader_t));
-	tempHeader.eventNumber=bdPtr->eventNumber;
-	fillGenericHeader(&tempHeader,PACKET_HD,sizeof(AnitaEventHeader_t));
-	hdPtr=&tempHeader;
+	
+	if(!hdPtr) {	
+	  memset(&tempHeader,0,sizeof(AnitaEventHeader_t));
+	  tempHeader.eventNumber=bdPtr->eventNumber;
+	  fillGenericHeader(&tempHeader,PACKET_HD,sizeof(AnitaEventHeader_t));
+	  hdPtr=&tempHeader;
+	}
       }
 
       if(fMakeEventDisplaysForAware)
@@ -357,7 +365,19 @@ void AnitaHeaderHandler::addEncPedSubbedSurfPacket(EncodedPedSubbedSurfPacketHea
     zeroCounters();
     //Do something
     processPedSubbedEncSurfPacket(epssPkt);
-    
+    startedEvent=1;
+    currentEventRun=run;
+    //Find link to current header
+    memset(&curEventHeader,0,sizeof(AnitaEventHeader_t));
+    std::map<UInt_t,std::map<UInt_t, AnitaEventHeader_t> >::iterator headRunIt;
+    headRunIt=fHeadMap.find(run);
+    if(headRunIt!=fHeadMap.end()) {
+      std::map<UInt_t,AnitaEventHeader_t>::iterator headIt;
+      headIt=headRunIt->second.find(curPSBody.eventNumber);
+      if(headIt!=headRunIt->second.end()) {
+	memcpy(&curEventHeader,&(headIt->second),sizeof(AnitaEventHeader_t));
+      }
+    }    
   }
 }
 
@@ -536,13 +556,6 @@ void AnitaHeaderHandler::addCurPSBody()
   // AnitaEventHeader_t *hdPtr=NULL;
   // //std::cout << bdPtr->eventNumber << "\t" << 100*(bdPtr->eventNumber/100) << "\n";    
    
-
-  // if(headRunIt!=fHeadMap.end()) {
-  //   headIt=headRunIt->second.find(curPSBody.eventNumber);
-  //   if(headIt!=headRunIt->second.end()) {
-  //     hdPtr=&(headIt->second);
-  //   }
-  // }
   // //  std::cerr << "Before plotEvent\t" << hdPtr << "\n";;
   // if(fMakeEventDisplaysForAware)
   //   plotEvent(hdPtr,&curPSBody,currentEventRun);
