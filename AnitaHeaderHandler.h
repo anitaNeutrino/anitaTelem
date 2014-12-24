@@ -66,7 +66,7 @@ private:
 
   AnitaEventBody_t curBody; //Only needed as temp variable
   PedSubbedEventBody_t curPSBody; //What we actually plot with
-
+  AnitaEventHeader_t curEventHeader; //
 
 
 };

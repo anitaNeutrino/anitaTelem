@@ -50,17 +50,22 @@ AnitaHeaderHandler::AnitaHeaderHandler(std::string rawDir,std::string awareDir,i
 void AnitaHeaderHandler::newFile(AnitaTelemFileType::AnitaTelemFileType_t fileType) {
   if(!fReadLastPartialEvent) {
     char fileName[FILENAME_MAX];
-    sprintf(fileName,"%s/db/currentEvent%s.dat",fAwareDir.c_str(),telemTypeForFile[fileType]);
+    sprintf(fileName,"%s/ANITA3/db/currentEvent%s.dat",fAwareDir.c_str(),telemTypeForFile[fileType]);
     
     FILE *fp = fopen(fileName,"rb");
     if(fp) {
+      std::cout << "Reading from : " << fileName << "\n";
       fread(&curPSBody,sizeof(PedSubbedEventBody_t),1,fp);
       fread(&startedEvent,sizeof(int),1,fp);
       fread(&currentEventRun,sizeof(int),1,fp);
       fread(gotSurf,sizeof(int),ACTIVE_SURFS,fp);
       fread(gotWave,sizeof(int),ACTIVE_SURFS*9,fp);
       fclose(fp);
+      for(int surf=0;surf<ACTIVE_SURFS;surf++) {
+	std::cout << gotSurf[surf]  << " ";
+      }
     }        
+    std::cout << "\n";
   }
 
   fReadLastPartialEvent=1;
@@ -71,10 +76,13 @@ void AnitaHeaderHandler::newFile(AnitaTelemFileType::AnitaTelemFileType_t fileTy
 
 AnitaHeaderHandler::~AnitaHeaderHandler()
 {
+  std::cout << "AnitaHeaderHandler::~AnitaHeaderHandler() " << startedEvent << "\n";
   //RJN Add something here to store curPSBody and gotSurf,gotWave
   char fileName[FILENAME_MAX];
-  sprintf(fileName,"%s/db/currentEvent%s.dat",fAwareDir.c_str(),telemTypeForFile[fLastFileType]);
+  sprintf(fileName,"%s/ANITA3/db/currentEvent%s.dat",fAwareDir.c_str(),telemTypeForFile[fLastFileType]);
+  
   if(startedEvent) {
+    std::cout << fileName << "\n";
     //Need to save the current state of the event
     FILE *fp = fopen(fileName,"wb");
     if(fp) {
@@ -349,6 +357,7 @@ void AnitaHeaderHandler::addEncPedSubbedSurfPacket(EncodedPedSubbedSurfPacketHea
     zeroCounters();
     //Do something
     processPedSubbedEncSurfPacket(epssPkt);
+    
   }
 }
 
