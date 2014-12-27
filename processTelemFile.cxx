@@ -424,7 +424,7 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 
 	      hdPtr= (AnitaEventHeader_t*)testGHdr;
 	      run=getRunNumberFromTime(hdPtr->unixTime);
-	      //	      cout << "Got Header\t" << run << "\t" << hdPtr->eventNumber << "\n";
+	      cout << "Got Header\t" << run << "\t" << hdPtr->eventNumber << "\t" << hdPtr->unixTime << "\n";
 	      headHandler->addHeader(hdPtr,run);
 	      lastHeaderRunNumber=run;
 	      lastHeaderEventNumber=hdPtr->eventNumber;

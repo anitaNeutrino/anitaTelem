@@ -144,6 +144,10 @@ void AnitaHkHandler::loopSSMap()
 
 	sprintf(fileName,"%s/run%d/house/hk/raw/sub_%d/sub_%d/",fRawDir.c_str(),fRun,hkPtr->unixTime,hkPtr->unixTime);       
 	gSystem->mkdir(fileName,kTRUE);
+
+	sprintf(fileName,"%s/run%d/house/hk/last",fRawDir.c_str(),fRun);
+	AwareRunDatabase::touchFile(fileName);
+
 	sprintf(fileName,"%s/run%d/house/hk/raw/sub_%d/sub_%d/sshk_raw_%d.dat.gz",fRawDir.c_str(),fRun,hkPtr->unixTime,hkPtr->unixTime,hkPtr->unixTime);
 	std::cout << fileName << "\n";
 	outFile=fopen(fileName,"ab");
