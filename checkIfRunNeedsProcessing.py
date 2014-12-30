@@ -321,7 +321,11 @@ def main():
         sys.stdout.flush()
         subprocess.call([processCommand],shell=True)
         processCommand=anitaAwareFilemakerDir+"/makeSlowRateHkJsonFiles"
-        print "--> [2 of 2] - running ",processCommand
+        print "--> [2 of 3] - running ",processCommand
+        sys.stdout.flush()
+        subprocess.call([processCommand,getRootFilename(runNum,"slowFile")])
+        processCommand=anitaAwareFilemakerDir+"/addRunToMapFile"
+        print "--> [3 of 3] - running ",processCommand
         sys.stdout.flush()
         subprocess.call([processCommand,getRootFilename(runNum,"slowFile")])
 
