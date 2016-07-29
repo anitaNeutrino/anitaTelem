@@ -47,8 +47,8 @@ while [ 1 ]; do
 
     for run in `cat $RUN_LIST2`;
     do
-	$ANITA_TELEM_DIR/checkIfRunNeedsProcessing.py $run > $AWARE_OUTPUT_DIR/ANITA3/log/rootAndJson.log 2>&1
-	if  test `cat $AWARE_OUTPUT_DIR/ANITA3/log/rootAndJson.log | wc -l` -gt 10 ; then
+	$ANITA_TELEM_DIR/checkIfRunNeedsProcessing.py $run > $AWARE_OUTPUT_DIR/ANITA4/log/rootAndJson.log 2>&1
+	if  test `cat $AWARE_OUTPUT_DIR/ANITA4/log/rootAndJson.log | wc -l` -gt 10 ; then
 	    echo "Processed run $run -- COUNT $COUNT"
 	    let COUNT=COUNT+1 
 	    if [ $COUNT -gt 4 ]; then

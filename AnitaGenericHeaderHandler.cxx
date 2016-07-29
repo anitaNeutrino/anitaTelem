@@ -51,14 +51,14 @@ void AnitaGenericHeaderHandler::writeFileSummary()
 
   const char *telemTypeForFile[3]={"Los","Tdrss","Openport"};
   char outputDir[FILENAME_MAX];
-  sprintf(outputDir,"%s/ANITA3/ghd",fAwareDir.c_str());
+  sprintf(outputDir,"%s/ANITA4/ghd",fAwareDir.c_str());
   gSystem->mkdir(outputDir,kTRUE);
 
   char fileTypeName[20];
   sprintf(fileTypeName,telemTypeForFile[fFileType]);
 
   char touchName[FILENAME_MAX];
-  sprintf(touchName,"%s/ANITA3/last%s",fAwareDir.c_str(),fileTypeName);
+  sprintf(touchName,"%s/ANITA4/last%s",fAwareDir.c_str(),fileTypeName);
   AwareRunDatabase::updateTouchFile(touchName,fCurrentFile,fCurrentFileTime);
 
   unsigned int fakeRun=(fCurrentRun*1000000) + fCurrentFile;

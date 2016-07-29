@@ -122,7 +122,7 @@ int main (int argc, char ** argv)
     std::cout << "AWARE_OUTPUT_DIR not set using default\n";
     awareOutputDir=(char*)"/anitaStorage/antarctica14/telem/aware/output";
   }
-  sprintf(awareDbDir,"%s/ANITA3/db",awareOutputDir);
+  sprintf(awareDbDir,"%s/ANITA4/db",awareOutputDir);
   gSystem->mkdir(awareDbDir);
  
   for(int i=AnitaTelemFileType::kAnitaTelemLos;i<AnitaTelemFileType::kNotATelemType;i++) {
@@ -137,7 +137,7 @@ int main (int argc, char ** argv)
   //  double val=gRandom->Rndm();
   int plotEvents=0;
   //  if(val>0.3) plotEvents=1;
-  plotEvents=1;
+  //  plotEvents=1;
   if(plotEvents) std::cout << "Plotting events\n";
   else std::cout << "Not plotting events\n";
 
@@ -609,7 +609,7 @@ void updateLastRunNumber() {
     std::cout << "updateRunNumber\t" << telemTypeForFile[telemType] << "\t" << lastRunNumber[telemType] << "\n";
     
     char fileName[FILENAME_MAX];
-    sprintf(fileName,"%s/ANITA3/db/last%sRun",awareOutputDir,telemTypeForFile[telemType]);
+    sprintf(fileName,"%s/ANITA4/db/last%sRun",awareOutputDir,telemTypeForFile[telemType]);
     std::ofstream RunFile(fileName);
     if(RunFile) {
       RunFile << lastRunNumber[telemType] << "\n";
@@ -622,7 +622,7 @@ void updateLastFileNumber() {
   for(int telemType=AnitaTelemFileType::kAnitaTelemLos;telemType<AnitaTelemFileType::kNotATelemType;telemType++) {
     std::cout << "updateLastFileNumber\t" << telemTypeForFile[telemType] << "\t" << lastFileNumber[telemType] << "\n";
     char fileName[FILENAME_MAX];
-    sprintf(fileName,"%s/ANITA3/db/last%sFile",awareOutputDir,telemTypeForFile[telemType]);
+    sprintf(fileName,"%s/ANITA4/db/last%sFile",awareOutputDir,telemTypeForFile[telemType]);
     std::ofstream FileFile(fileName);
     if(FileFile) {
       FileFile << lastFileNumber[telemType] << "\n";
@@ -636,7 +636,7 @@ void updateLastNumBytesNumber() {
   for(int telemType=AnitaTelemFileType::kAnitaTelemLos;telemType<AnitaTelemFileType::kNotATelemType;telemType++) {
     std::cout << "updateLastNumBytesNumber\t" << telemTypeForFile[telemType] << "\t" <<  lastNumBytesNumber[telemType] << "\n";
     char fileName[FILENAME_MAX];
-    sprintf(fileName,"%s/ANITA3/db/last%sNumBytes",awareOutputDir,telemTypeForFile[telemType]);
+    sprintf(fileName,"%s/ANITA4/db/last%sNumBytes",awareOutputDir,telemTypeForFile[telemType]);
     std::ofstream NumBytesNumBytes(fileName);
     if(NumBytesNumBytes) {
       NumBytesNumBytes << lastNumBytesNumber[telemType] << "\n";
@@ -647,7 +647,7 @@ void updateLastNumBytesNumber() {
 
 int getLastRunNumber(AnitaTelemFileType::AnitaTelemFileType_t telemType)  {
   char fileName[FILENAME_MAX];
-  sprintf(fileName,"%s/ANITA3/db/last%sRun",awareOutputDir,telemTypeForFile[telemType]);
+  sprintf(fileName,"%s/ANITA4/db/last%sRun",awareOutputDir,telemTypeForFile[telemType]);
   std::ifstream RunFile(fileName);
   if(RunFile) {
     RunFile >> lastRunNumber[telemType];
@@ -659,7 +659,7 @@ int getLastRunNumber(AnitaTelemFileType::AnitaTelemFileType_t telemType)  {
 
 int getLastNumBytesNumber(AnitaTelemFileType::AnitaTelemFileType_t telemType)  {
   char fileName[FILENAME_MAX];
-  sprintf(fileName,"%s/ANITA3/db/last%sNumBytes",awareOutputDir,telemTypeForFile[telemType]);
+  sprintf(fileName,"%s/ANITA4/db/last%sNumBytes",awareOutputDir,telemTypeForFile[telemType]);
   std::ifstream RunFile(fileName);
   if(RunFile) {
     RunFile >> lastNumBytesNumber[telemType];
@@ -671,7 +671,7 @@ int getLastNumBytesNumber(AnitaTelemFileType::AnitaTelemFileType_t telemType)  {
 
 int getLastFileNumber(AnitaTelemFileType::AnitaTelemFileType_t telemType)  {
   char fileName[FILENAME_MAX];
-  sprintf(fileName,"%s/ANITA3/db/last%sFile",awareOutputDir,telemTypeForFile[telemType]);
+  sprintf(fileName,"%s/ANITA4/db/last%sFile",awareOutputDir,telemTypeForFile[telemType]);
   std::cout << fileName << "\n";
   std::ifstream LastFile(fileName);
   if(LastFile) {
@@ -992,7 +992,7 @@ void loadRunNumberMap()
   UInt_t unixTime;
   UInt_t eventNumber;
   char fileName[FILENAME_MAX];
-  sprintf(fileName,"%s/ANITA3/db/runNumberMap",awareOutputDir);
+  sprintf(fileName,"%s/ANITA4/db/runNumberMap",awareOutputDir);
   std::ifstream RunFile(fileName);
   if(RunFile) { 
     while(RunFile >> runNumber >> unixTime >> eventNumber) {
@@ -1008,7 +1008,7 @@ void loadRunNumberMap()
 void saveRunNumberMap()
 {
   char fileName[FILENAME_MAX];
-  sprintf(fileName,"%s/ANITA3/db/runNumberMap",awareOutputDir);
+  sprintf(fileName,"%s/ANITA4/db/runNumberMap",awareOutputDir);
   std::ofstream RunFile(fileName);
 
   if(RunFile) {

@@ -50,7 +50,7 @@ class EventHandler(pyinotify.ProcessEvent):
         # # print out the message and the name of the file in question
         print "Moved file detected:", event.pathname, " launching telem...."
         sys.stdout.flush()
-        processLogFile=open(awareOutputDir+"/ANITA3/log/processTelem.log","w")
+        processLogFile=open(awareOutputDir+"/ANITA4/log/processTelem.log","w")
 
         print ["processTelemFile.sh",event.pathname]
         sys.stdout.flush()
@@ -72,7 +72,7 @@ class EventHandler(pyinotify.ProcessEvent):
             else :
                print "New file detected:", event.pathname, " launching telem...."
                sys.stdout.flush()
-               processLogFile=open(awareOutputDir+"/ANITA3/log/processTelem.log","w")
+               processLogFile=open(awareOutputDir+"/ANITA4/log/processTelem.log","w")
                print ["processTelemFile.sh",event.pathname]
                sys.stdout.flush()
                subprocess.call([processTelemCommand,event.pathname],stdout=processLogFile,stderr=processLogFile)

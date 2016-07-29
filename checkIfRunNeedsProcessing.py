@@ -62,7 +62,7 @@ def main():
     if not doesRootDirExist(runNum):
         print "Root dir does not exist for run ",runNum," <- generating root files"
         sys.stdout.flush()
-        processCommand=anitaTreeMakerDir+"/runAnitaIIIFileMakerTelem.sh "+str(runNum)
+        processCommand=anitaTreeMakerDir+"/runAnita4FileMakerTelem.sh "+str(runNum)
         print "--> [1 of 2] - running ",processCommand
         sys.stdout.flush()
         subprocess.call([processCommand],shell=True)
@@ -101,7 +101,7 @@ def main():
         processCommand=anitaAwareFilemakerDir+"/makeWaveformSummaryJsonFiles"
         print "--> [4 of 4] - running ",processCommand
         sys.stdout.flush()
-        subprocess.call([processCommand,getRootFilename(runNum,"eventHeadFile"),getRootFilename(runNum,"eventFile")])
+       # subprocess.call([processCommand,getRootFilename(runNum,"eventHeadFile"),getRootFilename(runNum,"eventFile")])
     else:
         print "event ROOT file for run ",runNum," up-to-date - rawTime = ",rawTime," / rootTime = ",rootTime," <- from check on event/last"
         sys.stdout.flush()

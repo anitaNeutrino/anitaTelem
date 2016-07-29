@@ -38,28 +38,28 @@ AnitaMonitorHandler::~AnitaMonitorHandler()
     
 void AnitaMonitorHandler::addMonitor(MonitorStruct_t *monitorPtr,int run)
 {
-
+  unsigned int  unixTime=(monitorPtr->unixTime);
   std::map<UInt_t,std::map<UInt_t, MonitorStruct_t> >::iterator it=fMonitorMap.find(run);
   if(it!=fMonitorMap.end()) {
-    it->second.insert(std::pair<UInt_t,MonitorStruct_t>(monitorPtr->unixTime,*monitorPtr));
+    it->second.insert(std::pair<UInt_t,MonitorStruct_t>(unixTime,*monitorPtr));
   }
   else {
     std::map<UInt_t, MonitorStruct_t> runMap;
-    runMap.insert(std::pair<UInt_t,MonitorStruct_t>(monitorPtr->unixTime,*monitorPtr));
+    runMap.insert(std::pair<UInt_t,MonitorStruct_t>(unixTime,*monitorPtr));
     fMonitorMap.insert(std::pair<UInt_t,std::map<UInt_t, MonitorStruct_t> >(run,runMap));
   }
 }
 
 void AnitaMonitorHandler::addOtherMonitor(OtherMonitorStruct_t *monitorPtr,int run)
 {
-
+  unsigned int  unixTime=(monitorPtr->unixTime);
   std::map<UInt_t,std::map<UInt_t, OtherMonitorStruct_t> >::iterator it=fOtherMonitorMap.find(run);
   if(it!=fOtherMonitorMap.end()) {
-    it->second.insert(std::pair<UInt_t,OtherMonitorStruct_t>(monitorPtr->unixTime,*monitorPtr));
+    it->second.insert(std::pair<UInt_t,OtherMonitorStruct_t>(unixTime,*monitorPtr));
   }
   else {
     std::map<UInt_t, OtherMonitorStruct_t> runMap;
-    runMap.insert(std::pair<UInt_t,OtherMonitorStruct_t>(monitorPtr->unixTime,*monitorPtr));
+    runMap.insert(std::pair<UInt_t,OtherMonitorStruct_t>(unixTime,*monitorPtr));
     fOtherMonitorMap.insert(std::pair<UInt_t,std::map<UInt_t, OtherMonitorStruct_t> >(run,runMap));
   }
 

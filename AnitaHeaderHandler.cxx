@@ -40,8 +40,8 @@ AnitaHeaderHandler::AnitaHeaderHandler(std::string rawDir,std::string awareDir,i
   :fRawDir(rawDir),fAwareDir(awareDir),fMakeEventDisplaysForAware(makeEventPngsForAware),startedEvent(0)
 {
   zeroCounters();
-  fHeaderTouchFile=fAwareDir+"/ANITA3/lastHeader";
-  fEventTouchFile=fAwareDir+"/ANITA3/lastEvent";
+  fHeaderTouchFile=fAwareDir+"/ANITA4/lastHeader";
+  fEventTouchFile=fAwareDir+"/ANITA4/lastEvent";
   fReadLastPartialEvent=0;
 
   
@@ -51,7 +51,7 @@ AnitaHeaderHandler::AnitaHeaderHandler(std::string rawDir,std::string awareDir,i
 void AnitaHeaderHandler::newFile(AnitaTelemFileType::AnitaTelemFileType_t fileType) {
   if(!fReadLastPartialEvent) {
     char fileName[FILENAME_MAX];
-    sprintf(fileName,"%s/ANITA3/db/currentEvent%s.dat",fAwareDir.c_str(),telemTypeForFile[fileType]);
+    sprintf(fileName,"%s/ANITA4/db/currentEvent%s.dat",fAwareDir.c_str(),telemTypeForFile[fileType]);
     
     FILE *fp = fopen(fileName,"rb");
     if(fp) {
@@ -83,7 +83,7 @@ AnitaHeaderHandler::~AnitaHeaderHandler()
   std::cout << "AnitaHeaderHandler::~AnitaHeaderHandler() " << startedEvent << "\n";
   //RJN Add something here to store curPSBody and gotSurf,gotWave
   char fileName[FILENAME_MAX];
-  sprintf(fileName,"%s/ANITA3/db/currentEvent%s.dat",fAwareDir.c_str(),telemTypeForFile[fLastFileType]);
+  sprintf(fileName,"%s/ANITA4/db/currentEvent%s.dat",fAwareDir.c_str(),telemTypeForFile[fLastFileType]);
   
   if(startedEvent) {
     std::cout << fileName << "\n";
@@ -582,7 +582,7 @@ void AnitaHeaderHandler::plotEvent(AnitaEventHeader_t *hdPtr,PedSubbedEventBody_
   static TPad *fMagicMainPad=NULL;
   static TPad *fMagicEventInfoPad=NULL;
   char eventDir[FILENAME_MAX];
-  sprintf(eventDir,"%s/ANITA3/event",fAwareDir.c_str());
+  sprintf(eventDir,"%s/ANITA4/event",fAwareDir.c_str());
 
   if(hdPtr) {
 
@@ -644,7 +644,7 @@ void AnitaHeaderHandler::plotEvent(AnitaEventHeader_t *hdPtr,PedSubbedEventBody_
     fMagicCanvas->Update();
   } 
   
-  UsefulAnitaEvent *usefulEventPtr = new UsefulAnitaEvent(fTheEvent,WaveCalType::kVTFast);  
+  UsefulAnitaEvent *usefulEventPtr = new UsefulAnitaEvent(fTheEvent,WaveCalType::kDefault);  
   
 
 
@@ -708,7 +708,7 @@ void AnitaHeaderHandler::plotEvent(AnitaEventHeader_t *hdPtr,PedSubbedEventBody_
 	utime(evTouchFile,&ut);
     }
     else {
-      ofstream Touch(evTouchFile);
+      std::ofstream Touch(evTouchFile);
       Touch.close();
       utime(evTouchFile,&ut);
     }
@@ -744,7 +744,7 @@ void AnitaHeaderHandler::plotEvent(AnitaEventHeader_t *hdPtr,PedSubbedEventBody_
 	    utime(evTouchFile,&ut);
 	}
 	else {
-	  ofstream Touch(evTouchFile);
+	  std::ofstream Touch(evTouchFile);
 	  Touch.close();
 	  utime(evTouchFile,&ut);
 	}

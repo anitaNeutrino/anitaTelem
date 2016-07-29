@@ -42,9 +42,9 @@ void AnitaFileHandler::processFile(ZippedFile_t *zfPtr,int run)
   char segmentName[FILENAME_MAX];
   char outputFilename[FILENAME_MAX];
   char awareFilename[FILENAME_MAX];
-  //  sprintf(outputFilename,"%s/ANITA3/log/run%d/archive",fAwareDir.c_str(),run);
+  //  sprintf(outputFilename,"%s/ANITA4/log/run%d/archive",fAwareDir.c_str(),run);
   //  gSystem->mkdir(outputFilename,kTRUE);
-  sprintf(outputFilename,"%s/ANITA3/aux/run%d/archive",fAwareDir.c_str(),run);
+  sprintf(outputFilename,"%s/ANITA4/aux/run%d/archive",fAwareDir.c_str(),run);
   gSystem->mkdir(outputFilename,kTRUE);
   sprintf(outputFilename,"%s/run%d/config",fRawDir.c_str(),run);
   gSystem->mkdir(outputFilename,kTRUE);
@@ -132,7 +132,7 @@ void AnitaFileHandler::processFile(ZippedFile_t *zfPtr,int run)
 int AnitaFileHandler::getAwareName(char *awareName,ZippedFile_t *zfPtr) {
   if(strstr(zfPtr->filename,"config")) {
     //Have a config file
-    sprintf(awareName,"%s/ANITA3/config/%s",fAwareDir.c_str(),zfPtr->filename);
+    sprintf(awareName,"%s/ANITA4/config/%s",fAwareDir.c_str(),zfPtr->filename);
     return 1;
   }
   return 0;   
@@ -151,10 +151,10 @@ void AnitaFileHandler::getOutputName(char *outputFilename,char *linkName,ZippedF
     }
     else {
       //Other file
-      sprintf(outputFilename,"%s/ANITA3/aux/run%d/archive/%s.%u_%u",
+      sprintf(outputFilename,"%s/ANITA4/aux/run%d/archive/%s.%u_%u",
 	      fAwareDir.c_str(),fRun,zfPtr->filename,
 	      zfPtr->unixTime,zfPtr->segmentNumber);
-      sprintf(linkName,"%s/ANITA3/aux/%s",fAwareDir.c_str(),zfPtr->filename);
+      sprintf(linkName,"%s/ANITA4/aux/%s",fAwareDir.c_str(),zfPtr->filename);
     }
   }
   else {
@@ -165,10 +165,10 @@ void AnitaFileHandler::getOutputName(char *outputFilename,char *linkName,ZippedF
 	}
 	else {
 	  //Other file
-	  sprintf(outputFilename,"%s/ANITA3/aux/run%d/archive/%s.%u",
+	  sprintf(outputFilename,"%s/ANITA4/aux/run%d/archive/%s.%u",
 		  fAwareDir.c_str(),fRun,zfPtr->filename,
 		  zfPtr->unixTime);
-	  sprintf(linkName,"%s/ANITA3/aux/%s",fAwareDir.c_str(),zfPtr->filename);
+	  sprintf(linkName,"%s/ANITA4/aux/%s",fAwareDir.c_str(),zfPtr->filename);
 	}
   }
 }

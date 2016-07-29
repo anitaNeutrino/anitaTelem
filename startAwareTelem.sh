@@ -48,6 +48,6 @@ else
 fi
 
 echo "Starting newTelemFileWatcher.py"
-nohup ./newTelemFileWatcher.py > $AWARE_OUTPUT_DIR/ANITA3/log/filewatcher.log 2>&1 < /dev/null &
+nohup ./newTelemFileWatcher.py > $AWARE_OUTPUT_DIR/ANITA4/log/filewatcher.log 2>&1 < /dev/null &
 echo "Starting rootAndJsonFileLoop.sh"
-nohup ./rootAndJsonFileLoop.sh > $AWARE_OUTPUT_DIR/ANITA3/log/rootJson.log 2>&1 < /dev/null &
+nohup ./rootAndJsonFileLoop.sh > $AWARE_OUTPUT_DIR/ANITA4/log/rootJson.log 2>&1 < /dev/null &

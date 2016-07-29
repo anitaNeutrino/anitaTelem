@@ -62,7 +62,7 @@ void AnitaCmdEchoHandler::loopMaps()
      
      int cmdCount=0;
 
-     sprintf(cmdCountFile,"%s/ANITA3/db/cmdCount%s.dat",fAwareDir.c_str(),fromString[payloadFlag]);
+     sprintf(cmdCountFile,"%s/ANITA4/db/cmdCount%s.dat",fAwareDir.c_str(),fromString[payloadFlag]);
      std::ifstream CmdCountFile(cmdCountFile);
      if(CmdCountFile) {
        CmdCountFile >> cmdCount;
@@ -73,7 +73,7 @@ void AnitaCmdEchoHandler::loopMaps()
      if(fCmdEchoMap[payloadFlag].size()>0) {
 
       
-	sprintf(fileName,"%s/ANITA3/cmdEcho/%s",fAwareDir.c_str(),fromString[payloadFlag]);
+	sprintf(fileName,"%s/ANITA4/cmdEcho/%s",fAwareDir.c_str(),fromString[payloadFlag]);
 	gSystem->mkdir(fileName,kTRUE);
  
 		
@@ -82,7 +82,7 @@ void AnitaCmdEchoHandler::loopMaps()
 	   CommandEcho echo(-1,echoPtr->unixTime,echoPtr);
 	  
 	   while(1) {
-	     sprintf(fileName,"%s/ANITA3/cmdEcho/%s/cmdEcho%d.json",fAwareDir.c_str(),fromString[payloadFlag],cmdCount);
+	     sprintf(fileName,"%s/ANITA4/cmdEcho/%s/cmdEcho%d.json",fAwareDir.c_str(),fromString[payloadFlag],cmdCount);
 	     if(gSystem->GetPathInfo(fileName,staty)) {
 	       //File doesn't exist
 	       break;
