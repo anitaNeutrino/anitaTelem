@@ -62,3 +62,24 @@ nohup /home/anita/Code/anitaAwareFileMaker/palestine/copyScripts/streamLOSdata.s
 
 
 
+# Now start Openport Copy Script
+
+if [ -f "/tmp/pidOpenportCopy" ]; then
+    echo "Old Openport Copy PID is " `cat /tmp/pidOpenportCopy`
+    kill `cat /tmp/pidOpenportCopy`
+    sleep 1
+fi
+
+if  test `ps x | grep streamOpenportDataSouth.sh  | wc -l` -gt 1; then
+    echo "streamOpenportDataSouth.sh is running."
+    echo "    You should stop this before trying to start another one"
+    exit 1
+
+else
+    echo "streamOpenportDataSouth.sh is not running."
+fi
+
+nohup /home/anita/Code/anitaAwareFileMaker/palestine/copyScripts/streamOpenportDataSouth.sh > $AWARE_OUTPUT_DIR/ANITA4/log/openportCopy.log 2>&1 < /dev/null &
+
+
+
