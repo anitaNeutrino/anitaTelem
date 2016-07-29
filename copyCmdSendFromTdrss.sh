@@ -1,16 +1,23 @@
 #!/bin/bash
-source /home/radio/anita14/anitaTelem/setupAwareVariablesForTelem.sh
-TDRSS_HOST=tdrss
+source /home/anita/Code/anitaTelem/setupAwareVariablesForTelem.sh
+
+echo "PID = $$"
+echo $$ > /tmp/pidCmdCopy
+
+TDRSS_HOST=tdrss1
 TDRSS_USER=anita
 TDRSS_DIR=/home/anita/cmdSend/jsonLog/
 TDRSS_DEST_DIR=$AWARE_OUTPUT_DIR/ANITA4/cmdSend/palestine
 TDRSS_SRC_DIR=${TDRSS_USER}@${TDRSS_HOST}:${TDRSS_DIR}/*.json
 
-LOS_HOST=192.168.1.6
+LOS_HOST=localhost
 LOS_USER=anita
 LOS_DIR=/home/anita/cmdSend/jsonLog/
 LOS_DEST_DIR=$AWARE_OUTPUT_DIR/ANITA4/cmdSend/los
 LOS_SRC_DIR=${LOS_USER}@${LOS_HOST}:${LOS_DIR}/*.json
+
+mkdir -p ${LOS_DEST_DIR}
+mkdir -p ${TDRSS_DEST_DIR}
 
 
 while [ 1 ]; do

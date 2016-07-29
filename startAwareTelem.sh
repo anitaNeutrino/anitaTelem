@@ -30,6 +30,12 @@ then
    exit 1
 fi
 
+if [ "$AWARE_SITE_SCRIPT" = "" ]
+then
+    echo "AWARE_SITE_SCRIPT must be set to start local copy scripts, or an empty script is necessary"
+    exit 1
+fi
+
 if  test `ps x | grep newTelemFileWatcher.py  | wc -l` -gt 1; then
   echo "newTelemFileWatcher.py is running."
   echo "    You should stop this before trying to start another one"
@@ -51,3 +57,6 @@ echo "Starting newTelemFileWatcher.py"
 nohup ./newTelemFileWatcher.py > $AWARE_OUTPUT_DIR/ANITA4/log/filewatcher.log 2>&1 < /dev/null &
 echo "Starting rootAndJsonFileLoop.sh"
 nohup ./rootAndJsonFileLoop.sh > $AWARE_OUTPUT_DIR/ANITA4/log/rootJson.log 2>&1 < /dev/null &
+
+echo "Starting local script"
+nohup ${AWARE_SITE_SCRIPT} > $AWARE_OUTPUT_DIR/ANITA4/log/siteScript.log 2>&1 < /dev/null &
