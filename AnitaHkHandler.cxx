@@ -36,9 +36,22 @@ AnitaHkHandler::~AnitaHkHandler()
 
 
 }
-    
+
+
+
+void AnitaHkHandler::updateStatusPage(HkDataStruct_t *hkPtr)
+{
+  //Check if packet is newer than what is one the status page
+  // Do HkDataStruct_t-->RawHk-->CalibratedHk
+  // Update status page json
+
+}
+
+
 void AnitaHkHandler::addHk(HkDataStruct_t *hkPtr, int run)
 {
+  updateStatusPage(hkPtr)
+  
   std::map<UInt_t,std::map<UInt_t, HkDataStruct_t> >::iterator it=fHkMap.find(run);
   if(it!=fHkMap.end()) {
     it->second.insert(std::pair<UInt_t,HkDataStruct_t>(hkPtr->unixTime,*hkPtr));

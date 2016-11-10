@@ -27,6 +27,9 @@ public:
     void loopMap();
     void loopSSMap();
 
+    //For Peter's status page
+    void updateStatusPage(HkDataStruct_t *hkPtr);
+    
 
 private:
     std::string fRawDir;
