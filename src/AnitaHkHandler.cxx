@@ -50,7 +50,7 @@ void AnitaHkHandler::updateStatusPage(HkDataStruct_t *hkPtr)
 
 void AnitaHkHandler::addHk(HkDataStruct_t *hkPtr, int run)
 {
-  updateStatusPage(hkPtr)
+  updateStatusPage(hkPtr);
   
   std::map<UInt_t,std::map<UInt_t, HkDataStruct_t> >::iterator it=fHkMap.find(run);
   if(it!=fHkMap.end()) {
