@@ -28,7 +28,7 @@ print "Using ANITA_TELEM_DIR="+anitaTelemDir
 sys.stdout.flush()
 print "Using ANITA_TELEM_DATA_DIR="+anitaTelemDataDir
 sys.stdout.flush()
-processTelemCommand=anitaTelemDir+"/processTelemFile"
+processTelemCommand="processTelemFile"
 print "Telem processing command: "+processTelemCommand
 sys.stdout.flush()
 
