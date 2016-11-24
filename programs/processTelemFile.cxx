@@ -582,7 +582,7 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 
 	    default: 
 	      {
-		fprintf(stderr,"Got packet without a handler (code: %x -- %s)\n",
+		fprintf(stderr,"Got packet without a handler (code: %#x -- %s)\n",
 			testGHdr->code,packetCodeAsString(testGHdr->code));
 		break;
 	      }
