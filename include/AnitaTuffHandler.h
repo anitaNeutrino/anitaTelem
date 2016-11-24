@@ -4,7 +4,7 @@
   ///// Cosmin Deaconu <cozzyd@kicp.uchicago.edu>  Nov 2016   //////
     ///////////////////////////////////////////////////////////////
 
-#ifndef ANITA_TUFF_HANDLER
+#ifndef ANITA_TUFF_HANDLER_H
 #define ANITA_TUFF_HANDLER_H
 
 #include <map>
