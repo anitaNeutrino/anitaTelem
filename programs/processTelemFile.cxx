@@ -28,6 +28,7 @@ using namespace std;
 #include "AnitaFileHandler.h" 
 #include "AnitaGenericHeaderHandler.h" 
 #include "AnitaSlowRateHandler.h"
+#include "AnitaRTLHandler.h" 
 
 // #include "configLib/configLib.h"
 // #include "kvpLib/keyValuePair.h"
@@ -68,6 +69,7 @@ AnitaHeaderHandler *headHandler;
 AnitaMonitorHandler *monHandler;
 AnitaGpuHandler *gpuHandler;
 AnitaTuffHandler *tuffHandler;
+AnitaRTLHandler *rtlHandler;
 AnitaHkHandler *hkHandler;
 AnitaSurfHkHandler *surfhkHandler;
 AnitaTurfRateHandler *turfRateHandler;
@@ -149,6 +151,7 @@ int main (int argc, char ** argv)
   monHandler = new AnitaMonitorHandler(rawDir);
   gpuHandler = new AnitaGpuHandler(rawDir);
   tuffHandler = new AnitaTuffHandler(rawDir);
+  rtlHandler = new AnitaRTLHandler(rawDir);
   surfhkHandler = new AnitaSurfHkHandler(rawDir);
   turfRateHandler = new AnitaTurfRateHandler(rawDir);
   auxHandler = new AnitaAuxiliaryHandler(rawDir);
@@ -202,6 +205,7 @@ int main (int argc, char ** argv)
   monHandler->loopMap();
   monHandler->loopOtherMap();
   gpuHandler->loopMap();
+  rtlHandler->loopMap();
   tuffHandler->loopNotchMap();
   tuffHandler->loopRawCmdMap();
   surfhkHandler->loopMap();
@@ -573,18 +577,21 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	      runStartPtr = (RunStart_t*)testGHdr;
 	      addRunToMap(runStartPtr->runNumber,runStartPtr->eventNumber,runStartPtr->unixTime);
 	      break;
-            case PACKET_TUFF_STATUS:
-	      tuffHandler->addTuffStatus((TuffNotchStatus_t*)testGHdr,getRunNumberFromTime(((TuffNotchStatus_t*)testGHdr)->unixTime));
+      case PACKET_TUFF_STATUS:
+        tuffHandler->addTuffStatus((TuffNotchStatus_t*)testGHdr,getRunNumberFromTime(((TuffNotchStatus_t*)testGHdr)->unixTime));
+        break;
+      case PACKET_TUFF_RAW_CMD:
+        tuffHandler->addRawCommand((TuffRawCmd_t*)testGHdr,getRunNumberFromTime(((TuffRawCmd_t*)testGHdr)->enactedTime));
 	      break;
-            case PACKET_TUFF_RAW_CMD:
-	      tuffHandler->addRawCommand((TuffRawCmd_t*)testGHdr,getRunNumberFromTime(((TuffRawCmd_t*)testGHdr)->enactedTime));
-	      break;
+      case PACKET_RTLSDR_POW_SPEC: 
+        rtlHandler->addRTL((RtlSdrPowerSpectraStruct_t*) testGHdr, getRunNumberFromTime(((RtlSdrPowerSpectraStruct_t*) testGHdr)->scanTime));
+        break;
 
 	    default: 
 	      {
-		fprintf(stderr,"Got packet without a handler (code: %#x -- %s)\n",
-			testGHdr->code,packetCodeAsString(testGHdr->code));
-		break;
+          fprintf(stderr,"Got packet without a handler (code: %#x -- %s)\n",
+          testGHdr->code,packetCodeAsString(testGHdr->code));
+          break;
 	      }
 	    }
 
