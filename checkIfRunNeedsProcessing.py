@@ -101,7 +101,7 @@ def main():
         processCommand="makeWaveformSummaryJsonFiles"
         print "--> [4 of 4] - running ",processCommand
         sys.stdout.flush()
-       # subprocess.call([processCommand,getRootFilename(runNum,"eventHeadFile"),getRootFilename(runNum,"eventFile")])
+        subprocess.call([processCommand,getRootFilename(runNum,"eventHeadFile"),getRootFilename(runNum,"eventFile")])
     else:
         print "event ROOT file for run ",runNum," up-to-date - rawTime = ",rawTime," / rootTime = ",rootTime," <- from check on event/last"
         sys.stdout.flush()
@@ -207,7 +207,7 @@ def main():
         processCommand="makeSumTurfRateJsonFiles"
         print "--> [2 of 2] - running ",processCommand
         sys.stdout.flush()
-        subprocess.call([processCommand,getRootFilename(runNum,"sumTurfRateFile")])
+#        subprocess.call([processCommand,getRootFilename(runNum,"sumTurfRateFile")])
     else:
         print "SummedTurfRate ROOT file for run ",runNum," up-to-date - rawTime = ",rawTime," / rootTime = ",rootTime," <- from check on house/turfhk/last"
         sys.stdout.flush()
@@ -232,7 +232,7 @@ def main():
         processCommand="makeAvgSurfHkJsonFiles"
         print "--> [4 of 4] - running ",processCommand
         sys.stdout.flush()
-        subprocess.call([processCommand,getRootFilename(runNum,"avgSurfHkFile")])
+#        subprocess.call([processCommand,getRootFilename(runNum,"avgSurfHkFile")])
     else:
         print "surf hk ROOT file for run ",runNum," up-to-date - rawTime = ",rawTime," / rootTime = ",rootTime," <- from check on house/surfhk/last"
         sys.stdout.flush()

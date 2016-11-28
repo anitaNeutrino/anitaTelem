@@ -1,5 +1,5 @@
 #!/bin/bash
-source /home/anita/Code/anitaTelem/setupAwareVariablesForTelem.sh
+source /home/anita/Code/anitaTelem/setupAwareVariablesForTelemAntarctica.sh
 
 echo "PID = $$"
 echo $$ > /tmp/pidCmdCopy
@@ -18,6 +18,9 @@ LOS_SRC_DIR=${LOS_USER}@${LOS_HOST}:${LOS_DIR}/*.json
 
 mkdir -p ${LOS_DEST_DIR}
 mkdir -p ${TDRSS_DEST_DIR}
+
+echo "$LOS_SRC_DIR"
+echo "$LOS_DEST_DIR"
 
 
 while [ 1 ]; do

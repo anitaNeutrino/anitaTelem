@@ -20,6 +20,7 @@ using namespace std;
 #include "AnitaGpsHandler.h" 
 #include "AnitaMonitorHandler.h" 
 #include "AnitaGpuHandler.h" 
+#include "AnitaTuffHandler.h" 
 #include "AnitaSurfHkHandler.h" 
 #include "AnitaTurfRateHandler.h"
 #include "AnitaAuxiliaryHandler.h"
@@ -27,6 +28,7 @@ using namespace std;
 #include "AnitaFileHandler.h" 
 #include "AnitaGenericHeaderHandler.h" 
 #include "AnitaSlowRateHandler.h"
+#include "AnitaRTLHandler.h" 
 
 // #include "configLib/configLib.h"
 // #include "kvpLib/keyValuePair.h"
@@ -66,6 +68,8 @@ unsigned short *bigBuffer;
 AnitaHeaderHandler *headHandler;
 AnitaMonitorHandler *monHandler;
 AnitaGpuHandler *gpuHandler;
+AnitaTuffHandler *tuffHandler;
+AnitaRTLHandler *rtlHandler;
 AnitaHkHandler *hkHandler;
 AnitaSurfHkHandler *surfhkHandler;
 AnitaTurfRateHandler *turfRateHandler;
@@ -133,9 +137,10 @@ int main (int argc, char ** argv)
   loadRunNumberMap();
   
 
-  //  gRandom->SetSeed();
-  //  double val=gRandom->Rndm();
+  gRandom->SetSeed();
+  double val=gRandom->Rndm();
   int plotEvents=0;
+
   //  if(val>0.3) plotEvents=1;
     plotEvents=1;
   if(plotEvents) std::cout << "Plotting events\n";
@@ -146,6 +151,8 @@ int main (int argc, char ** argv)
   gpsHandler = new AnitaGpsHandler(rawDir);
   monHandler = new AnitaMonitorHandler(rawDir);
   gpuHandler = new AnitaGpuHandler(rawDir);
+  tuffHandler = new AnitaTuffHandler(rawDir);
+  rtlHandler = new AnitaRTLHandler(rawDir);
   surfhkHandler = new AnitaSurfHkHandler(rawDir);
   turfRateHandler = new AnitaTurfRateHandler(rawDir);
   auxHandler = new AnitaAuxiliaryHandler(rawDir);
@@ -199,6 +206,9 @@ int main (int argc, char ** argv)
   monHandler->loopMap();
   monHandler->loopOtherMap();
   gpuHandler->loopMap();
+  rtlHandler->loopMap();
+  tuffHandler->loopNotchMap();
+  tuffHandler->loopRawCmdMap();
   surfhkHandler->loopMap();
   surfhkHandler->loopAvgMap();
   turfRateHandler->loopMap();
@@ -568,12 +578,21 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	      runStartPtr = (RunStart_t*)testGHdr;
 	      addRunToMap(runStartPtr->runNumber,runStartPtr->eventNumber,runStartPtr->unixTime);
 	      break;
-	      
+      case PACKET_TUFF_STATUS:
+        tuffHandler->addTuffStatus((TuffNotchStatus_t*)testGHdr,getRunNumberFromTime(((TuffNotchStatus_t*)testGHdr)->unixTime));
+        break;
+      case PACKET_TUFF_RAW_CMD:
+        tuffHandler->addRawCommand((TuffRawCmd_t*)testGHdr,getRunNumberFromTime(((TuffRawCmd_t*)testGHdr)->enactedTime));
+	      break;
+      case PACKET_RTLSDR_POW_SPEC: 
+        rtlHandler->addRTL((RtlSdrPowerSpectraStruct_t*) testGHdr, getRunNumberFromTime(((RtlSdrPowerSpectraStruct_t*) testGHdr)->scanTime));
+        break;
+
 	    default: 
 	      {
-		fprintf(stderr,"Got packet without a handler (code: %x -- %s)\n",
-			testGHdr->code,packetCodeAsString(testGHdr->code));
-		break;
+          fprintf(stderr,"Got packet without a handler (code: %#x -- %s)\n",
+          testGHdr->code,packetCodeAsString(testGHdr->code));
+          break;
 	      }
 	    }
 

@@ -61,6 +61,25 @@ fi
 nohup /home/anita/Code/anitaAwareFileMaker/antarctica/copyScripts/streamLOSdata.sh > $AWARE_OUTPUT_DIR/ANITA4/log/losCopy.log 2>&1 < /dev/null &
 
 
+# Now start LOS Cmd Copy Script
+if [ -f "/tmp/pidStreamCmdNorth" ]; then
+    echo "Old LOS Copy PID is " `cat /tmp/pidStreamCmdNorth`
+    kill `cat /tmp/pidStreamCmdNorth`
+    sleep 1
+fi
+
+if  test `ps x | grep streamLosCmdsNorth.sh  | wc -l` -gt 1; then
+    echo "streamLosCmdsNorth.sh is running."
+    echo "    You should stop this before trying to start another one"
+    exit 1
+
+else
+    echo "streamLosCmdsNorth.sh is not running."
+fi
+
+nohup /home/anita/Code/anitaAwareFileMaker/antarctica/copyScripts/streamLosCmdsNorth.sh > $AWARE_OUTPUT_DIR/ANITA4/log/losCmdsCopy.log 2>&1 < /dev/null &
+
+
 
 # Now start Openport Copy Script
 
