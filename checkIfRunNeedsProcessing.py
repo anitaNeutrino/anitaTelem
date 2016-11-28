@@ -207,7 +207,7 @@ def main():
         processCommand="makeSumTurfRateJsonFiles"
         print "--> [2 of 2] - running ",processCommand
         sys.stdout.flush()
-#        subprocess.call([processCommand,getRootFilename(runNum,"sumTurfRateFile")])
+        subprocess.call([processCommand,getRootFilename(runNum,"sumTurfRateFile")])
     else:
         print "SummedTurfRate ROOT file for run ",runNum," up-to-date - rawTime = ",rawTime," / rootTime = ",rootTime," <- from check on house/turfhk/last"
         sys.stdout.flush()

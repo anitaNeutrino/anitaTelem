@@ -8,6 +8,7 @@
 #include "AnitaGenericHeaderHandler.h"
 
 #include <iostream>
+#include <fstream>
 #include "TTree.h"
 #include "TFile.h"
 #include "TH1.h"
@@ -54,6 +55,18 @@ void AnitaGenericHeaderHandler::writeFileSummary()
   sprintf(outputDir,"%s/ANITA4/ghd",fAwareDir.c_str());
   gSystem->mkdir(outputDir,kTRUE);
 
+  unsigned long totalBytes=0;
+  char totalBytesFile[FILENAME_MAX];
+  sprintf(totalBytesFile,"%s/ANITA4/ghd/total%s",fAwareDir.c_str(),telemTypeForFile[fFileType]);
+  
+  std::ifstream ByteFile(totalBytesFile);
+  if(ByteFile) {
+    ByteFile >> totalBytes;
+    ByteFile.close();
+  }
+
+
+  
   char fileTypeName[20];
   sprintf(fileTypeName,telemTypeForFile[fFileType]);
 
@@ -99,6 +112,13 @@ void AnitaGenericHeaderHandler::writeFileSummary()
   sprintf(elementName,"numFileEventBytes");
   sprintf(elementLabel,"Event Bytes");
   summaryFile.addVariablePoint(elementName,elementLabel,fCurrentFileTime,numFileEventBytes);
+
+  totalBytes+=numFileBytes;
+  sprintf(elementName,"totalBytes");
+  sprintf(elementLabel,"Total Bytes");
+  summaryFile.addVariablePoint(elementName,elementLabel,fCurrentFileTime,totalBytes);
+  
+
   
   for(int bin=1;bin<=histPacket.GetNbinsX();bin++) {
     int logicCode=(int)histPacket.GetBinCenter(bin);
@@ -135,7 +155,12 @@ void AnitaGenericHeaderHandler::writeFileSummary()
   sprintf(outName,"%s/ghdTime.json.gz",dirName);
   summaryFile.writeTimeJSONFile(outName);
 
-
+  std::ofstream ByteFileOut(totalBytesFile);
+  if(ByteFileOut) {
+    ByteFileOut << totalBytes << "\n";
+    ByteFileOut.close();
+  }
+  
 
 
 
