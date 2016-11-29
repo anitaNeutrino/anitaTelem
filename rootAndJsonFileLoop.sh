@@ -30,6 +30,8 @@ then
    exit 1
 fi
 
+mkdir -p $AWARE_OUTPUT_DIR/ANITA4/log
+
 while [ 1 ]; do
     
     COUNT=0
