@@ -10,7 +10,6 @@ import subprocess
 
 anitaTelemDir = os.getenv('ANITA_TELEM_DIR', "/home/radio/anita14/anitaTelem")
 anitaTelemDataDir = os.getenv('ANITA_TELEM_DATA_DIR', "/anitaStorage2/antarctica14/telem")
-anitaAwareFilemakerDir= os.getenv("ANITA_AWARE_FILEMAKER_DIR","/home/radio/anita14/anitaAwareFileMaker")
 
 site="antarctica"
 
@@ -65,7 +64,7 @@ def main():
         print "--> [1 of 2] - running ",processCommand
         sys.stdout.flush()
         subprocess.call([processCommand],shell=True)
-        processCommand=anitaAwareFilemakerDir+"/"+site+"/processRunTelem.sh "+str(runNum)
+        processCommand="processRunTelem.sh "+str(runNum)
         print "--> [1 of 2] - running ",processCommand
         sys.stdout.flush()
         subprocess.call([processCommand],shell=True)
@@ -330,7 +329,7 @@ def main():
 
     if(1):
         print "Reprocess config file"
-        processCommand=anitaAwareFilemakerDir+"/"+site+"/processConfigTelem.sh"
+        processCommand="processConfigTelem.sh"
         print "--> [1 of 1] - running ",processCommand
         subprocess.call([processCommand,str(runNum)])
         sys.stdout.flush()

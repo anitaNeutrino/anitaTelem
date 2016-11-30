@@ -90,7 +90,7 @@ def main():
     notifier = pyinotify.Notifier(wm, handler)
     # Internally, 'handler' is a callable object which on new events will be called like this: handler(new_event)
  
-    losDir=anitaTelemDataDir+"raw_los/"
+    losDir=anitaTelemDataDir+"los/"
     tdrssDir=anitaTelemDataDir+"fast_tdrss/"
     openportDir=anitaTelemDataDir+"openport/"
     slowTdrssDir=anitaTelemDataDir+"slow_tdrss/"

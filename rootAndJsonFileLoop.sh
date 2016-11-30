@@ -24,12 +24,6 @@ then
    exit 1
 fi
 
-if [ "$ANITA_AWARE_FILEMAKER_DIR" = "" ]
-then
-   echo "ANITA_AWARE_FILEMAKER_DIR must be set to where the anitaAwareFileMaker code is"
-   exit 1
-fi
-
 mkdir -p $AWARE_OUTPUT_DIR/ANITA4/log
 
 while [ 1 ]; do
