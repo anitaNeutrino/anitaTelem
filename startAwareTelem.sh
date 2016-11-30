@@ -18,11 +18,13 @@ then
    exit 1
 fi
 
+
 if [ "$ANITA_BIN_DIR" = "" ]
 then
    echo "ANITA_BIN_DIR must be set to where the ANITA binaries are"
    exit 1
 fi
+
 
 if [ "$AWARE_SITE_SCRIPT" = "" ]
 then
@@ -47,8 +49,11 @@ else
   echo "rootandJsonFileLoop.sh is not running."
 fi
 
+mkdir -p $AWARE_OUTPUT_DIR/ANITA4/log/
+
 
 PATH=${ANITA_BIN_DIR}:${PATH}
+
 
 
 echo "Starting newTelemFileWatcher.py"
