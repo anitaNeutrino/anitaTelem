@@ -7,7 +7,7 @@ export AWARE_BASE_DIR=/home/anita/Code/awareTelem
 #/home/anita/Code/anitaAwareFileMaker/
 export ANITA_TELEM_DIR=/home/anita/Code/anitaTelem
 #export ANITA_TREE_MAKER_DIR=/usr/local/anita/bin/
-
+export ANITA_BIN_DIR=${ANITA_UTIL_INSTALL_DIR}/bin
 
 export AWARE_OUTPUT_DIR=/data/flight1617/aware/output/
 export ANITA_TELEM_DATA_DIR=/data/flight1617/telem/
