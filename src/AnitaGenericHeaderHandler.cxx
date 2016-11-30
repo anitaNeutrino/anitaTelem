@@ -132,7 +132,7 @@ void AnitaGenericHeaderHandler::writeFileSummary()
 
 
   float rate=0;
-  if(lastModTime>0 && (lastModTimeRun<fCurrentRun || lastModTimeFile<fCurrentRun)) {
+  if(lastModTime>0 && (lastModTimeRun<fCurrentRun || lastModTimeFile<fCurrentFile)) {
     //Can calculate rate
     rate=(numFileBytes*8./1024)/(fCurrentFileTime-lastModTime);
   }
