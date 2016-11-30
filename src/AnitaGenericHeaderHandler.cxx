@@ -134,7 +134,7 @@ void AnitaGenericHeaderHandler::writeFileSummary()
   float rate=0;
   if(lastModTime>0 && (lastModTimeRun<fCurrentRun || lastModTimeFile<fCurrentRun)) {
     //Can calculate rate
-    rate=(numFileBytes*8/1024)/(fCurrentFileTime-lastModTime);
+    rate=(numFileBytes*8./1024)/(fCurrentFileTime-lastModTime);
   }
   sprintf(elementName,"fileRate");
   sprintf(elementLabel,"Rate (kbps)");
