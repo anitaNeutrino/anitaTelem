@@ -184,7 +184,7 @@ void AnitaGenericHeaderHandler::writeFileSummary()
 
   std::ofstream LastModFileOut(lastModTimeFilename);
   if(LastModFileOut) {
-    LastModFileOut << fCurrentFileTime << "\t" << fCurrentRun << "\t" << fCurrentFileTime << "\n";
+    LastModFileOut << fCurrentFileTime << "\t" << fCurrentRun << "\t" << fCurrentFile << "\n";
     LastModFileOut.close();
   }
     
