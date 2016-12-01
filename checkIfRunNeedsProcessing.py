@@ -186,7 +186,7 @@ def main():
         processCommand="makeTuffStatusJsonFiles"
         print "--> [2 of 2] - running ",processCommand
         sys.stdout.flush()
-#RJN hack        subprocess.call([processCommand,getRootFilename(runNum,"tuffFile")])
+        subprocess.call([processCommand,getRootFilename(runNum,"tuffStatusFile")])
     else:
         print "tuff ROOT file for run ",runNum," up-to-date - rawTime = ",rawTime," / rootTime = ",rootTime," <- from check on house/tuff/last"
         sys.stdout.flush()
