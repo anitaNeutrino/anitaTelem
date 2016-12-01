@@ -18,17 +18,13 @@ then
    exit 1
 fi
 
-if [ "$ANITA_TREE_MAKER_DIR" = "" ]
+if [ "$ANITA_BIN_DIR" = "" ]
 then
-   echo "ANITA_TREE_MAKER_DIR must be set to where the simpleTreeMaker code is"
+   echo "ANITA_BIN_DIR must be set to where the ANITA binaries are"
    exit 1
 fi
 
-if [ "$ANITA_AWARE_FILEMAKER_DIR" = "" ]
-then
-   echo "ANITA_AWARE_FILEMAKER_DIR must be set to where the anitaAwareFileMaker code is"
-   exit 1
-fi
+mkdir -p $AWARE_OUTPUT_DIR/ANITA4/log
 
 while [ 1 ]; do
     

@@ -8,6 +8,7 @@
 #include "AnitaGenericHeaderHandler.h"
 
 #include <iostream>
+#include <fstream>
 #include "TTree.h"
 #include "TFile.h"
 #include "TH1.h"
@@ -53,9 +54,33 @@ void AnitaGenericHeaderHandler::writeFileSummary()
   char outputDir[FILENAME_MAX];
   sprintf(outputDir,"%s/ANITA4/ghd",fAwareDir.c_str());
   gSystem->mkdir(outputDir,kTRUE);
+  
+  unsigned long totalBytes=0;
+  char totalBytesFile[FILENAME_MAX];
+  sprintf(totalBytesFile,"%s/ANITA4/ghd/total%s",fAwareDir.c_str(),telemTypeForFile[fFileType]);
+  
+  std::ifstream ByteFile(totalBytesFile);
+  if(ByteFile) {
+    ByteFile >> totalBytes;
+    ByteFile.close();
+  }
 
+  unsigned long lastModTime=0;
+  unsigned long lastModTimeRun=0;
+  unsigned long lastModTimeFile=0;
+  char lastModTimeFilename[FILENAME_MAX];
+  sprintf(lastModTimeFilename,"%s/ANITA4/ghd/lastModTime%s",fAwareDir.c_str(),telemTypeForFile[fFileType]);
+  
+  std::ifstream ModFile(lastModTimeFilename);
+  if(ModFile) {
+    ModFile >> lastModTime >> lastModTimeRun >> lastModTimeFile;
+    ModFile.close();
+  }
+
+
+  
   char fileTypeName[20];
-  sprintf(fileTypeName,telemTypeForFile[fFileType]);
+  sprintf(fileTypeName,"%s",telemTypeForFile[fFileType]);
 
   char touchName[FILENAME_MAX];
   sprintf(touchName,"%s/ANITA4/last%s",fAwareDir.c_str(),fileTypeName);
@@ -99,6 +124,22 @@ void AnitaGenericHeaderHandler::writeFileSummary()
   sprintf(elementName,"numFileEventBytes");
   sprintf(elementLabel,"Event Bytes");
   summaryFile.addVariablePoint(elementName,elementLabel,fCurrentFileTime,numFileEventBytes);
+
+  totalBytes+=numFileBytes;
+  sprintf(elementName,"totalBytes");
+  sprintf(elementLabel,"Total Bytes");
+  summaryFile.addVariablePoint(elementName,elementLabel,fCurrentFileTime,totalBytes);
+
+
+  float rate=0;
+  if(lastModTime>0 && (lastModTimeRun<fCurrentRun || lastModTimeFile<fCurrentFile)) {
+    //Can calculate rate
+    rate=(numFileBytes*8./1024)/(fCurrentFileTime-lastModTime);
+  }
+  sprintf(elementName,"fileRate");
+  sprintf(elementLabel,"Rate (kbps)");
+  summaryFile.addVariablePoint(elementName,elementLabel,fCurrentFileTime,rate);
+
   
   for(int bin=1;bin<=histPacket.GetNbinsX();bin++) {
     int logicCode=(int)histPacket.GetBinCenter(bin);
@@ -135,7 +176,19 @@ void AnitaGenericHeaderHandler::writeFileSummary()
   sprintf(outName,"%s/ghdTime.json.gz",dirName);
   summaryFile.writeTimeJSONFile(outName);
 
+  std::ofstream ByteFileOut(totalBytesFile);
+  if(ByteFileOut) {
+    ByteFileOut << totalBytes << "\n";
+    ByteFileOut.close();
+  }
 
+  std::ofstream LastModFileOut(lastModTimeFilename);
+  if(LastModFileOut) {
+    LastModFileOut << fCurrentFileTime << "\t" << fCurrentRun << "\t" << fCurrentFile << "\n";
+    LastModFileOut.close();
+  }
+    
+  
 
 
 

@@ -18,17 +18,13 @@ then
    exit 1
 fi
 
-if [ "$ANITA_TREE_MAKER_DIR" = "" ]
+
+if [ "$ANITA_BIN_DIR" = "" ]
 then
-   echo "ANITA_TREE_MAKER_DIR must be set to where the simpleTreeMaker code is"
+   echo "ANITA_BIN_DIR must be set to where the ANITA binaries are"
    exit 1
 fi
 
-if [ "$ANITA_AWARE_FILEMAKER_DIR" = "" ]
-then
-   echo "ANITA_AWARE_FILEMAKER_DIR must be set to where the anitaAwareFileMaker code is"
-   exit 1
-fi
 
 if [ "$AWARE_SITE_SCRIPT" = "" ]
 then
@@ -52,6 +48,13 @@ if  test `ps x | grep rootAndJsonFileLoop.sh  | wc -l` -gt 1; then
 else
   echo "rootandJsonFileLoop.sh is not running."
 fi
+
+mkdir -p $AWARE_OUTPUT_DIR/ANITA4/log/
+
+
+PATH=${ANITA_BIN_DIR}:${PATH}
+
+
 
 echo "Starting newTelemFileWatcher.py"
 nohup ./newTelemFileWatcher.py > $AWARE_OUTPUT_DIR/ANITA4/log/filewatcher.log 2>&1 < /dev/null &
