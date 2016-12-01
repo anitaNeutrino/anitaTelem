@@ -231,7 +231,7 @@ def main():
         processCommand="makeAvgSurfHkJsonFiles"
         print "--> [4 of 4] - running ",processCommand
         sys.stdout.flush()
-#        subprocess.call([processCommand,getRootFilename(runNum,"avgSurfHkFile")])
+        subprocess.call([processCommand,getRootFilename(runNum,"avgSurfHkFile")])
     else:
         print "surf hk ROOT file for run ",runNum," up-to-date - rawTime = ",rawTime," / rootTime = ",rootTime," <- from check on house/surfhk/last"
         sys.stdout.flush()
