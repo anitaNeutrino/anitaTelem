@@ -141,8 +141,8 @@ int main (int argc, char ** argv)
   double val=gRandom->Rndm();
   int plotEvents=0;
 
-  //  if(val>0.3) plotEvents=1;
-    plotEvents=1;
+  if(val>0.3) plotEvents=1;
+  //  plotEvents=1;
   if(plotEvents) std::cout << "Plotting events\n";
   else std::cout << "Not plotting events\n";
 
