@@ -82,10 +82,11 @@ AnitaHeaderHandler::~AnitaHeaderHandler()
 {
   std::cout << "AnitaHeaderHandler::~AnitaHeaderHandler() " << startedEvent << "\n";
   //RJN Add something here to store curPSBody and gotSurf,gotWave
-  char fileName[FILENAME_MAX];
-  sprintf(fileName,"%s/ANITA4/db/currentEvent%s.dat",fAwareDir.c_str(),telemTypeForFile[fLastFileType]);
   
   if(startedEvent) {
+    char fileName[FILENAME_MAX];
+    sprintf(fileName,"%s/ANITA4/db/currentEvent%s.dat",fAwareDir.c_str(),telemTypeForFile[fLastFileType]);
+    
     std::cout << fileName << "\n";
     //Need to save the current state of the event
     FILE *fp = fopen(fileName,"wb");
@@ -100,7 +101,7 @@ AnitaHeaderHandler::~AnitaHeaderHandler()
     }
     else unlink(fileName);
   }
-  else unlink(fileName);
+  //  else unlink(fileName);
 }
     
 void AnitaHeaderHandler::addHeader(AnitaEventHeader_t *hdPtr, UInt_t run)
