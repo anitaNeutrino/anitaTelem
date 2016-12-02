@@ -87,7 +87,7 @@ void AnitaTuffHandler::loopNotchMap()
       gSystem->mkdir(fileName,kTRUE);
       sprintf(fileName,"%s/run%d/house/tuff/last",fRawDir.c_str(),fRun);
       AwareRunDatabase::touchFile(fileName);
-      sprintf(fileName,"%s/run%d/house/tuff/sub_%d/sub_%d/notchstatus_%d.dat.gz",fRawDir.c_str(),fRun,notchPtr->unixTime,notchPtr->unixTime,notchPtr->unixTime);
+      sprintf(fileName,"%s/run%d/house/tuff/sub_%d/sub_%d/tuff%d.dat.gz",fRawDir.c_str(),fRun,notchPtr->unixTime,notchPtr->unixTime,notchPtr->unixTime);
       std::cout << fileName << "\n";
       outFile=fopen(fileName,"ab");
       if(!outFile ) {

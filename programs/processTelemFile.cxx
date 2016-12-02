@@ -824,7 +824,8 @@ int processLOSFile(char *filename) {
 		auxHdr2=bigBuffer[count+2+9+(numSciBytes/2)];
 
 		//Now do something with buffer
-		handleScience((unsigned char*)&bigBuffer[count+2+6],numSciBytes);
+		if((numSciBytes/2)+count+12 < numBytes) //RJN check to see if there is a possibility that this packet is in this file
+		  handleScience((unsigned char*)&bigBuffer[count+2+6],numSciBytes);
 		// printf("swEndHdr -- %x\n",swEndHdr);
 		// printf("endHdr -- %x\n",endHdr);
 		// printf("auxHdr2 -- %x\n",auxHdr2);	
