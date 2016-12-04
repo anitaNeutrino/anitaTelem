@@ -424,6 +424,7 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	RunStart_t *runStartPtr=0;
 	LogWatchdStart_t *logWatchStart=0;
 	OtherMonitorStruct_t *otherMonPtr=0;
+	int turfEvent,turfRun;
 	if((checkVal==0) && testGHdr>0) {	  
 	  if(testGHdr->code>0) ghdHandler->addGenericHeader(testGHdr);
 	    //	    printf("Got %s (%#x) -- (%d bytes)\n",
@@ -434,7 +435,15 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 
 	      hdPtr= (AnitaEventHeader_t*)testGHdr;
 	      run=getRunNumberFromTime(hdPtr->unixTime);
-	      cout << "Got Header\t" << run << "\t" << hdPtr->eventNumber << "\t" << hdPtr->unixTime << "\n";
+	      turfEvent=hdPtr->turfEventId;
+	      turfRun=(((turfEvent&0xfff00000)>>20));
+	      cout << "Got Header\t" << run << "\t" << hdPtr->eventNumber << "\t" << hdPtr->unixTime << "\t" << run << "\t" << turfRun << "\n";
+
+	      if(turfRun>run && (turfRun-run)<10) { //10 is arbitrary
+		addRunToMap(turfRun,hdPtr->eventNumber,hdPtr->unixTime);
+		run=turfRun;
+	      }
+	      
 	      headHandler->addHeader(hdPtr,run);
 	      lastHeaderRunNumber=run;
 	      lastHeaderEventNumber=hdPtr->eventNumber;
@@ -1092,7 +1101,7 @@ UInt_t getRunNumberFromEvent(UInt_t eventNumber)
 
 void addRunToMap(UInt_t run, UInt_t eventNumber, UInt_t unixTime) 
 {
-  std::cout << run << "\t" << eventNumber << "\t" << unixTime << "\n";
+  //  std::cout << run << "\t" << eventNumber << "\t" << unixTime << "\n";
 
   std::map<UInt_t,UInt_t>::iterator it=fRunToEventMap.find(run);
   if(it==fRunToEventMap.end()) {
@@ -1105,8 +1114,8 @@ void addRunToMap(UInt_t run, UInt_t eventNumber, UInt_t unixTime)
   }
   else {
     //Maybe do something clever
-    std::cout << "Already have this run in the map\n";
-    std::cout << it->second << "\n";
+    //    std::cout << "Already have this run in the map\n";
+    //    std::cout << it->second << "\n";
     if(it->second > eventNumber) it->second=eventNumber;    
   }
 }

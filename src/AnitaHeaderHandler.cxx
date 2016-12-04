@@ -166,9 +166,9 @@ void AnitaHeaderHandler::loopMap()
 	  printf("Couldn't open: %s\n",fileName);
 	  return;
 	}
+      	lastFileNumber=fileNumber;
+	fwrite(hdPtr,sizeof(AnitaEventHeader_t),1,outFile);
       }
-      lastFileNumber=fileNumber;
-      fwrite(hdPtr,sizeof(AnitaEventHeader_t),1,outFile);
     }
     if(outFile) fclose(outFile);
     outFile=NULL;
