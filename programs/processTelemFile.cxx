@@ -261,15 +261,20 @@ int processHighRateTDRSSFile(char *filename) {
     cout << "processTDRSSFile: " << filename << "\t" << tdrssFileString << "\t" << tdrssDirString << "\t" << thisFileNumber <<  "\t" << thisRunNumber << "\t" << lastFileNumber[AnitaTelemFileType::kAnitaTelemTdrss] << "\t" << lastRunNumber[AnitaTelemFileType::kAnitaTelemTdrss] << endl;
     
     int newRun=-1;
-    if(thisRunNumber>lastRunNumber[AnitaTelemFileType::kAnitaTelemTdrss])
+    int newFile=-1;
+    if(thisRunNumber>lastRunNumber[AnitaTelemFileType::kAnitaTelemTdrss]) {
       newRun=1;
+      newFile=1;
+    }
     else if(thisRunNumber==lastRunNumber[AnitaTelemFileType::kAnitaTelemTdrss]) {
       if(thisFileNumber==lastFileNumber[AnitaTelemFileType::kAnitaTelemTdrss]) {
 	newRun=0;
+	newFile=0;
 	lastNumBytes=getLastNumBytesNumber(AnitaTelemFileType::kAnitaTelemTdrss);
       }
       else if(thisFileNumber>lastFileNumber[AnitaTelemFileType::kAnitaTelemTdrss]) {
-	newRun=1;
+	newRun=0;
+	newFile=1;
 	lastNumBytes=0;
       }
     }
@@ -290,12 +295,15 @@ int processHighRateTDRSSFile(char *filename) {
     struct stat buf;
     //    int retVal2=
     stat(filename,&buf);
-    ghdHandler->newFile(AnitaTelemFileType::kAnitaTelemTdrss,thisRunNumber,thisFileNumber,buf.st_mtime);
-    headHandler->newFile(AnitaTelemFileType::kAnitaTelemTdrss);
 
+    if(newFile) {
+      ghdHandler->newFile(AnitaTelemFileType::kAnitaTelemTdrss,thisRunNumber,thisFileNumber,buf.st_mtime);
+      headHandler->newFile(AnitaTelemFileType::kAnitaTelemTdrss);
+    }
+    
     static int triedThisOne=0;
     numBytes=fread(bigBuffer,1,BIG_BUF_SIZE,tdrssFile);
-    if(numBytes<MIN_TDRSS_SIZE && triedThisOne<50) {
+    if(numBytes<MIN_TDRSS_SIZE && triedThisOne<200) {
 	sleep(1);
 	fclose(tdrssFile);
 	triedThisOne++;
