@@ -99,16 +99,31 @@ void AnitaFileHandler::processFile(ZippedFile_t *zfPtr,int run)
     OutFile.close();
      
 
-
-    unlink(linkName);
-    link(outputFilename,linkName);
-         
+    
     //Change modification times
     struct utimbuf ut;
     ut.actime=zfPtr->unixTime;
     ut.modtime=zfPtr->unixTime;
     retVal=utime(outputFilename,&ut);
-    retVal=utime(linkName,&ut);
+   
+
+    {
+      //Only link if the file is new
+      struct stat buf;  
+      int retVal2=stat(linkName,&buf);  
+      if(retVal2==0) {    
+	if(buf.st_mtime<ut.modtime) {
+	  unlink(linkName);
+	  link(outputFilename,linkName);
+	  retVal=utime(linkName,&ut);
+	}
+      }
+      else {
+	link(outputFilename,linkName);
+	retVal=utime(linkName,&ut);
+      }
+    }
+   
       
     if(getAwareName(awareFilename,zfPtr)) {
       struct stat buf;  

@@ -134,11 +134,11 @@ void AnitaHeaderHandler::loopMap()
     std::map<UInt_t,AnitaEventHeader_t>::iterator it;
     FILE *outFile=NULL;
     UInt_t run=runIt->first;
-    //    std::cerr << "Loop Map Run " << run << "\n";
+    std::cerr << "Loop Map Run " << run << "\t" << (runIt->second).size() << "\n";
     for(it=(runIt->second).begin();it!=(runIt->second).end();it++) {
 
       AnitaEventHeader_t *hdPtr=&(it->second);
-      //      std::cout << hdPtr->unixTime << "\t" << hdPtr->eventNumber << "\t" << 100*(hdPtr->eventNumber/100) << "\n";    
+      std::cout << hdPtr->unixTime << "\t" << hdPtr->eventNumber << "\t" << 100*(hdPtr->eventNumber/100) << "\n";    
       int fileNumber=100*(hdPtr->eventNumber/100);
       //    processHeader(hdPtr);
       
@@ -167,8 +167,10 @@ void AnitaHeaderHandler::loopMap()
 	  return;
 	}
       	lastFileNumber=fileNumber;
-	fwrite(hdPtr,sizeof(AnitaEventHeader_t),1,outFile);
       }
+      if(outFile)
+	fwrite(hdPtr,sizeof(AnitaEventHeader_t),1,outFile);
+
     }
     if(outFile) fclose(outFile);
     outFile=NULL;

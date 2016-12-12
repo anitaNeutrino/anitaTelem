@@ -55,5 +55,6 @@ while [ 1 ]; do
 	fi	
     done
     rm $RUN_LIST2 $RUN_LIST
+    sleep 10
 done
 
