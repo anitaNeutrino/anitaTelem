@@ -41,9 +41,10 @@ private:
   int processRawSurfPacket(RawSurfPacket_t *rsPkt);
   int processRawWavePacket(RawWaveformPacket_t *rwPkt);
   int processEncSurfPacket(EncodedSurfPacketHeader_t *esPkt);
-  int processPedSubbedEncSurfPacket(EncodedPedSubbedSurfPacketHeader_t *epssPkt);
+  int processPedSubbedEncSurfPacket(EncodedPedSubbedSurfPacketHeader_t *epssPkt, UInt_t run);
   int processPedSubbedEncWavePacket(EncodedPedSubbedChannelPacketHeader_t *epscPkt);
   void plotEvent(AnitaEventHeader_t *hdPtr,PedSubbedEventBody_t *bdPtr,int run) ;
+  void addToRunSurfPacketFile(UInt_t run, UInt_t eventNumber, UInt_t surf, UInt_t packetNumber);
 
   std::string fRawDir;
   std::string fAwareDir;

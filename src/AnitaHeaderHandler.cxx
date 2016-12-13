@@ -356,7 +356,7 @@ void AnitaHeaderHandler::addEncPedSubbedSurfPacket(EncodedPedSubbedSurfPacketHea
   if(epssPkt->eventNumber == curPSBody.eventNumber) {
     startedEvent=1;
     currentEventRun=run;
-    int finished=processPedSubbedEncSurfPacket(epssPkt);
+    int finished=processPedSubbedEncSurfPacket(epssPkt,run);
     //    std::cout << startedEvent << "\t" << finished << std::endl;
     if(finished) {
       addCurPSBody();
@@ -370,7 +370,7 @@ void AnitaHeaderHandler::addEncPedSubbedSurfPacket(EncodedPedSubbedSurfPacketHea
     }
     zeroCounters();
     //Do something
-    processPedSubbedEncSurfPacket(epssPkt);
+    processPedSubbedEncSurfPacket(epssPkt,run);
     startedEvent=1;
     currentEventRun=run;
     //Find link to current header
@@ -459,7 +459,25 @@ int AnitaHeaderHandler::processEncSurfPacket(EncodedSurfPacketHeader_t  *esPkt)
 }
 
 
-int AnitaHeaderHandler::processPedSubbedEncSurfPacket(EncodedPedSubbedSurfPacketHeader_t *epssPkt)
+void AnitaHeaderHandler::addToRunSurfPacketFile(UInt_t run, UInt_t eventNumber, UInt_t surf, UInt_t packetNumber)
+{
+
+  
+  char fileName[FILENAME_MAX];
+  
+  sprintf(fileName,"%s/run%d/packetDb",fRawDir.c_str(),run);
+  gSystem->mkdir(fileName,kTRUE);
+    
+  sprintf(fileName,"%s/run%d/packetDb/surfPacketList.txt",fRawDir.c_str(),run);
+  std::ofstream PacketList(fileName);
+  PacketList << eventNumber << "\t" << surf << "\t" << packetNumber << "\n";
+  PacketList.close();
+
+}
+
+
+
+int AnitaHeaderHandler::processPedSubbedEncSurfPacket(EncodedPedSubbedSurfPacketHeader_t *epssPkt, UInt_t run)
 {
 
   unsigned char *input = (unsigned char*)epssPkt;
@@ -484,6 +502,10 @@ int AnitaHeaderHandler::processPedSubbedEncSurfPacket(EncodedPedSubbedSurfPacket
   chanIndex=chanHdPtr->rawHdr.chanId;
   int surf=chanIndex/9;
   //  std::cout << "processPedSubbedEncSurfPacket " << chanIndex << "\t" << surf << "\n";
+
+
+  addToRunSurfPacketFile(run,epssPkt->eventNumber,surf,epssPkt->gHdr.packetNumber);
+  
   gotSurf[surf]=1;
   for(int sid=0;sid<ACTIVE_SURFS;sid++) {
     if(gotSurf[sid]==0) return 0; //Still missing a SURF
