@@ -469,7 +469,7 @@ void AnitaHeaderHandler::addToRunSurfPacketFile(UInt_t run, UInt_t eventNumber, 
   gSystem->mkdir(fileName,kTRUE);
     
   sprintf(fileName,"%s/run%d/packetDb/surfPacketList.txt",fRawDir.c_str(),run);
-  std::ofstream PacketList(fileName);
+  std::ofstream PacketList(fileName,std::fstream::out | std::fstream::app);
   PacketList << eventNumber << "\t" << surf << "\t" << packetNumber << "\n";
   PacketList.close();
 
