@@ -700,21 +700,6 @@ int processLOSFile(char *filename) {
   sscanf(losDirString,"%06d",&thisRunNumber);
   cout << "processLOSFile: " << filename << "\t" << losFileString << "\t" << losDirString << "\t" << thisFileNumber <<  "\t" << thisRunNumber << "\t" << lastFileNumber[AnitaTelemFileType::kAnitaTelemLos] << "\t" << lastRunNumber[AnitaTelemFileType::kAnitaTelemLos] << endl;
 
-  int newRun=-1;
-  if(thisRunNumber>lastRunNumber[AnitaTelemFileType::kAnitaTelemLos])
-    newRun=1;
-  else if(thisRunNumber==lastRunNumber[AnitaTelemFileType::kAnitaTelemLos]) {
-    if(thisFileNumber==lastFileNumber[AnitaTelemFileType::kAnitaTelemLos]) {
-      newRun=0;
-      lastNumBytes=getLastNumBytesNumber(AnitaTelemFileType::kAnitaTelemLos);
-    }
-    else if(thisFileNumber>lastFileNumber[AnitaTelemFileType::kAnitaTelemLos]) {
-      newRun=1;
-      lastNumBytes=0;
-    }
-  }
-  cout << "New Run: " << newRun << "\n";
-  if(newRun<0) return 0;
 
   int numBytes=0,count=0;
   FILE *losFile;
@@ -749,23 +734,7 @@ int processLOSFile(char *filename) {
     return -1;
   }
   
-  printf("numBytes %d, lastNumBytes %d\n",numBytes,lastNumBytes);
-  if(numBytes==lastNumBytes) {
-    //No new data
-    fclose(losFile);
-    return 2;
-  }
-  count=lastNumBytes;
-  lastNumBytes=numBytes;
-  lastNumBytesNumber[AnitaTelemFileType::kAnitaTelemLos]=numBytes;
   cout << "losFile: " << filename << endl;
-  struct stat buf;
-  //    int retVal2=
-  
-  
-    
-  stat(filename,&buf);
-  ghdHandler->newFile(AnitaTelemFileType::kAnitaTelemLos,thisRunNumber,thisFileNumber,buf.st_mtime);
   headHandler->newFile(AnitaTelemFileType::kAnitaTelemLos);
   printf("Read %d bytes from %s\n",numBytes,filename);
   fclose(losFile);
@@ -823,9 +792,6 @@ int processLOSFile(char *filename) {
 	count++;
     }
 
-
-  lastRunNumber[AnitaTelemFileType::kAnitaTelemLos]=thisRunNumber;
-  lastFileNumber[AnitaTelemFileType::kAnitaTelemLos]=thisFileNumber;
 
   return 0;
 
