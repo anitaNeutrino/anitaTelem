@@ -103,7 +103,24 @@ void AnitaGenericHeaderHandler::writeFileSummary()
   UInt_t numFileBytes=0;
   UInt_t numFileEventBytes=0;
 
+  UInt_t firstPacketNum=0;
+  UInt_t lastPacketNum=0;
+  UInt_t numPackets=fGhdMap.size();
+
+  
+  
   std::map<UInt_t,GenericHeader_t>::iterator it;
+
+  if(numPackets>0) {
+    it=fGhdMap.begin();
+    firstPacketNum=it->first;
+
+    it=fGhdMap.end();
+    it--;
+    lastPacketNum=it->second;
+  }
+    
+  
   for(it=fGhdMap.begin();it!=fGhdMap.end();it++) {        
     int logicCode=getLogicalPacketCode(it->second.code);
     histPacket.Fill(logicCode);
@@ -130,6 +147,19 @@ void AnitaGenericHeaderHandler::writeFileSummary()
   sprintf(elementLabel,"Total Bytes");
   summaryFile.addVariablePoint(elementName,elementLabel,fCurrentFileTime,totalBytes);
 
+  sprintf(elementName,"firstPacketNum");
+  sprintf(elementLabel,"First Packet Num.");
+  summaryFile.addVariablePoint(elementName,elementLabel,fCurrentFileTime,firstPacketNum);
+
+  sprintf(elementName,"lastPacketNum");
+  sprintf(elementLabel,"Last Packet Num.");
+  summaryFile.addVariablePoint(elementName,elementLabel,fCurrentFileTime,lastPacketNum);
+  
+  sprintf(elementName,"numPackets");
+  sprintf(elementLabel,"Num. Good Packets");
+  summaryFile.addVariablePoint(elementName,elementLabel,fCurrentFileTime,numPackets);
+
+  
 
   float rate=0;
   if(lastModTime>0 && (lastModTimeRun<fCurrentRun || lastModTimeFile<fCurrentFile)) {
@@ -162,10 +192,11 @@ void AnitaGenericHeaderHandler::writeFileSummary()
   std::cout << "Making: " << dirName << "\n";
   
 
-  char fullDir[FILENAME_MAX];
-  sprintf(fullDir,"%s/full",dirName);
-  gSystem->mkdir(fullDir,kTRUE);
-  summaryFile.writeFullJSONFiles(fullDir,"ghd");
+  //  char fullDir[FILENAME_MAX];
+  //  sprintf(fullDir,"%s/full",dirName);
+  //  gSystem->mkdir(fullDir,kTRUE);
+  //  summaryFile.writeFullJSONFiles(fullDir,"ghd");
+  summaryFile.writeSingleFullJSONFile(dirName,"ghd");
 
   char outName[FILENAME_MAX];
 
