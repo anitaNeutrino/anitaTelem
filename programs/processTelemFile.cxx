@@ -1071,6 +1071,9 @@ UInt_t getRunNumberFromTime(UInt_t unixTime)
 {
   std::map<UInt_t,UInt_t>::iterator it=fTimeRunMap.lower_bound(unixTime);
   if(it!=fTimeRunMap.end()) {
+    if(it->first > unixTime && it!=fEventRunMap.begin()) {
+      it--;
+    }
     //    std::cout << it->first << "\t" << it->second << "\t" << unixTime << "\n";
     return it->second;
   }

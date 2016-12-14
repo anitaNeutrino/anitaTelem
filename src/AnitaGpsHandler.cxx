@@ -67,6 +67,7 @@ void AnitaGpsHandler::addG12Sat(GpsG12SatStruct_t *gpsPtr, int run)
 
 void AnitaGpsHandler::addGpsGga(GpsGgaStruct_t *gpsPtr, int run)
 {
+  if(whichGps(gpsPtr->gHdr.code)<0 || whichGps(gpsPtr->gHdr.code)>2) return;
   std::map<UInt_t,std::map<UInt_t, GpsGgaStruct_t> >::iterator it=fGpsGgaMap[whichGps(gpsPtr->gHdr.code)].find(run);
   if(it!=fGpsGgaMap[whichGps(gpsPtr->gHdr.code)].end()) {
     it->second.insert(std::pair<UInt_t,GpsGgaStruct_t>(gpsPtr->unixTime,*gpsPtr));
@@ -81,6 +82,7 @@ void AnitaGpsHandler::addGpsGga(GpsGgaStruct_t *gpsPtr, int run)
 
 void AnitaGpsHandler::addAdu5Pat(GpsAdu5PatStruct_t *gpsPtr, int run)
 {
+  if(whichGps(gpsPtr->gHdr.code)<0 || whichGps(gpsPtr->gHdr.code)>1) return;
   std::map<UInt_t,std::map<UInt_t, GpsAdu5PatStruct_t> >::iterator it=fAdu5PatMap[whichGps(gpsPtr->gHdr.code)].find(run);
   if(it!=fAdu5PatMap[whichGps(gpsPtr->gHdr.code)].end()) {
     it->second.insert(std::pair<UInt_t,GpsAdu5PatStruct_t>(gpsPtr->unixTime,*gpsPtr));
@@ -96,6 +98,7 @@ void AnitaGpsHandler::addAdu5Pat(GpsAdu5PatStruct_t *gpsPtr, int run)
 
 void AnitaGpsHandler::addAdu5Sat(GpsAdu5SatStruct_t *gpsPtr, int run)
 {
+  if(whichGps(gpsPtr->gHdr.code)<0 || whichGps(gpsPtr->gHdr.code)>1) return;
   std::map<UInt_t,std::map<UInt_t, GpsAdu5SatStruct_t> >::iterator it=fAdu5SatMap[whichGps(gpsPtr->gHdr.code)].find(run);
   if(it!=fAdu5SatMap[whichGps(gpsPtr->gHdr.code)].end()) {
     it->second.insert(std::pair<UInt_t,GpsAdu5SatStruct_t>(gpsPtr->unixTime,*gpsPtr));
@@ -110,13 +113,20 @@ void AnitaGpsHandler::addAdu5Sat(GpsAdu5SatStruct_t *gpsPtr, int run)
 
 void AnitaGpsHandler::addAdu5Vtg(GpsAdu5VtgStruct_t *gpsPtr, int run)
 {
+  if(whichGps(gpsPtr->gHdr.code)<0 || whichGps(gpsPtr->gHdr.code)>1) return;
+  //  std::cerr << run << "\t" << gpsPtr->unixTime << "\t" << whichGps(gpsPtr->gHdr.code) << "\t" << fAdu5VtgMap[whichGps(gpsPtr->gHdr.code)].size() << "\n";
   std::map<UInt_t,std::map<UInt_t, GpsAdu5VtgStruct_t> >::iterator it=fAdu5VtgMap[whichGps(gpsPtr->gHdr.code)].find(run);
+  //  std::cerr << "Done find run\n";
   if(it!=fAdu5VtgMap[whichGps(gpsPtr->gHdr.code)].end()) {
+    //    std::cerr << "Found map trying to insert\n";
     it->second.insert(std::pair<UInt_t,GpsAdu5VtgStruct_t>(gpsPtr->unixTime,*gpsPtr));
   }
   else {
+    //    std::cerr << "No map have to make one\n";
     std::map<UInt_t, GpsAdu5VtgStruct_t> runMap;
+    //    std::cerr << "Inserting into run map\n";
     runMap.insert(std::pair<UInt_t,GpsAdu5VtgStruct_t>(gpsPtr->unixTime,*gpsPtr));
+    //    std::cerr << "Inserting into map of maps\n";
     fAdu5VtgMap[whichGps(gpsPtr->gHdr.code)].insert(std::pair<UInt_t,std::map<UInt_t, GpsAdu5VtgStruct_t> >(run,runMap));
   }
    

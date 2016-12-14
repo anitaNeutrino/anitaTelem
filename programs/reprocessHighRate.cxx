@@ -280,7 +280,7 @@ int processHighRateTDRSSFile(char *filename) {
 	return -1;
     }
     triedThisOne=0;
-    printf("Read %d bytes from %s\n",numBytes,filename);
+    //    printf("Read %d bytes from %s\n",numBytes,filename);
     fclose(tdrssFile);
     int count3=0;
     while(count<numBytes) {
@@ -350,7 +350,7 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 // 	    printf("Got 0xfe Wake Up Buffer\n");
 // 	    return;
 // 	}
-//	printf("count %d\n",count);
+
 	checkVal=checkPacket(&buffer[count]);
 	gHdr = (GenericHeader_t*) &buffer[count];		
 
@@ -363,10 +363,10 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	  continue;
 	}
 
-
-// 	printf("Got %s (%#x) -- (%d bytes)\n",
-// 	       packetCodeAsString(gHdr->code),
-// 	       gHdr->code,gHdr->numBytes);
+	//      printf("count %d  (numBytes %d)\n",count,numBytes);
+	//      printf("Got %s (%#x) -- (%d bytes)\n",
+	//	     packetCodeAsString(gHdr->code),
+	//	     gHdr->code,gHdr->numBytes);
 	GenericHeader_t *testGHdr=gHdr;
 
 
@@ -412,7 +412,7 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	      run=getRunNumberFromTime(hdPtr->unixTime);
 	      turfEvent=hdPtr->turfEventId;
 	      turfRun=(((turfEvent&0xfff00000)>>20));
-	      cout << "Got Header\t" << run << "\t" << hdPtr->eventNumber << "\t" << hdPtr->unixTime << "\t" << run << "\t" << turfRun << "\n";
+	      //	      cout << "Got Header\t" << run << "\t" << hdPtr->eventNumber << "\t" << hdPtr->unixTime << "\t" << run << "\t" << turfRun << "\n";
 
 	      if(turfRun>run && (turfRun-run)<10) { //10 is arbitrary
 		addRunToMap(turfRun,hdPtr->eventNumber,hdPtr->unixTime);
@@ -484,7 +484,7 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 
 	      break;
 	    case PACKET_ZIPPED_FILE:
-	      cout << "Got ZippedFile_t\n";
+	      //	      cout << "Got ZippedFile_t\n";
 	      ///		    printf("Boo\n");
 	      fileHandler->processFile((ZippedFile_t*) testGHdr,getRunNumberFromTime(((ZippedFile_t*) testGHdr)->unixTime));
 	      break;
@@ -736,7 +736,7 @@ int processLOSFile(char *filename) {
   
   cout << "losFile: " << filename << endl;
   headHandler->newFile(AnitaTelemFileType::kAnitaTelemLos);
-  printf("Read %d bytes from %s\n",numBytes,filename);
+  //  printf("Read %d bytes from %s\n",numBytes,filename);
   fclose(losFile);
   int count3=0;
 
@@ -744,57 +744,57 @@ int processLOSFile(char *filename) {
       //      printf("%d\t%#x\n",i,bigBuffer[i]);
   while(count<numBytes) {
       //      printf("%d -- %x\n",count,bigBuffer[count]);
-      //      printf("%d of %d\n",count,numBytes);
-	count3++;
+    //  printf("%d of %d\n",count,numBytes);
+    count3++;
 	//	if(count3>100) break;
-	if(bigBuffer[count]==0xf00d) {
-	    count3=0;
-	    //	    printf("Got f00d %d\n",count);
-	    //Maybe new los buffer
+    if(bigBuffer[count]==0xf00d) {
+      count3=0;
+      //	    printf("Got f00d %d\n",count);
+      //Maybe new los buffer
 
-	    foodHdr=bigBuffer[count];
-	    doccHdr=bigBuffer[count+1];
-	    ae00Hdr=bigBuffer[count+2];
-	    numWords=bigBuffer[count+3];
-
-	    // printf("numWords -- %d -- %x\n",numWords,numWords);
-	    // printf("foodHdr -- %x\n",foodHdr);
-	    // printf("doccHdr -- %x\n",doccHdr);
-	    // printf("ae00Hdr -- %x\n",ae00Hdr);
-
-	    //	    exit(0);
-	    if(foodHdr==0xf00d && doccHdr==0xd0cc && (ae00Hdr&0xfff0)==0xae00) {
-		//Got a los buffer
-		losOrSip=ae00Hdr&0x1;
-		oddOrEven=ae00Hdr&0x2>>1;
-		ulPtr = (unsigned long*) &bigBuffer[count+3];
-		bufferCount=*ulPtr;
-		numSciBytes=bigBuffer[count+2+5];
-		//		printf("Buffer %u -- %d bytes\n",bufferCount,numSciBytes);
-		checksum=bigBuffer[count+2+6+(numSciBytes/2)];		
-		swEndHdr=bigBuffer[count+2+7+(numSciBytes/2)];
-		endHdr=bigBuffer[count+2+8+(numSciBytes/2)];
-		auxHdr2=bigBuffer[count+2+9+(numSciBytes/2)];
-
-		//Now do something with buffer
-		if((numSciBytes/2)+count+12 < numBytes) //RJN check to see if there is a possibility that this packet is in this file
-		  handleScience((unsigned char*)&bigBuffer[count+2+6],numSciBytes);
-		// printf("swEndHdr -- %x\n",swEndHdr);
-		// printf("endHdr -- %x\n",endHdr);
-		// printf("auxHdr2 -- %x\n",auxHdr2);	
-		
-		//		exit(0);
-//		return 0;
-		count+=12+(numSciBytes/2);
-		continue;
+      foodHdr=bigBuffer[count];
+      doccHdr=bigBuffer[count+1];
+      ae00Hdr=bigBuffer[count+2];
+      numWords=bigBuffer[count+3];
+      
+      // printf("numWords -- %d -- %x\n",numWords,numWords);
+      // printf("foodHdr -- %x\n",foodHdr);
+      // printf("doccHdr -- %x\n",doccHdr);
+      // printf("ae00Hdr -- %x\n",ae00Hdr);
+      
+      //	    exit(0);
+      if(foodHdr==0xf00d && doccHdr==0xd0cc && (ae00Hdr&0xfff0)==0xae00) {
+	//Got a los buffer
+	losOrSip=ae00Hdr&0x1;
+	oddOrEven=ae00Hdr&0x2>>1;
+	ulPtr = (unsigned long*) &bigBuffer[count+3];
+	bufferCount=*ulPtr;
+	numSciBytes=bigBuffer[count+2+5];
+	//		printf("Buffer %u -- %d bytes\n",bufferCount,numSciBytes);
+	checksum=bigBuffer[count+2+6+(numSciBytes/2)];		
+	swEndHdr=bigBuffer[count+2+7+(numSciBytes/2)];
+	endHdr=bigBuffer[count+2+8+(numSciBytes/2)];
+	auxHdr2=bigBuffer[count+2+9+(numSciBytes/2)];
+	
+	//Now do something with buffer
+	if((numSciBytes/2)+count+12 < numBytes) //RJN check to see if there is a possibility that this packet is in this file
+	  handleScience((unsigned char*)&bigBuffer[count+2+6],numSciBytes);
+	// printf("swEndHdr -- %x\n",swEndHdr);
+	// printf("endHdr -- %x\n",endHdr);
+	// printf("auxHdr2 -- %x\n",auxHdr2);	
+	
+	//		exit(0);
+	//		return 0;
+	count+=12+(numSciBytes/2);
+	continue;
 	    }
-	}
-	count++;
     }
-
-
+    count++;
+  }
+  
+  
   return 0;
-
+  
 }
 
 int processOpenportFile(char *filename) {
@@ -859,7 +859,7 @@ int processOpenportFile(char *filename) {
     return -1;
   }
   
-  printf("numBytes %d, lastNumBytes %d\n",numBytes,lastNumBytes);
+  //  printf("numBytes %d, lastNumBytes %d\n",numBytes,lastNumBytes);
   if(numBytes==lastNumBytes) {
     //No new data
     fclose(openportFile);
@@ -878,7 +878,7 @@ int processOpenportFile(char *filename) {
 
   ghdHandler->newFile(AnitaTelemFileType::kAnitaTelemOpenport,thisRunNumber,thisFileNumber,buf.st_mtime);
   headHandler->newFile(AnitaTelemFileType::kAnitaTelemOpenport);
-  printf("Read %d bytes from %s\n",numBytes,filename);
+  //  printf("Read %d bytes from %s\n",numBytes,filename);
   fclose(openportFile);
   int count3=0;
 
@@ -999,6 +999,9 @@ UInt_t getRunNumberFromTime(UInt_t unixTime)
 {
   std::map<UInt_t,UInt_t>::iterator it=fTimeRunMap.lower_bound(unixTime);
   if(it!=fTimeRunMap.end()) {
+    if(it->first > unixTime && it!=fEventRunMap.begin()) {
+      it--;
+    }
     //    std::cout << it->first << "\t" << it->second << "\t" << unixTime << "\n";
     return it->second;
   }
@@ -1225,8 +1228,8 @@ int processSlowTdrssFile(char *filename) {
 	    unsigned char *sciData=&charBuffer[count+3];
 	    count+=numBytes+3;
 	    
-	    printf("count %d -- comm %#x, seqNum %d, numBytes %d\n",
-		   count,comm1or2,seqNum,numBytes);
+	    //	    printf("count %d -- comm %#x, seqNum %d, numBytes %d\n",
+	    //		   count,comm1or2,seqNum,numBytes);
 	    //	    printf("sizeof(SlowRateFull_t) -- %ul\n",sizeof(SlowRateFull_t));
 	    if(numBytes==sizeof(SlowRateFull_t)) {
 	      //		cout << "Yes" << endl;
