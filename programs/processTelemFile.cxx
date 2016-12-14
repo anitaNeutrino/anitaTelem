@@ -298,11 +298,6 @@ int processHighRateTDRSSFile(char *filename) {
     //    int retVal2=
     stat(filename,&buf);
 
-    if(newFile) {
-      ghdHandler->newFile(AnitaTelemFileType::kAnitaTelemTdrss,thisRunNumber,thisFileNumber,buf.st_mtime);
-      headHandler->newFile(AnitaTelemFileType::kAnitaTelemTdrss);
-    }
-    
     static int triedThisOne=0;
     numBytes=fread(bigBuffer,1,BIG_BUF_SIZE,tdrssFile);
     if(numBytes<MIN_TDRSS_SIZE && triedThisOne<200) {
@@ -313,6 +308,13 @@ int processHighRateTDRSSFile(char *filename) {
     }
     triedThisOne=0;
     printf("Read %d bytes from %s\n",numBytes,filename);
+
+    if(newFile) {
+      ghdHandler->newFile(AnitaTelemFileType::kAnitaTelemTdrss,thisRunNumber,thisFileNumber,buf.st_mtime);
+      headHandler->newFile(AnitaTelemFileType::kAnitaTelemTdrss);
+    }
+    
+    
     fclose(tdrssFile);
     int count3=0;
     while(count<numBytes) {
