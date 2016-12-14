@@ -341,6 +341,7 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
     static UInt_t latestHeaderEventNumber=0;
     static UInt_t lastHeaderEventNumber=0;
     static UInt_t lastHeaderRunNumber=0;
+    static UInt_t lastPacketNumber=0;
     int run=0;
     while(count<(unsigned long)(numBytes-1)) {
       if(count==lastCount)
@@ -367,6 +368,12 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	//      printf("Got %s (%#x) -- (%d bytes)\n",
 	//	     packetCodeAsString(gHdr->code),
 	//	     gHdr->code,gHdr->numBytes);
+	if(gHdr->packetNumber!=lastPacketNumber+1) {
+	  std::cout << "Hang on a minute why did we jump from packetNumber=" << lastPacketNumber << " to " << gHdr->packetNumber << "\n";
+	}
+
+
+	
 	GenericHeader_t *testGHdr=gHdr;
 
 
@@ -581,8 +588,10 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	    }
 
 	    
-	    if(gHdr->numBytes>0) 
+	    if(gHdr->numBytes>0) {
 	      count+=gHdr->numBytes;
+	      lastPacketNumber=gHdr->packetNumber;
+	    }
 	    else {
 	      //Got broken packet will bail
 	      printf("Problem with buffer -- bailing\n");
@@ -591,8 +600,8 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	      
 	}
 	else {
-	    printf("Problem with packet -- checkVal==%d  (%s code? %#x)\n",
-		   checkVal,packetCodeAsString(gHdr->code),gHdr->code);
+	    printf("Problem with packet -- checkVal==%d  (%s code? %#x)\n\t\tPacket Number %d -- Last %d",
+		   checkVal,packetCodeAsString(gHdr->code),gHdr->code,gHdr->packetNumber,lastPacketNumber);
 	    //	    return;
 	    if(gHdr->numBytes>0) {
 	      count+=gHdr->numBytes;

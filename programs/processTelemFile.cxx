@@ -448,7 +448,7 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	      run=getRunNumberFromTime(hdPtr->unixTime);
 	      turfEvent=hdPtr->turfEventId;
 	      turfRun=(((turfEvent&0xfff00000)>>20));
-	      cout << "Got Header\t" << run << "\t" << hdPtr->eventNumber << "\t" << hdPtr->unixTime << "\t" << run << "\t" << turfRun << "\n";
+	      //	      cout << "Got Header\t" << run << "\t" << hdPtr->eventNumber << "\t" << hdPtr->unixTime << "\t" << run << "\t" << turfRun << "\n";
 
 	      if(turfRun>run && (turfRun-run)<10) { //10 is arbitrary
 		addRunToMap(turfRun,hdPtr->eventNumber,hdPtr->unixTime);
@@ -520,7 +520,7 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 
 	      break;
 	    case PACKET_ZIPPED_FILE:
-	      cout << "Got ZippedFile_t\n";
+	      //	      cout << "Got ZippedFile_t\n";
 	      ///		    printf("Boo\n");
 	      fileHandler->processFile((ZippedFile_t*) testGHdr,getRunNumberFromTime(((ZippedFile_t*) testGHdr)->unixTime));
 	      break;
