@@ -117,7 +117,7 @@ void AnitaGenericHeaderHandler::writeFileSummary()
 
     it=fGhdMap.end();
     it--;
-    lastPacketNum=it->second;
+    lastPacketNum=it->first;
   }
     
   
@@ -164,7 +164,14 @@ void AnitaGenericHeaderHandler::writeFileSummary()
   float rate=0;
   if(lastModTime>0 && (lastModTimeRun<fCurrentRun || lastModTimeFile<fCurrentFile)) {
     //Can calculate rate
-    rate=(numFileBytes*8./1024)/(fCurrentFileTime-lastModTime);
+    if(numFileBytes>0 && (fCurrentFileTime-lastModTimeFile)>1)
+      rate=(numFileBytes*8./1024)/(fCurrentFileTime-lastModTime);
+    else
+      rate=0;
+
+    if(TMath::IsNaN(rate)) rate=0;
+    if(rate>1e9) rate =0;
+
   }
   sprintf(elementName,"fileRate");
   sprintf(elementLabel,"Rate (kbps)");

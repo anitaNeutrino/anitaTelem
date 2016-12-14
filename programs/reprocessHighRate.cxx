@@ -57,8 +57,11 @@ void loadRunNumberMap();
 void saveRunNumberMap();
 UInt_t getRunNumberFromTime(UInt_t unixTime);
 UInt_t getRunNumberFromEvent(UInt_t eventNumber);
-
+void addTdrssBufferToMap(UInt_t bufferNumber, unsigned short numBytes);
 void addRunToMap(UInt_t run, UInt_t eventNumber, UInt_t unixTime);
+void printBufferMap();
+
+
 int needToSaveRunMap=0;
 
 
@@ -90,7 +93,7 @@ int lastFileNumber[5]={0};
 std::map<UInt_t,UInt_t> fTimeRunMap;
 std::map<UInt_t,UInt_t> fEventRunMap;
 std::map<UInt_t,UInt_t> fRunToEventMap;
-
+std::map<UInt_t,UShort_t> fBufferMap;
 
 
 
@@ -194,7 +197,10 @@ int main (int argc, char ** argv)
 
   free(bigBuffer);
 
-  //  ghdHandler->writeFileSummary();
+  printBufferMap();
+
+
+  //  ghdhandler->writeFileSummary();
   headHandler->loopMap();
   headHandler->loopEventMap();
   hkHandler->loopMap();
@@ -225,7 +231,7 @@ int main (int argc, char ** argv)
 
 
 int processHighRateTDRSSFile(char *filename) {
-  
+
 
     int numBytes=0,count=0;
     FILE *tdrssFile;
@@ -305,7 +311,9 @@ int processHighRateTDRSSFile(char *filename) {
 		ulPtr = (unsigned long*) &bigBuffer[count+3];
 		bufferCount=*ulPtr;
 		numSciBytes=bigBuffer[count+2+5];
-		//		printf("Buffer %u -- %d bytes\n",bufferCount,numSciBytes);		
+		printf("Buffer %u -- %d bytes\n",bufferCount,numSciBytes);		
+		addTdrssBufferToMap(bufferCount,numSciBytes);
+
 		handleScience((unsigned char*)&bigBuffer[count+2+6],numSciBytes);
 		checksum=bigBuffer[count+2+6+(numSciBytes/2)];		
 		swEndHdr=bigBuffer[count+2+7+(numSciBytes/2)];
@@ -315,7 +323,7 @@ int processHighRateTDRSSFile(char *filename) {
 		//		printf("endHdr -- %x\n",endHdr);
 		//		printf("auxHdr2 -- %x\n",auxHdr2);		
 //		return 0;
-		count+=2+10+(numSciBytes/2);
+		count+=2+10+(numSciBytes/2);  
 		continue;
 	    }
 	}
@@ -329,6 +337,8 @@ int processHighRateTDRSSFile(char *filename) {
 
 
 void handleScience(unsigned char *buffer,unsigned short numBytes) {
+
+  std::cout << "Starting handleScience with numBytes " << numBytes << "\n\n";
 
 //    cout << (int) headHandler << endl;
     unsigned long count=0;
@@ -364,10 +374,10 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	  continue;
 	}
 
-	//      printf("count %d  (numBytes %d)\n",count,numBytes);
-	//      printf("Got %s (%#x) -- (%d bytes)\n",
-	//	     packetCodeAsString(gHdr->code),
-	//	     gHdr->code,gHdr->numBytes);
+	printf("count %d  (numBytes %d)\n",count,numBytes);
+	printf("Got %s (%#x) -- (%d bytes)  --packetNumber=%d\n",
+	       packetCodeAsString(gHdr->code),
+	       gHdr->code,gHdr->numBytes,gHdr->packetNumber);
 	if(gHdr->packetNumber!=lastPacketNumber+1) {
 	  std::cout << "Hang on a minute why did we jump from packetNumber=" << lastPacketNumber << " to " << gHdr->packetNumber << "\n";
 	}
@@ -600,7 +610,7 @@ void handleScience(unsigned char *buffer,unsigned short numBytes) {
 	      
 	}
 	else {
-	    printf("Problem with packet -- checkVal==%d  (%s code? %#x)\n\t\tPacket Number %d -- Last %d",
+	    printf("Problem with packet -- checkVal==%d  (%s code? %#x)\n\t\tPacket Number %d -- Last %d\n",
 		   checkVal,packetCodeAsString(gHdr->code),gHdr->code,gHdr->packetNumber,lastPacketNumber);
 	    //	    return;
 	    if(gHdr->numBytes>0) {
@@ -1126,7 +1136,8 @@ int processIridiumFile(char *filename) {
 
     unsigned char *charBuffer=(unsigned char*)&bigBuffer[0];
 
-    while(count<numBytes) {	
+    while(count<numBytes) {
+      //      printf("count %d -- %#x\n",count,charBuffer[count]);
 	unsigned char comm1or2=charBuffer[count];
 	if(comm1or2==0xc1 || comm1or2==0xc2) {
 	    unsigned char seqNum=charBuffer[count+1];
@@ -1155,11 +1166,31 @@ int processIridiumFile(char *filename) {
 	    }
 	    else {
 	      std::cout << "Bad iridium data -- " << retVal << "\n";
-	    }
-	
+	    }	
 	}
 	else {
-	    count++;
+	  int testNum=charBuffer[count];
+	  //  printf("count %d, charBuffer[count]=%#x -- %d\n",count,charBuffer[count],testNum);
+	  //	  std::cout << "testNum test: " << testNum << "\t" << (testNum==254) << "\n";
+	  if(testNum==254) {
+	    //	    std::cout << "Got 0xfe\n";
+	    printf("Got 0xfe\n");
+	    if(count>10) {
+	      unsigned short *usPtr=(unsigned short*)&charBuffer[count-2];
+	      std::cout << "usPtr: " << *usPtr << "\n";
+	      printf("usPtr: %d\n",*usPtr);
+	      GenericHeader_t *gHdr = (GenericHeader_t*)&charBuffer[count-10];
+	      printf("gHdr: %#x --%d -- %d\n",gHdr->code,gHdr->packetNumber,gHdr->numBytes);
+	      if(gHdr->code==0x100 && gHdr->numBytes==84) {
+		//This is a header
+		handleScience(&charBuffer[count-10],84);
+	      }
+
+
+
+	    }
+	  }
+	  count++;
 	}
     }
     fclose(iridiumFile);
@@ -1283,3 +1314,38 @@ int processSlowTdrssFile(char *filename) {
     lastNumBytesNumber[AnitaTelemFileType::kAnitaTelemSlowTdrss]=numBytes;
     return 1;
 }
+
+
+void addTdrssBufferToMap(UInt_t bufferNumber, unsigned short numBytes)
+{
+  static UShort_t order=0;
+
+  fBufferMap.insert(std::pair<UInt_t,UShort_t>(bufferNumber,order)); 
+  order++;
+}
+
+void printBufferMap()
+{
+  std::map<UInt_t,UShort_t>::iterator it;
+  int counter=0;
+  int firstBuffer=0;
+  int lastBuffer=0;
+  int lastOffset=0;
+  int offset=0;
+  for(it=fBufferMap.begin();it!=fBufferMap.end();it++) {
+    offset=it->first-counter;
+
+
+    if(offset!=lastOffset) {
+      std::cout << it->first << "\t" << it->second << "\t" << counter << "\n";   
+    }
+    if(it->first!=(lastBuffer+1) && lastBuffer>0) {
+      std::cout << "Missing buffer: " << lastBuffer << " " << it->first << "\n";
+    }
+
+    counter++;
+    lastOffset=offset;
+    lastBuffer=it->first;
+  }
+
+}  
