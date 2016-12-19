@@ -65,6 +65,16 @@ int needToSaveRunMap=0;
 unsigned short *bigBuffer;
 
 
+bool checkIfTdrss(unsigned char * buf) 
+{
+  short * bigbuf = (short *) buf; 
+
+
+  return bigbuf[0] == 0xf00d && bigbuf[1] == 0xd0cc && (bigbuf[2] & 0xff00) == 0xae00 ;
+
+
+}
+
 AnitaHeaderHandler *headHandler;
 AnitaMonitorHandler *monHandler;
 AnitaGpuHandler *gpuHandler;
@@ -1193,7 +1203,21 @@ int processIridiumFile(char *filename) {
 
     while(count<numBytes) {	
 	unsigned char comm1or2=charBuffer[count];
-	if(comm1or2==0xc1 || comm1or2==0xc2) {
+
+	if (checkIfTdrss(charBuffer + count))
+	{
+           
+//	 	losOrSip = charBuffer[count+5] &1; 
+//	 	oddOrEven = (charBuffer[count+5] &2) >> 1; 
+//		bufferCount = *((unsigned long *) (charBuffer + count + 6)); 
+		unsigned short numSciBytes = *((unsigned short*) (charBuffer + count + 14)); 
+		handleScience(charBuffer + count + 16, numSciBytes); 
+//		checksum = *((unsigned short*)  (charBuffer + count + 16 + numSciBytes)); 
+		count += 24 + numSciBytes; 
+	}
+
+
+	else if(comm1or2==0xc1 || comm1or2==0xc2) {
 	    unsigned char seqNum=charBuffer[count+1];
 	    unsigned char numBytes=charBuffer[count+2];
 	    unsigned char *sciData=&charBuffer[count+3];
