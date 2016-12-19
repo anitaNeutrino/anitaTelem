@@ -173,7 +173,7 @@ def main():
         sys.stdout.flush()
 
     rawTime=getRawTimeModified(runNum,"house/tuff/last")
-    rootTime=getRootTimeModified(runNum,"tuffFile")
+    rootTime=getRootTimeModified(runNum,"tuffStatusFile")
     if(rawTime>rootTime):
         print "Need new tuff ROOT file for run ",runNum," - rawTime = ",rawTime," / rootTime = ",rootTime," <- from check on house/tuff/last"
         sys.stdout.flush()

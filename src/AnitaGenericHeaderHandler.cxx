@@ -117,7 +117,7 @@ void AnitaGenericHeaderHandler::writeFileSummary()
 
     it=fGhdMap.end();
     it--;
-    lastPacketNum=it->second;
+    lastPacketNum=it->first;
   }
     
   
