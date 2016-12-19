@@ -138,7 +138,7 @@ void AnitaHeaderHandler::loopMap()
     for(it=(runIt->second).begin();it!=(runIt->second).end();it++) {
 
       AnitaEventHeader_t *hdPtr=&(it->second);
-      std::cout << hdPtr->unixTime << "\t" << hdPtr->eventNumber << "\t" << 100*(hdPtr->eventNumber/100) << "\n";    
+      //      std::cout << hdPtr->unixTime << "\t" << hdPtr->eventNumber << "\t" << 100*(hdPtr->eventNumber/100) << "\n";    
       int fileNumber=100*(hdPtr->eventNumber/100);
       //    processHeader(hdPtr);
       
