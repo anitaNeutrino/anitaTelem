@@ -164,10 +164,10 @@ def main():
         sys.stdout.flush()
         subprocess.call([processCommand],shell=True)
         #Here insert call to aware file maker
-        processCommand="makeGpuJsonFiles"
+        processCommand="makeGpuPowerSpectrumImages"
         print "--> [2 of 2] - running ",processCommand
         sys.stdout.flush()
-#RJN hack        subprocess.call([processCommand,getRootFilename(runNum,"gpuFile")])
+        subprocess.call([processCommand,getRootFilename(runNum,"gpuFile")])
     else:
         print "gpu ROOT file for run ",runNum," up-to-date - rawTime = ",rawTime," / rootTime = ",rootTime," <- from check on house/gpu/last"
         sys.stdout.flush()

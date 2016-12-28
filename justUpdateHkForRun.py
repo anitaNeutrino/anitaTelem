@@ -12,6 +12,7 @@ anitaTelemDir = os.getenv('ANITA_TELEM_DIR', "/home/radio/anita14/anitaTelem")
 anitaTelemDataDir = os.getenv('ANITA_TELEM_DATA_DIR', "/anitaStorage2/antarctica14/telem")
 
 
+
 def doesRawDirExist(runNum):
     rawDir=anitaTelemDataDir+"/raw/run"+str(runNum)
     if(os.path.isdir(rawDir)):
@@ -142,25 +143,25 @@ def main():
         sys.stdout.flush()
         subprocess.call([processCommand],shell=True)
         #Here insert call to aware file maker
-        processCommand="makeGpuJsonFiles"
+        processCommand="makeGpuPowerSpectrumImages"
         print "--> [2 of 2] - running ",processCommand
         sys.stdout.flush()
-#        subprocess.call([processCommand,getRootFilename(runNum,"gpuFile")])
+        subprocess.call([processCommand,getRootFilename(runNum,"gpuFile")])
     else:
         print "gpu ROOT file for run ",runNum," up-to-date - rawTime = ",rawTime," / rootTime = ",rootTime," <- from check on house/gpu/last"
         sys.stdout.flush()
 
     rawTime=getRawTimeModified(runNum,"house/tuff/last")
-    rootTime=getRootTimeModified(runNum,"tuffFile")
+    rootTime=getRootTimeModified(runNum,"tuffStatusFile")
     if(rawTime>rootTime):
         print "Need new tuff ROOT file for run ",runNum," - rawTime = ",rawTime," / rootTime = ",rootTime," <- from check on house/tuff/last"
         sys.stdout.flush()
-        processCommand=anitaTreeMakerDir+"/runTelemTuffStatusMaker.sh "+str(runNum)+" "+rawDir+" "+rootDir
+        processCommand="runTelemTuffStatusMaker.sh "+str(runNum)+" "+rawDir+" "+rootDir
         print "--> [1 of 2] - running ",processCommand
         sys.stdout.flush()
         subprocess.call([processCommand],shell=True)
         #Here insert call to aware file maker
-        processCommand=anitaAwareFilemakerDir+"/makeTuffStatusJsonFiles"
+        processCommand="makeTuffStatusJsonFiles"
         print "--> [2 of 2] - running ",processCommand
         sys.stdout.flush()
         subprocess.call([processCommand,getRootFilename(runNum,"tuffStatusFile")])
