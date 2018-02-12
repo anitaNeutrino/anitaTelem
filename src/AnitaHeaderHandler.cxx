@@ -673,7 +673,7 @@ void AnitaHeaderHandler::plotEvent(AnitaEventHeader_t *hdPtr,PedSubbedEventBody_
   
 
 
-  gEventCanvasMaker->getEventInfoCanvas(usefulEventPtr,fTheHead,fMagicEventInfoPad);
+  gEventCanvasMaker->getEventInfoCanvas(usefulEventPtr,fTheHead,0,fMagicEventInfoPad);
   gEventCanvasMaker->fMinVoltLimit=-100;
   gEventCanvasMaker->fMaxVoltLimit=100;
   
